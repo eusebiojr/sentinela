@@ -18,6 +18,7 @@ class TabelaJustificativas:
     def __init__(self, page: ft.Page, app_controller):
         self.page = page
         self.app_controller = app_controller
+        self.processando_envio = False
         
     def criar_tabela(self, evento: str, df_evento: pd.DataFrame):
         """Cria tabela completa de justificativas"""
@@ -183,6 +184,7 @@ class TabelaJustificativas:
     def _criar_campos_editaveis(self, row, motivos, chave_alteracao,
                                placa_width, motivo_width, previsao_width, obs_width,
                                font_size, field_height):
+        campos_desabilitados = self.processando_envio
         """Cria campos editáveis para uma linha"""
         
         # Opções do dropdown de motivo
@@ -200,12 +202,14 @@ class TabelaJustificativas:
             text_size=font_size,
             dense=True,
             filled=True,
-            bgcolor=ft.colors.GREY_100,
+            bgcolor=ft.colors.GREY_100 if not campos_desabilitados else ft.colors.GREY_200,
             multiline=True,
             min_lines=1,
             max_lines=3,
             label="Observações",
-            border_radius=6
+            border_radius=6,
+            # NOVO: Desabilita durante processamento
+            disabled=campos_desabilitados
         )
         
         # Ícone de alerta para observação obrigatória
@@ -219,6 +223,9 @@ class TabelaJustificativas:
         
         # Validadores
         def validar_motivo_mudanca(e):
+            if campos_desabilitados:
+                return
+            
             motivo_selecionado = e.control.value
             obs_value = obs_field.value
             
@@ -237,6 +244,9 @@ class TabelaJustificativas:
             self.page.update()
         
         def validar_observacao_mudanca(e):
+            if campos_desabilitados:
+                return
+            
             motivo_selecionado = motivo_dropdown.value
             obs_value = e.control.value
             
@@ -261,17 +271,20 @@ class TabelaJustificativas:
             text_size=font_size,
             dense=True,
             filled=True,
-            bgcolor=ft.colors.GREY_100,
+            bgcolor=ft.colors.GREY_100 if not campos_desabilitados else ft.colors.GREY_200,
             content_padding=ft.padding.only(left=12, right=8, top=8, bottom=8),
             alignment=ft.alignment.center_left,
-            on_change=validar_motivo_mudanca
+            on_change=validar_motivo_mudanca if not campos_desabilitados else None,
+            # NOVO: Desabilita durante processamento
+            disabled=campos_desabilitados
         )
         
         # Configura validação da observação
-        obs_field.on_change = validar_observacao_mudanca
+        if not campos_desabilitados:
+            obs_field.on_change = validar_observacao_mudanca
         
         # Validação inicial
-        if (valor_dropdown and valor_dropdown.lower() == "outros" and 
+        if not campos_desabilitados and (valor_dropdown and valor_dropdown.lower() == "outros" and 
             (not obs_field.value or not obs_field.value.strip())):
             obs_field.border_color = ft.colors.ORANGE_600
             icone_alerta.visible = True
@@ -329,48 +342,64 @@ class TabelaJustificativas:
             ))
         ]
     
-    def _criar_campo_previsao(self, valor_inicial, chave_alteracao, row, 
-                            previsao_width, font_size, field_height):
-        """Cria campo de previsão com modal personalizado"""
+    def _criar_campo_previsao(self, valor_inicial, chave_alteracao, row, previsao_width, font_size, field_height):
+        """Cria campo de previsão com controle de estado de processamento"""
         
         # Parse do valor inicial
         display_value = ""
         if valor_inicial and str(valor_inicial).strip():
             display_value = str(valor_inicial).strip()
         
+        # NOVO: Determina se deve estar desabilitado
+        campo_desabilitado = self.processando_envio
+        
         # Campo de exibição
         campo_display = ft.TextField(
             value=display_value,
-            hint_text="Clique para selecionar",
+            hint_text="Clique para selecionar" if not campo_desabilitado else "Processando...",
             width=previsao_width,
             height=field_height,
             text_size=font_size,
             dense=True,
             filled=True,
-            bgcolor=ft.colors.GREY_100,
+            bgcolor=ft.colors.GREY_100 if not campo_desabilitado else ft.colors.GREY_200,
             read_only=True,
             prefix_icon=ft.icons.SCHEDULE,
-            border_radius=8
+            border_radius=8,
+            # NOVO: Desabilita campo durante processamento
+            disabled=campo_desabilitado
         )
         
         # Função para abrir modal
         def abrir_modal(e):
+            # NOVO: Verifica se está processando
+            if self.processando_envio:
+                mostrar_mensagem(self.page, "⏳ Aguarde finalizar o processamento atual", False)
+                return
+                
             print(f"🔧 [MODAL] Abrindo modal para chave: {chave_alteracao}")
             self._mostrar_modal_data_hora(campo_display, chave_alteracao, row)
         
-        campo_display.on_click = abrir_modal
+        # NOVO: Só adiciona evento se não estiver processando
+        if not campo_desabilitado:
+            campo_display.on_click = abrir_modal
+        
+        # Botão de edição
+        btn_edicao = ft.IconButton(
+            icon=ft.icons.EDIT_CALENDAR,
+            tooltip="Editar data/hora" if not campo_desabilitado else "Aguarde processamento...",
+            on_click=abrir_modal if not campo_desabilitado else None,
+            icon_size=16,
+            icon_color=ft.colors.BLUE_600 if not campo_desabilitado else ft.colors.GREY_400,
+            # NOVO: Desabilita botão durante processamento
+            disabled=campo_desabilitado
+        )
         
         return ft.Row([
             campo_display,
-            ft.IconButton(
-                icon=ft.icons.EDIT_CALENDAR,
-                tooltip="Editar data/hora",
-                on_click=abrir_modal,
-                icon_size=16,
-                icon_color=ft.colors.BLUE_600
-            )
+            btn_edicao
         ], spacing=2)
-    
+
     def _mostrar_modal_data_hora(self, campo_display, chave_alteracao, row):
         """Mostra modal personalizado para seleção de data/hora"""
         
@@ -497,13 +526,27 @@ class TabelaJustificativas:
     def _criar_botoes_acao(self, evento, df_evento, pode_editar):
         """Cria botões de ação para o evento"""
         if pode_editar:
+            # NOVO: Texto e cor dinâmicos baseados no estado
+            if self.processando_envio:
+                btn_text = "⏳ Enviando..."
+                btn_color = ft.colors.GREY_600
+                btn_disabled = True
+                btn_icon = ft.icons.HOURGLASS_EMPTY
+            else:
+                btn_text = "Enviar Justificativas"
+                btn_color = ft.colors.GREEN_600
+                btn_disabled = False
+                btn_icon = ft.icons.SEND
+            
             btn_enviar = ft.ElevatedButton(
-                "Enviar Justificativas",
-                bgcolor=ft.colors.GREEN_600,
+                btn_text,
+                bgcolor=btn_color,
                 color=ft.colors.WHITE,
-                icon=ft.icons.SEND,
-                on_click=lambda e: self._enviar_justificativas(evento, df_evento),
-                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=6))
+                icon=btn_icon,
+                on_click=lambda e: self._enviar_justificativas(evento, df_evento) if not btn_disabled else None,
+                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=6)),
+                # NOVO: Desabilita durante processamento
+                disabled=btn_disabled
             )
             return ft.Row([btn_enviar], alignment=ft.MainAxisAlignment.END)
         
@@ -536,7 +579,13 @@ class TabelaJustificativas:
         return ft.Container()
     
     def _enviar_justificativas(self, evento, df_evento):
-        """Envia justificativas para o SharePoint"""
+        """Envia justificativas para o SharePoint com bloqueio de interface"""
+        
+        # NOVO: Verifica se já está processando
+        if self.processando_envio:
+            mostrar_mensagem(self.page, "⏳ Aguarde... processamento em andamento", False)
+            return
+        
         mostrar_mensagem(self.page, "⏳ Validando dados...", False)
         
         # Validação usando DataValidator
@@ -549,9 +598,22 @@ class TabelaJustificativas:
             self._mostrar_modal_validacao(erros_validacao)
             return
         
+        # NOVO: Ativa modo processamento
+        self._ativar_modo_processamento(True)
+        
         # Se validação passou, processa envio
         mostrar_mensagem(self.page, "⏳ Enviando justificativas...", False)
         self._processar_envio(evento, df_evento)
+
+    def _ativar_modo_processamento(self, ativo: bool):
+        """Ativa/desativa modo processamento - bloqueia/desbloqueia interface"""
+        self.processando_envio = ativo
+        
+        # Força atualização da interface para refletir mudanças
+        try:
+            self.page.update()
+        except Exception as e:
+            print(f"⚠️ [PROCESSAMENTO] Erro ao atualizar interface: {e}")
     
     def _mostrar_modal_validacao(self, erros_validacao):
         """Mostra modal de erro com validações pendentes"""
@@ -662,7 +724,7 @@ class TabelaJustificativas:
         self.page.update()
     
     def _processar_envio(self, evento, df_evento):
-        """Processa envio das justificativas"""
+        """Processa envio das justificativas com controle de bloqueio"""
         
         # Processa em background
         import threading
@@ -672,10 +734,12 @@ class TabelaJustificativas:
                 
                 # Verifica se há alterações pendentes para este evento
                 alteracoes_evento = {k: v for k, v in app_state.alteracoes_pendentes.items() 
-                                   if k.startswith(f"{evento}_")}
+                                if k.startswith(f"{evento}_")}
                 
                 if not alteracoes_evento:
                     mostrar_mensagem(self.page, "⚠️ Nenhuma alteração detectada.", True)
+                    # NOVO: Desativa modo processamento
+                    self._ativar_modo_processamento(False)
                     return
                 
                 # Coleta todas as atualizações em lote
@@ -736,19 +800,28 @@ class TabelaJustificativas:
                 
                 if registros_atualizados > 0:
                     mostrar_mensagem(self.page, f"✅ {registros_atualizados} registro(s) atualizado(s) com sucesso!")
-                    # Atualiza dados e interface
+                    
+                    # NOVO: Pequeno delay antes de recarregar (melhor UX)
+                    import time
+                    time.sleep(0.5)
+                    
+                    # Atualiza dados e interface (isso vai recriar a tabela com processando_envio = False)
                     self.app_controller.atualizar_dados()
                 else:
                     mostrar_mensagem(self.page, "❌ Nenhum registro foi atualizado no SharePoint", True)
+                    # NOVO: Desativa modo processamento em caso de erro
+                    self._ativar_modo_processamento(False)
                 
             except Exception as e:
                 print(f"❌ Erro no processamento: {str(e)}")
                 mostrar_mensagem(self.page, f"❌ Erro ao enviar justificativas: {str(e)}", True)
+                # NOVO: Desativa modo processamento em caso de erro
+                self._ativar_modo_processamento(False)
         
         # Executa em thread separada
         thread = threading.Thread(target=processar, daemon=True)
         thread.start()
-    
+
     def _aprovar_evento(self, evento):
         """Aprova um evento"""
         def confirmar_aprovacao(e):
