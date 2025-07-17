@@ -1,0 +1,35 @@
+# Docker Compose para desenvolvimento local
+version: '3.8'
+
+services:
+  sentinela:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentinela-dev
+    ports:
+      - "8081:8080"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - PORT=8080
+    env_file:
+      - .env
+    volumes:
+      # Volume para desenvolvimento com hot reload (opcional)
+      - ./app:/app/app
+      - ./assets:/app/assets
+      - ./logs:/app/logs
+    restart: unless-stopped
+    
+  # Opcional: Adicionar Redis para cache futuro
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: sentinela-redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+
+networks:
+  default:
+    name: sentinela-network

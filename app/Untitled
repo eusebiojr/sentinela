@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Script de deploy manual para o Sentinela no Google Cloud Run
+# Execute: chmod +x deploy.sh && ./deploy.sh
+
+set -e  # Para na primeira falha
+
+# 🔧 CONFIGURAÇÕES DO PROJETO (AJUSTE AQUI!)
+PROJECT_ID="sz-wsp-00009"  # ⚠️ SUBSTITUA pelo seu Project ID
+SERVICE_NAME="sentinela"
+REGION="us-central1"
+IMAGE_NAME="gcr.io/$PROJECT_ID/$SERVICE_NAME"
+
+echo "🚀 Iniciando deploy do Sentinela no Google Cloud Run"
+echo "📊 Projeto: $PROJECT_ID"
+echo "🌎 Região: $REGION"
+echo "🏷️ Serviço: $SERVICE_NAME"
+echo ""
+
+# Verifica se PROJECT_ID foi alterado
+if [ "$PROJECT_ID" = "seu-projeto-gcp-id" ]; then
+    echo "❌ ERRO: Você precisa configurar o PROJECT_ID no script!"
+    echo "📝 Edite o arquivo deploy.sh e substitua 'seu-projeto-gcp-id' pelo ID do seu projeto"
+    echo "💡 Para ver seus projetos: gcloud projects list"
+    exit 1
+fi
+
+# Verifica se gcloud está instalado
+if ! command -v gcloud &> /dev/null; then
+    echo "❌ Google Cloud SDK não está instalado"
+    echo "💡 Instale em: https://cloud.google.com/sdk/docs/install"
+    exit 1
+fi
+
+# Verifica se Docker está instalado
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker não está instalado"
+    echo "💡 Instale em: https://docs.docker.com/get-docker/"
+    exit 1
+fi
+
+# Verifica se está logado no gcloud
+if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
+    echo "❌ Você não está logado no Google Cloud"
+    echo "💡 Execute: gcloud auth login"
+    exit 1
+fi
+
+# Configura projeto
+echo "🔧 Configurando projeto GCP..."
+gcloud config set project $PROJECT_ID
+
+# Habilita APIs necessárias
+echo "🔌 Habilitando APIs necessárias..."
+gcloud services enable run.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable containerregistry.googleapis.com
+
+# Autentica Docker com GCP
+echo "🔑 Autenticando Docker..."
+gcloud auth configure-docker
+
+# Build da imagem
+echo "📦 Construindo imagem Docker..."
+docker build -t $IMAGE_NAME:latest .
+
+# Push da imagem
+echo "📤 Enviando imagem para Container Registry..."
+docker push $IMAGE_NAME:latest
+
+# Deploy no Cloud Run
+echo "🚀 Fazendo deploy no Cloud Run..."
+gcloud run deploy $SERVICE_NAME \
+    --image $IMAGE_NAME:latest \
+    --region $REGION \
+    --platform managed \
+    --allow-unauthenticated \
+    --memory 1Gi \
+    --cpu 1 \
+    --min-instances 0 \
+    --max-instances 10 \
+    --port 8080 \
+    --set-env-vars ENVIRONMENT=production \
+    --timeout 300 \
+    --concurrency 80
+
+# Obtém URL do serviço
+SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$REGION --format="value(status.url)")
+
+echo ""
+echo "✅ Deploy concluído com sucesso!"
+echo "🌐 URL do serviço: $SERVICE_URL"
+echo "📊 Monitoramento: https://console.cloud.google.com/run/detail/$REGION/$SERVICE_NAME"
+echo ""
+echo "🔧 Comandos úteis:"
+echo "  • Ver logs: gcloud run services logs tail $SERVICE_NAME --region=$REGION"
+echo "  • Atualizar: ./deploy.sh"
+echo "  • Parar: gcloud run services delete $SERVICE_NAME --region=$REGION"
+echo ""
+echo "🎉 Sentinela está online!"

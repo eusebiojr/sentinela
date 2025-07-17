@@ -1,0 +1,55 @@
+# Arquivos e diretórios a serem ignorados pelo Docker
+
+# Arquivos de desenvolvimento
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs
+logs/
+*.log
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Diretórios de build
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Deploy
+deploy.sh
+cloudbuild.yaml
+
+# Documentação
+README.md
+docs/
+
+# Testes
+tests/
+test_*.py
+*_test.py
