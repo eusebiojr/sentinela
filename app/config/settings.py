@@ -34,35 +34,41 @@ class AppConfig:
         if self.motivos_poi is None:
             self.motivos_poi = {
                 "PA Agua Clara": [
-                    "Absenteísmo", 
+                    "Atestado Motorista",
+                    "Brecha na escala", 
                     "Ciclo Antecipado - Aguardando Motorista", 
-                    "Falta Mão de Obra", 
-                    "Informação Incorreta", 
-                    "Outros"
+                    "Falta Motorista",
+                    "Outros", 
+                    "Refeição", 
+                    "Socorro Mecânico"
                 ],
                 "Manutenção": [
+                    "Corretiva",
+                    "Falta Mecânico",
+                    "Falta Material", 
+                    "Inspeção", 
+                    "Lavagem", 
                     "Preventiva", 
-                    "Manutenção Grande Monta", 
-                    "ITR", 
-                    "Falta Mão de Obra", 
-                    "Informação Incorreta"
+                    "Outros"
                 ],
                 "Terminal": [
                     "Chegada em Comboio", 
-                    "Troca de Turno", 
-                    "Absenteísmo", 
-                    "Falta Mão de Obra", 
-                    "Indisponibilidade Mecânica", 
+                    "Falta de Espaço", 
+                    "Falta de Máquina", 
+                    "Falta de Operador", 
+                    "Janela de Descarga",
+                    "Prioridade Ferrovia",
                     "Outros"
                 ],
                 "Fábrica": [
                     "Chegada em Comboio", 
-                    "Troca de Turno", 
-                    "Absenteísmo", 
-                    "Falta Mão de Obra", 
-                    "Indisponibilidade Mecânica", 
-                    "Aguardando Nota", 
-                    "Outros"
+                    "Emissão Nota Fiscal", 
+                    "Falta de Máquina", 
+                    "Falta de Material", 
+                    "Falta de Operador", 
+                    "Janela Carregamento", 
+                    "Outros",
+                    "Restrição de Tráfego"
                 ]
             }
 

@@ -26,19 +26,28 @@ class TabelaJustificativas:
         screen_size = get_screen_size(self.page.window_width)
         
         if screen_size == "small":
-            motivo_width = 182
+            # Largura da coluna Placa aumentada em 15% (65 -> 75)
+            placa_width = 75
+            # Largura da coluna Motivo aumentada em 50% (182 -> 273)
+            motivo_width = 273
             previsao_width = 160
             obs_width = 380
             font_size = 12
             field_height = 38
         elif screen_size == "medium":
-            motivo_width = 218
+            # Largura da coluna Placa aumentada em 15% (estimado 75 -> 86)
+            placa_width = 86
+            # Largura da coluna Motivo aumentada em 50% (218 -> 327)
+            motivo_width = 327
             previsao_width = 175
             obs_width = 450
             font_size = 13
             field_height = 40
         else:  # large
-            motivo_width = 237
+            # Largura da coluna Placa aumentada em 15% (estimado 85 -> 98)
+            placa_width = 98
+            # Largura da coluna Motivo aumentada em 50% (237 -> 356)
+            motivo_width = 356
             previsao_width = 190
             obs_width = 600
             font_size = 14
@@ -63,7 +72,7 @@ class TabelaJustificativas:
         for idx, row in df_evento_reset.iterrows():
             row_cells = self._criar_linha_tabela(
                 evento, row, motivos, pode_editar, 
-                motivo_width, previsao_width, obs_width, 
+                placa_width, motivo_width, previsao_width, obs_width, 
                 font_size, field_height
             )
             table_rows.append(ft.DataRow(cells=row_cells))
@@ -78,15 +87,15 @@ class TabelaJustificativas:
             ft.DataColumn(ft.Text("Observações", weight=ft.FontWeight.BOLD, size=header_font_size))
         ]
         
-        # Configurações da tabela
+        # Configurações da tabela - ajustando largura total para acomodar as novas dimensões
         if screen_size == "small":
-            table_width = 1200
+            table_width = 1300  # Aumentado de 1200 para acomodar colunas maiores
             column_spacing = 3
         elif screen_size == "medium":
-            table_width = 1400
+            table_width = 1500  # Aumentado de 1400 para acomodar colunas maiores
             column_spacing = 4
         else:
-            table_width = 1600
+            table_width = 1700  # Aumentado de 1600 para acomodar colunas maiores
             column_spacing = 5
         
         # Cria tabela
@@ -143,7 +152,7 @@ class TabelaJustificativas:
         return df_exibir
     
     def _criar_linha_tabela(self, evento, row, motivos, pode_editar, 
-                          motivo_width, previsao_width, obs_width, 
+                          placa_width, motivo_width, previsao_width, obs_width, 
                           font_size, field_height):
         """Cria uma linha da tabela"""
         
@@ -164,15 +173,15 @@ class TabelaJustificativas:
             # Campos editáveis
             return self._criar_campos_editaveis(
                 row, motivos, chave_alteracao,
-                motivo_width, previsao_width, obs_width,
+                placa_width, motivo_width, previsao_width, obs_width,
                 font_size, field_height
             )
         else:
             # Campos apenas leitura
-            return self._criar_campos_readonly(row, font_size)
+            return self._criar_campos_readonly(row, placa_width, font_size)
     
     def _criar_campos_editaveis(self, row, motivos, chave_alteracao,
-                               motivo_width, previsao_width, obs_width,
+                               placa_width, motivo_width, previsao_width, obs_width,
                                font_size, field_height):
         """Cria campos editáveis para uma linha"""
         
@@ -279,11 +288,11 @@ class TabelaJustificativas:
             icone_alerta
         ], spacing=5, alignment=ft.MainAxisAlignment.START)
         
-        # Células da linha
+        # Células da linha com larguras ajustadas
         return [
             ft.DataCell(ft.Container(
                 ft.Text(DataFormatter.safe_str(row["Placa"]), size=15, weight=ft.FontWeight.W_500), 
-                width=65
+                width=placa_width
             )),
             ft.DataCell(ft.Container(
                 ft.Text(DataFormatter.safe_str(row["Data/Hora Entrada"]), size=15), 
@@ -294,11 +303,12 @@ class TabelaJustificativas:
             ft.DataCell(ft.Container(obs_container, width=obs_width + 20))
         ]
     
-    def _criar_campos_readonly(self, row, font_size):
+    def _criar_campos_readonly(self, row, placa_width, font_size):
         """Cria campos apenas leitura"""
         return [
             ft.DataCell(ft.Container(
                 ft.Text(DataFormatter.safe_str(row["Placa"]), size=15, weight=ft.FontWeight.W_500), 
+                width=placa_width,
                 padding=5
             )),
             ft.DataCell(ft.Container(
