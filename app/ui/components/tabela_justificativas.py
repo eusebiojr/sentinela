@@ -401,21 +401,54 @@ class TabelaJustificativas:
         ], spacing=2)
 
     def _mostrar_modal_data_hora(self, campo_display, chave_alteracao, row):
-        """Mostra modal personalizado para seleção de data/hora"""
+        """Mostra modal personalizado para seleção de data/hora com dropdown de horários"""
         
-        # Campos temporários
+        # NOVO: Função para gerar opções de horário (meia em meia hora)
+        def gerar_opcoes_horario():
+            opcoes = []
+            for hora in range(24):
+                for minuto in [0, 30]:
+                    hora_formatada = f"{hora:02d}:{minuto:02d}"
+                    opcoes.append(ft.dropdown.Option(hora_formatada, hora_formatada))
+            return opcoes
+        
+        # NOVO: Obter data de hoje e hora atual + 1 hora
+        from datetime import datetime, timedelta
+        import pytz
+        
+        agora = datetime.now(pytz.timezone("America/Campo_Grande"))
+        data_hoje = agora.strftime("%d/%m/%Y")
+        
+        # Calcula hora padrão (atual + 1 hora, arredondada para meia hora)
+        hora_padrao = agora + timedelta(hours=1)
+        minutos = hora_padrao.minute
+        
+        # Arredonda para a próxima meia hora
+        if minutos <= 30:
+            hora_padrao = hora_padrao.replace(minute=30, second=0, microsecond=0)
+        else:
+            hora_padrao = hora_padrao.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        
+        hora_padrao_str = hora_padrao.strftime("%H:%M")
+        
+        # Campo de data com valor padrão
         temp_data_field = ft.TextField(
             label="Data (dd/mm/aaaa)",
-            value="",
+            value=data_hoje,  # NOVO: Pré-preenchido com data de hoje
             width=150,
             hint_text="12/07/2025"
         )
         
-        temp_hora_field = ft.TextField(
-            label="Hora (hh:mm)",
-            value="12:00",
+        # NOVO: Dropdown de hora ao invés de TextField
+        temp_hora_dropdown = ft.Dropdown(
+            label="Hora",
+            value=hora_padrao_str,  # NOVO: Pré-preenchido com hora atual + 1h
+            options=gerar_opcoes_horario(),
             width=120,
-            hint_text="14:30"
+            dense=True,
+            filled=True,
+            bgcolor=ft.colors.GREY_100,
+            content_padding=ft.padding.only(left=12, right=8, top=8, bottom=8)
         )
         
         error_text = ft.Text("", color=ft.colors.RED, size=12, visible=False)
@@ -423,7 +456,7 @@ class TabelaJustificativas:
         def confirmar_data_hora(e):
             try:
                 data_str = temp_data_field.value.strip()
-                hora_str = temp_hora_field.value.strip()
+                hora_str = temp_hora_dropdown.value
                 
                 if not data_str and not hora_str:
                     campo_display.value = ""
@@ -437,7 +470,7 @@ class TabelaJustificativas:
                     self.page.update()
                     return
                 
-                # Valida formato
+                # Valida formato da data
                 dt_inserida = datetime.strptime(f"{data_str} {hora_str}", "%d/%m/%Y %H:%M")
                 
                 # Valida se é posterior à entrada
@@ -464,7 +497,7 @@ class TabelaJustificativas:
                 self.page.update()
                 
             except ValueError:
-                error_text.value = "❌ Formato inválido. Use dd/mm/aaaa hh:mm"
+                error_text.value = "❌ Formato de data inválido. Use dd/mm/aaaa"
                 error_text.visible = True
                 self.page.update()
         
@@ -474,13 +507,82 @@ class TabelaJustificativas:
         
         def limpar_campos(e):
             temp_data_field.value = ""
-            temp_hora_field.value = ""
+            temp_hora_dropdown.value = None
             error_text.visible = False
             campo_display.value = ""
             app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", "")
             self.page.update()
         
-        # Modal
+        # NOVO: Função para definir como "hoje + 1 hora"
+        def usar_hoje_mais_uma_hora(e):
+            agora = datetime.now(pytz.timezone("America/Campo_Grande"))
+            data_hoje = agora.strftime("%d/%m/%Y")
+            
+            # Calcula hora atual + 1 hora, arredondada para meia hora
+            hora_mais_uma = agora + timedelta(hours=1)
+            minutos = hora_mais_uma.minute
+            
+            # Arredonda para a próxima meia hora
+            if minutos <= 30:
+                hora_mais_uma = hora_mais_uma.replace(minute=30, second=0, microsecond=0)
+            else:
+                hora_mais_uma = hora_mais_uma.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+            
+            hora_str = hora_mais_uma.strftime("%H:%M")
+            
+            temp_data_field.value = data_hoje
+            temp_hora_dropdown.value = hora_str
+            error_text.visible = False
+            self.page.update()
+        
+        # NOVO: Função para definir como "amanhã mesmo horário"
+        def usar_amanha_mesmo_horario(e):
+            agora = datetime.now(pytz.timezone("America/Campo_Grande"))
+            amanha = agora + timedelta(days=1)
+            data_amanha = amanha.strftime("%d/%m/%Y")
+            hora_atual = agora.strftime("%H:%M")
+            
+            # Arredonda hora atual para meia hora mais próxima
+            minutos = agora.minute
+            if minutos <= 15:
+                hora_arredondada = agora.replace(minute=0, second=0, microsecond=0)
+            elif minutos <= 45:
+                hora_arredondada = agora.replace(minute=30, second=0, microsecond=0)
+            else:
+                hora_arredondada = agora.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+            
+            temp_data_field.value = data_amanha
+            temp_hora_dropdown.value = hora_arredondada.strftime("%H:%M")
+            error_text.visible = False
+            self.page.update()
+        
+        # NOVO: Botões de atalho com tamanho aumentado
+        botoes_atalho = ft.Row([
+            ft.ElevatedButton(
+                "📅 Hoje +1h",
+                on_click=usar_hoje_mais_uma_hora,
+                bgcolor=ft.colors.BLUE_100,
+                color=ft.colors.BLUE_800,
+                style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=4)
+                ),
+                height=36,
+                width=130
+            ),
+            ft.ElevatedButton(
+                "📅 Amanhã",
+                on_click=usar_amanha_mesmo_horario,
+                bgcolor=ft.colors.GREEN_100,
+                color=ft.colors.GREEN_800,
+                style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=4)
+                ),
+                height=36,
+                width=130
+            )
+        ], spacing=15, alignment=ft.MainAxisAlignment.CENTER)
+        
+        # Modal melhorado
         modal_datetime = ft.AlertDialog(
             modal=True,
             title=ft.Text("Selecionar Data e Hora", weight=ft.FontWeight.BOLD),
@@ -499,30 +601,56 @@ class TabelaJustificativas:
                         border_radius=3
                     ),
                     ft.Container(height=10),
-                    ft.Row([temp_data_field, temp_hora_field], spacing=10),
+                    
+                    # NOVO: Atalhos rápidos
+                    ft.Text("⚡ Atalhos rápidos:", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_700),
+                    botoes_atalho,
+                    ft.Container(height=15),
+                    
+                    # Campos de entrada
+                    ft.Text("📝 Ou preencha manualmente:", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_700),
+                    ft.Row([temp_data_field, temp_hora_dropdown], spacing=10),
                     ft.Container(height=5),
                     error_text,
-                    ft.Container(height=5),
-                    ft.Text("Exemplo: 12/07/2025 14:30", size=12, color=ft.colors.GREY_600),
-                    ft.Text("💡 A data deve ser posterior à data de entrada", size=11, color=ft.colors.GREY_500, italic=True),
-                    ft.Text("📝 Deixe ambos campos em branco para remover", size=11, color=ft.colors.BLUE_500, italic=True),
+                    ft.Container(height=15),  # Aumentado de 5 para 15
+                    
+                    # Dicas com mais espaçamento
+                    ft.Container(
+                        content=ft.Column([
+                            ft.Text("💡 Dicas:", size=11, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_600),
+                            ft.Text("• A data deve ser posterior à data de entrada", size=10, color=ft.colors.GREY_500),
+                            ft.Text("• Use os atalhos para preenchimento rápido", size=10, color=ft.colors.GREY_500),
+                            ft.Text("• Horários disponíveis de meia em meia hora", size=10, color=ft.colors.GREY_500),
+                        ], spacing=2),
+                        padding=ft.padding.all(8),
+                        bgcolor=ft.colors.GREY_50,
+                        border_radius=4,
+                        border=ft.border.all(1, ft.colors.GREY_200)
+                    ),
+                    ft.Container(height=10)  # Espaçamento adicional antes dos botões
                 ], tight=True),
-                width=380,
-                height=280,
+                width=450,  # Aumentado de 420 para 450 para acomodar botões maiores
+                height=400,  # Aumentado de 380 para 400
                 padding=15
             ),
             actions=[
                 ft.TextButton("Limpar", on_click=limpar_campos),
                 ft.TextButton("Cancelar", on_click=cancelar),
-                ft.ElevatedButton("Confirmar", on_click=confirmar_data_hora, bgcolor=ft.colors.BLUE_600, color=ft.colors.WHITE)
+                ft.ElevatedButton(
+                    "Confirmar", 
+                    on_click=confirmar_data_hora, 
+                    bgcolor=ft.colors.BLUE_600, 
+                    color=ft.colors.WHITE,
+                    icon=ft.icons.CHECK
+                )
             ],
-            shape=ft.RoundedRectangleBorder(radius=6)
+            shape=ft.RoundedRectangleBorder(radius=8)
         )
         
         self.page.dialog = modal_datetime
         modal_datetime.open = True
         self.page.update()
-    
+
     def _criar_botoes_acao(self, evento, df_evento, pode_editar):
         """Cria botões de ação para o evento"""
         if pode_editar:
