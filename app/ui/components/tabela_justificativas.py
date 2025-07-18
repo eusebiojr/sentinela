@@ -1,5 +1,6 @@
 """
-Componente de tabela de justificativas para eventos
+Componente de tabela de justificativas para eventos - IMPORTS CORRIGIDOS
+Substitui o arquivo app/ui/components/tabela_justificativas.py
 """
 import flet as ft
 import pandas as pd
@@ -27,27 +28,21 @@ class TabelaJustificativas:
         screen_size = get_screen_size(self.page.window_width)
         
         if screen_size == "small":
-            # Largura da coluna Placa aumentada em 15% (65 -> 75)
             placa_width = 75
-            # Largura da coluna Motivo aumentada em 50% (182 -> 273)
             motivo_width = 273
             previsao_width = 160
             obs_width = 380
             font_size = 12
             field_height = 38
         elif screen_size == "medium":
-            # Largura da coluna Placa aumentada em 15% (estimado 75 -> 86)
             placa_width = 86
-            # Largura da coluna Motivo aumentada em 50% (218 -> 327)
             motivo_width = 327
             previsao_width = 175
             obs_width = 450
             font_size = 13
             field_height = 40
         else:  # large
-            # Largura da coluna Placa aumentada em 15% (estimado 85 -> 98)
             placa_width = 98
-            # Largura da coluna Motivo aumentada em 50% (237 -> 356)
             motivo_width = 356
             previsao_width = 190
             obs_width = 600
@@ -88,15 +83,15 @@ class TabelaJustificativas:
             ft.DataColumn(ft.Text("Observações", weight=ft.FontWeight.BOLD, size=header_font_size))
         ]
         
-        # Configurações da tabela - ajustando largura total para acomodar as novas dimensões
+        # Configurações da tabela
         if screen_size == "small":
-            table_width = 1300  # Aumentado de 1200 para acomodar colunas maiores
+            table_width = 1300
             column_spacing = 3
         elif screen_size == "medium":
-            table_width = 1500  # Aumentado de 1400 para acomodar colunas maiores
+            table_width = 1500
             column_spacing = 4
         else:
-            table_width = 1700  # Aumentado de 1600 para acomodar colunas maiores
+            table_width = 1700
             column_spacing = 5
         
         # Cria tabela
@@ -159,16 +154,14 @@ class TabelaJustificativas:
         
         evento_str = str(evento).strip()
         
-        # CORREÇÃO: Extrai ID corretamente
+        # Extrai ID corretamente
         if isinstance(row["ID"], pd.Series):
             row_id = str(row["ID"].iloc[0]).strip()
         else:
             row_id = str(row["ID"]).strip()
         
-        # CORREÇÃO: Chave de alteração simples e limpa
+        # Chave de alteração
         chave_alteracao = f"{evento_str}_{row_id}"
-        
-        print(f"🔧 [TABELA] Criando linha - Evento: {evento_str}, ID: {row_id}, Chave: {chave_alteracao}")
         
         if pode_editar:
             # Campos editáveis
@@ -184,8 +177,9 @@ class TabelaJustificativas:
     def _criar_campos_editaveis(self, row, motivos, chave_alteracao,
                                placa_width, motivo_width, previsao_width, obs_width,
                                font_size, field_height):
-        campos_desabilitados = self.processando_envio
         """Cria campos editáveis para uma linha"""
+        
+        campos_desabilitados = self.processando_envio
         
         # Opções do dropdown de motivo
         opcoes_motivo = [ft.dropdown.Option("", "— Selecione —")] + [
@@ -208,7 +202,6 @@ class TabelaJustificativas:
             max_lines=3,
             label="Observações",
             border_radius=6,
-            # NOVO: Desabilita durante processamento
             disabled=campos_desabilitados
         )
         
@@ -239,7 +232,6 @@ class TabelaJustificativas:
                 obs_field.border_color = None
                 icone_alerta.visible = False
             
-            print(f"🔄 [UI] Alteração motivo: {chave_alteracao} = {motivo_selecionado}")
             app_state.atualizar_alteracao(chave_alteracao, "Motivo", motivo_selecionado)
             self.page.update()
         
@@ -258,7 +250,6 @@ class TabelaJustificativas:
                 obs_field.border_color = None
                 icone_alerta.visible = False
             
-            print(f"🔄 [UI] Alteração observação: {chave_alteracao} = {obs_value}")
             app_state.atualizar_alteracao(chave_alteracao, "Observacoes", obs_value)
             self.page.update()
         
@@ -275,7 +266,6 @@ class TabelaJustificativas:
             content_padding=ft.padding.only(left=12, right=8, top=8, bottom=8),
             alignment=ft.alignment.center_left,
             on_change=validar_motivo_mudanca if not campos_desabilitados else None,
-            # NOVO: Desabilita durante processamento
             disabled=campos_desabilitados
         )
         
@@ -301,7 +291,7 @@ class TabelaJustificativas:
             icone_alerta
         ], spacing=5, alignment=ft.MainAxisAlignment.START)
         
-        # Células da linha com larguras ajustadas
+        # Células da linha
         return [
             ft.DataCell(ft.Container(
                 ft.Text(DataFormatter.safe_str(row["Placa"]), size=15, weight=ft.FontWeight.W_500), 
@@ -343,318 +333,67 @@ class TabelaJustificativas:
         ]
     
     def _criar_campo_previsao(self, valor_inicial, chave_alteracao, row, previsao_width, font_size, field_height):
-        """Cria campo de previsão com controle de estado de processamento"""
+        """Cria campo de previsão com dropdown de opções baseado na data de entrada"""
         
         # Parse do valor inicial
         display_value = ""
         if valor_inicial and str(valor_inicial).strip():
             display_value = str(valor_inicial).strip()
         
-        # NOVO: Determina se deve estar desabilitado
         campo_desabilitado = self.processando_envio
         
-        # Campo de exibição
-        campo_display = ft.TextField(
-            value=display_value,
-            hint_text="Clique para selecionar" if not campo_desabilitado else "Processando...",
+        # Obtém data de entrada para gerar opções corretas
+        data_entrada = row.get("Data/Hora Entrada", "")
+        
+        # DEBUG: Log para verificar o que está chegando
+        print(f"🔍 DEBUG _criar_campo_previsao - row keys: {list(row.keys())}")
+        print(f"🔍 DEBUG _criar_campo_previsao - data_entrada raw: '{data_entrada}' (tipo: {type(data_entrada)})")
+        
+        if pd.notnull(data_entrada) and str(data_entrada).strip() and str(data_entrada).strip().lower() != 'none':
+            data_entrada_str = str(data_entrada).strip()
+            print(f"✅ DEBUG _criar_campo_previsao - data_entrada_str: '{data_entrada_str}'")
+        else:
+            data_entrada_str = None
+            print(f"❌ DEBUG _criar_campo_previsao - data_entrada é None/vazia")
+        
+        # Dropdown de previsão usando as opções geradas COM BASE NA DATA DE ENTRADA
+        opcoes_previsao = gerar_opcoes_previsao(data_entrada_str)
+        
+        # Encontra valor correspondente nas opções
+        valor_selecionado = ""
+        for opcao in opcoes_previsao:
+            if opcao.key == display_value:
+                valor_selecionado = opcao.key
+                break
+        
+        def atualizar_previsao(e):
+            if campo_desabilitado:
+                return
+            
+            novo_valor = e.control.value
+            app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", novo_valor)
+        
+        previsao_dropdown = ft.Dropdown(
+            value=valor_selecionado,
+            options=opcoes_previsao,
             width=previsao_width,
             height=field_height,
             text_size=font_size,
             dense=True,
             filled=True,
             bgcolor=ft.colors.GREY_100 if not campo_desabilitado else ft.colors.GREY_200,
-            read_only=True,
-            prefix_icon=ft.icons.SCHEDULE,
-            border_radius=8,
-            # NOVO: Desabilita campo durante processamento
-            disabled=campo_desabilitado
+            content_padding=ft.padding.only(left=12, right=8, top=8, bottom=8),
+            alignment=ft.alignment.center_left,
+            on_change=atualizar_previsao if not campo_desabilitado else None,
+            disabled=campo_desabilitado,
+            hint_text="Selecione previsão"
         )
         
-        # Função para abrir modal
-        def abrir_modal(e):
-            # NOVO: Verifica se está processando
-            if self.processando_envio:
-                mostrar_mensagem(self.page, "⏳ Aguarde finalizar o processamento atual", False)
-                return
-                
-            print(f"🔧 [MODAL] Abrindo modal para chave: {chave_alteracao}")
-            self._mostrar_modal_data_hora(campo_display, chave_alteracao, row)
-        
-        # NOVO: Só adiciona evento se não estiver processando
-        if not campo_desabilitado:
-            campo_display.on_click = abrir_modal
-        
-        # Botão de edição
-        btn_edicao = ft.IconButton(
-            icon=ft.icons.EDIT_CALENDAR,
-            tooltip="Editar data/hora" if not campo_desabilitado else "Aguarde processamento...",
-            on_click=abrir_modal if not campo_desabilitado else None,
-            icon_size=16,
-            icon_color=ft.colors.BLUE_600 if not campo_desabilitado else ft.colors.GREY_400,
-            # NOVO: Desabilita botão durante processamento
-            disabled=campo_desabilitado
-        )
-        
-        return ft.Row([
-            campo_display,
-            btn_edicao
-        ], spacing=2)
-
-    def _mostrar_modal_data_hora(self, campo_display, chave_alteracao, row):
-        """Mostra modal personalizado para seleção de data/hora com dropdown de horários"""
-        
-        # NOVO: Função para gerar opções de horário (meia em meia hora)
-        def gerar_opcoes_horario():
-            opcoes = []
-            for hora in range(24):
-                for minuto in [0, 30]:
-                    hora_formatada = f"{hora:02d}:{minuto:02d}"
-                    opcoes.append(ft.dropdown.Option(hora_formatada, hora_formatada))
-            return opcoes
-        
-        # NOVO: Obter data de hoje e hora atual + 1 hora
-        from datetime import datetime, timedelta
-        import pytz
-        
-        agora = datetime.now(pytz.timezone("America/Campo_Grande"))
-        data_hoje = agora.strftime("%d/%m/%Y")
-        
-        # Calcula hora padrão (atual + 1 hora, arredondada para meia hora)
-        hora_padrao = agora + timedelta(hours=1)
-        minutos = hora_padrao.minute
-        
-        # Arredonda para a próxima meia hora
-        if minutos <= 30:
-            hora_padrao = hora_padrao.replace(minute=30, second=0, microsecond=0)
-        else:
-            hora_padrao = hora_padrao.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-        
-        hora_padrao_str = hora_padrao.strftime("%H:%M")
-        
-        # Campo de data com valor padrão
-        temp_data_field = ft.TextField(
-            label="Data (dd/mm/aaaa)",
-            value=data_hoje,  # NOVO: Pré-preenchido com data de hoje
-            width=150,
-            hint_text="12/07/2025"
-        )
-        
-        # NOVO: Dropdown de hora ao invés de TextField
-        temp_hora_dropdown = ft.Dropdown(
-            label="Hora",
-            value=hora_padrao_str,  # NOVO: Pré-preenchido com hora atual + 1h
-            options=gerar_opcoes_horario(),
-            width=120,
-            dense=True,
-            filled=True,
-            bgcolor=ft.colors.GREY_100,
-            content_padding=ft.padding.only(left=12, right=8, top=8, bottom=8)
-        )
-        
-        error_text = ft.Text("", color=ft.colors.RED, size=12, visible=False)
-        
-        def confirmar_data_hora(e):
-            try:
-                data_str = temp_data_field.value.strip()
-                hora_str = temp_hora_dropdown.value
-                
-                if not data_str and not hora_str:
-                    campo_display.value = ""
-                    app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", "")
-                    modal_datetime.open = False
-                    self.page.update()
-                    return
-                elif not data_str or not hora_str:
-                    error_text.value = "⚠️ Preencha ambos os campos ou deixe ambos em branco"
-                    error_text.visible = True
-                    self.page.update()
-                    return
-                
-                # Valida formato da data
-                dt_inserida = datetime.strptime(f"{data_str} {hora_str}", "%d/%m/%Y %H:%M")
-                
-                # Valida se é posterior à entrada
-                data_entrada_str = DataFormatter.safe_str(row["Data/Hora Entrada"])
-                if data_entrada_str:
-                    try:
-                        dt_entrada = datetime.strptime(data_entrada_str, "%d/%m/%Y %H:%M")
-                        if dt_inserida <= dt_entrada:
-                            error_text.value = f"⚠️ Data/hora deve ser posterior à entrada: {data_entrada_str}"
-                            error_text.visible = True
-                            self.page.update()
-                            return
-                    except ValueError:
-                        pass
-                
-                # Atualiza campos
-                novo_valor = f"{data_str} {hora_str}"
-                campo_display.value = novo_valor
-                
-                print(f"🔄 [MODAL] Alteração previsão: {chave_alteracao} = {novo_valor}")
-                app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", novo_valor)
-                
-                modal_datetime.open = False
-                self.page.update()
-                
-            except ValueError:
-                error_text.value = "❌ Formato de data inválido. Use dd/mm/aaaa"
-                error_text.visible = True
-                self.page.update()
-        
-        def cancelar(e):
-            modal_datetime.open = False
-            self.page.update()
-        
-        def limpar_campos(e):
-            temp_data_field.value = ""
-            temp_hora_dropdown.value = None
-            error_text.visible = False
-            campo_display.value = ""
-            app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", "")
-            self.page.update()
-        
-        # NOVO: Função para definir como "hoje + 1 hora"
-        def usar_hoje_mais_uma_hora(e):
-            agora = datetime.now(pytz.timezone("America/Campo_Grande"))
-            data_hoje = agora.strftime("%d/%m/%Y")
-            
-            # Calcula hora atual + 1 hora, arredondada para meia hora
-            hora_mais_uma = agora + timedelta(hours=1)
-            minutos = hora_mais_uma.minute
-            
-            # Arredonda para a próxima meia hora
-            if minutos <= 30:
-                hora_mais_uma = hora_mais_uma.replace(minute=30, second=0, microsecond=0)
-            else:
-                hora_mais_uma = hora_mais_uma.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-            
-            hora_str = hora_mais_uma.strftime("%H:%M")
-            
-            temp_data_field.value = data_hoje
-            temp_hora_dropdown.value = hora_str
-            error_text.visible = False
-            self.page.update()
-        
-        # NOVO: Função para definir como "amanhã mesmo horário"
-        def usar_amanha_mesmo_horario(e):
-            agora = datetime.now(pytz.timezone("America/Campo_Grande"))
-            amanha = agora + timedelta(days=1)
-            data_amanha = amanha.strftime("%d/%m/%Y")
-            hora_atual = agora.strftime("%H:%M")
-            
-            # Arredonda hora atual para meia hora mais próxima
-            minutos = agora.minute
-            if minutos <= 15:
-                hora_arredondada = agora.replace(minute=0, second=0, microsecond=0)
-            elif minutos <= 45:
-                hora_arredondada = agora.replace(minute=30, second=0, microsecond=0)
-            else:
-                hora_arredondada = agora.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-            
-            temp_data_field.value = data_amanha
-            temp_hora_dropdown.value = hora_arredondada.strftime("%H:%M")
-            error_text.visible = False
-            self.page.update()
-        
-        # NOVO: Botões de atalho com tamanho aumentado
-        botoes_atalho = ft.Row([
-            ft.ElevatedButton(
-                "📅 Hoje +1h",
-                on_click=usar_hoje_mais_uma_hora,
-                bgcolor=ft.colors.BLUE_100,
-                color=ft.colors.BLUE_800,
-                style=ft.ButtonStyle(
-                    shape=ft.RoundedRectangleBorder(radius=4)
-                ),
-                height=36,
-                width=130
-            ),
-            ft.ElevatedButton(
-                "📅 Amanhã",
-                on_click=usar_amanha_mesmo_horario,
-                bgcolor=ft.colors.GREEN_100,
-                color=ft.colors.GREEN_800,
-                style=ft.ButtonStyle(
-                    shape=ft.RoundedRectangleBorder(radius=4)
-                ),
-                height=36,
-                width=130
-            )
-        ], spacing=15, alignment=ft.MainAxisAlignment.CENTER)
-        
-        # Modal melhorado
-        modal_datetime = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Selecionar Data e Hora", weight=ft.FontWeight.BOLD),
-            content=ft.Container(
-                content=ft.Column([
-                    ft.Text("Informe a data e hora prevista:", size=14),
-                    ft.Container(
-                        content=ft.Text(
-                            f"📅 Data de entrada: {DataFormatter.safe_str(row['Data/Hora Entrada'])}", 
-                            size=12, 
-                            color=ft.colors.BLUE_700,
-                            weight=ft.FontWeight.W_500
-                        ),
-                        padding=ft.padding.symmetric(vertical=5),
-                        bgcolor=ft.colors.BLUE_50,
-                        border_radius=3
-                    ),
-                    ft.Container(height=10),
-                    
-                    # NOVO: Atalhos rápidos
-                    ft.Text("⚡ Atalhos rápidos:", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_700),
-                    botoes_atalho,
-                    ft.Container(height=15),
-                    
-                    # Campos de entrada
-                    ft.Text("📝 Ou preencha manualmente:", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_700),
-                    ft.Row([temp_data_field, temp_hora_dropdown], spacing=10),
-                    ft.Container(height=5),
-                    error_text,
-                    ft.Container(height=15),  # Aumentado de 5 para 15
-                    
-                    # Dicas com mais espaçamento
-                    ft.Container(
-                        content=ft.Column([
-                            ft.Text("💡 Dicas:", size=11, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_600),
-                            ft.Text("• A data deve ser posterior à data de entrada", size=10, color=ft.colors.GREY_500),
-                            ft.Text("• Use os atalhos para preenchimento rápido", size=10, color=ft.colors.GREY_500),
-                            ft.Text("• Horários disponíveis de meia em meia hora", size=10, color=ft.colors.GREY_500),
-                        ], spacing=2),
-                        padding=ft.padding.all(8),
-                        bgcolor=ft.colors.GREY_50,
-                        border_radius=4,
-                        border=ft.border.all(1, ft.colors.GREY_200)
-                    ),
-                    ft.Container(height=10)  # Espaçamento adicional antes dos botões
-                ], tight=True),
-                width=450,  # Aumentado de 420 para 450 para acomodar botões maiores
-                height=400,  # Aumentado de 380 para 400
-                padding=15
-            ),
-            actions=[
-                ft.TextButton("Limpar", on_click=limpar_campos),
-                ft.TextButton("Cancelar", on_click=cancelar),
-                ft.ElevatedButton(
-                    "Confirmar", 
-                    on_click=confirmar_data_hora, 
-                    bgcolor=ft.colors.BLUE_600, 
-                    color=ft.colors.WHITE,
-                    icon=ft.icons.CHECK
-                )
-            ],
-            shape=ft.RoundedRectangleBorder(radius=8)
-        )
-        
-        self.page.dialog = modal_datetime
-        modal_datetime.open = True
-        self.page.update()
-
+        return previsao_dropdown
+    
     def _criar_botoes_acao(self, evento, df_evento, pode_editar):
         """Cria botões de ação para o evento"""
         if pode_editar:
-            # NOVO: Texto e cor dinâmicos baseados no estado
             if self.processando_envio:
                 btn_text = "⏳ Enviando..."
                 btn_color = ft.colors.GREY_600
@@ -673,7 +412,6 @@ class TabelaJustificativas:
                 icon=btn_icon,
                 on_click=lambda e: self._enviar_justificativas(evento, df_evento) if not btn_disabled else None,
                 style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=6)),
-                # NOVO: Desabilita durante processamento
                 disabled=btn_disabled
             )
             return ft.Row([btn_enviar], alignment=ft.MainAxisAlignment.END)
@@ -707,14 +445,13 @@ class TabelaJustificativas:
         return ft.Container()
     
     def _enviar_justificativas(self, evento, df_evento):
-        """Envia justificativas para o SharePoint com bloqueio de interface"""
+        """Envia justificativas para o SharePoint"""
         
-        # NOVO: Verifica se já está processando
         if self.processando_envio:
             mostrar_mensagem(self.page, "⏳ Aguarde... processamento em andamento", False)
             return
         
-        mostrar_mensagem(self.page, "⏳ Validando dados...", False)
+        mostrar_mensagem(self.page, "⏳ Validando dados...", "info")
         
         # Validação usando DataValidator
         validacao_resultado = DataValidator.validar_justificativas_evento(df_evento, app_state.alteracoes_pendentes)
@@ -722,26 +459,25 @@ class TabelaJustificativas:
 
         # Se há erros de validação, mostra modal personalizado
         if erros_validacao:
-            mostrar_mensagem(self.page, "❌ Existem campos obrigatórios não preenchidos", True)
+            mostrar_mensagem(self.page, "❌ Existem campos obrigatórios não preenchidos", "error")
             self._mostrar_modal_validacao(erros_validacao)
             return
         
-        # NOVO: Ativa modo processamento
+        # Ativa modo processamento
         self._ativar_modo_processamento(True)
         
         # Se validação passou, processa envio
-        mostrar_mensagem(self.page, "⏳ Enviando justificativas...", False)
+        mostrar_mensagem(self.page, "⏳ Enviando justificativas...", "info")
         self._processar_envio(evento, df_evento)
 
     def _ativar_modo_processamento(self, ativo: bool):
-        """Ativa/desativa modo processamento - bloqueia/desbloqueia interface"""
+        """Ativa/desativa modo processamento"""
         self.processando_envio = ativo
         
-        # Força atualização da interface para refletir mudanças
         try:
             self.page.update()
         except Exception as e:
-            print(f"⚠️ [PROCESSAMENTO] Erro ao atualizar interface: {e}")
+            print(f"⚠️ Erro ao atualizar interface: {e}")
     
     def _mostrar_modal_validacao(self, erros_validacao):
         """Mostra modal de erro com validações pendentes"""
@@ -750,7 +486,6 @@ class TabelaJustificativas:
             modal_erro.open = False
             self.page.update()
 
-        # Calcula altura dinâmica baseada no número de erros
         altura_base = 180
         altura_por_erro = 35
         altura_padding = 80
@@ -760,10 +495,8 @@ class TabelaJustificativas:
         altura_calculada = altura_base + (len(erros_validacao) * altura_por_erro) + altura_padding
         altura_final = max(altura_minima, min(altura_calculada, altura_maxima))
 
-        # Se ultrapassar altura máxima, adiciona scroll
         usar_scroll = altura_calculada > altura_maxima
 
-        # Container dos erros
         container_erros = ft.Container(
             content=ft.Column([
                 ft.Container(
@@ -782,7 +515,6 @@ class TabelaJustificativas:
             height=min(400, len(erros_validacao) * altura_por_erro + 20) if usar_scroll else None
         )
 
-        # Modal de erro
         modal_erro = ft.AlertDialog(
             modal=True,
             title=ft.Row([
@@ -852,29 +584,24 @@ class TabelaJustificativas:
         self.page.update()
     
     def _processar_envio(self, evento, df_evento):
-        """Processa envio das justificativas com controle de bloqueio"""
+        """Processa envio das justificativas"""
         
-        # Processa em background
         import threading
         def processar():
             try:
                 registros_atualizados = 0
                 
-                # Verifica se há alterações pendentes para este evento
                 alteracoes_evento = {k: v for k, v in app_state.alteracoes_pendentes.items() 
                                 if k.startswith(f"{evento}_")}
                 
                 if not alteracoes_evento:
-                    mostrar_mensagem(self.page, "⚠️ Nenhuma alteração detectada.", True)
-                    # NOVO: Desativa modo processamento
+                    mostrar_mensagem(self.page, "⚠️ Nenhuma alteração detectada.", "warning")
                     self._ativar_modo_processamento(False)
                     return
                 
-                # Coleta todas as atualizações em lote
                 atualizacoes_lote = []
                 status_evento = EventoProcessor.calcular_status_evento(df_evento, app_state.alteracoes_pendentes)
                 
-                # Processa registros com alterações
                 for _, row in df_evento.iterrows():
                     row_id = str(row["ID"]).strip()
                     chave_alteracao = f"{evento}_{row_id}"
@@ -882,17 +609,14 @@ class TabelaJustificativas:
                     if chave_alteracao in app_state.alteracoes_pendentes:
                         alteracoes = app_state.alteracoes_pendentes[chave_alteracao]
                         
-                        # Valores atuais do DataFrame
                         valor_motivo_df = row.get("Motivo", "")
                         valor_previsao_df = row.get("Previsao_Liberacao", "")
                         valor_obs_df = row.get("Observacoes", "")
                         
-                        # Aplica alterações pendentes
                         valor_motivo_final = alteracoes.get("Motivo", valor_motivo_df)
                         valor_previsao_final = alteracoes.get("Previsao_Liberacao", valor_previsao_df)
                         valor_obs_final = alteracoes.get("Observacoes", valor_obs_df)
                         
-                        # Prepara dados para SharePoint
                         dados = {
                             "Motivo": DataFormatter.formatar_valor_sharepoint(valor_motivo_final),
                             "Previsao_Liberacao": DataFormatter.formatar_valor_sharepoint(valor_previsao_final, "Previsao_Liberacao"),
@@ -900,67 +624,49 @@ class TabelaJustificativas:
                             "Status": status_evento
                         }
                         
-                        # Debug: mostra dados sendo enviados
-                        print(f"📤 Enviando para ID {row_id}: {dados}")
-                        
                         atualizacoes_lote.append((int(row_id), dados))
                 
-                # Envia todas as alterações em paralelo
                 if atualizacoes_lote:
-                    print(f"📊 Enviando {len(atualizacoes_lote)} registros...")
                     registros_atualizados = SharePointClient.atualizar_lote(atualizacoes_lote)
-                    print(f"✅ {registros_atualizados} registros atualizados no SharePoint")
                 
-                # Atualiza status de TODOS os registros do evento
                 atualizacoes_status = []
                 for _, row in df_evento.iterrows():
                     row_id = str(row["ID"]).strip()
                     dados_status = {"Status": status_evento}
                     atualizacoes_status.append((int(row_id), dados_status))
                 
-                # Envia atualizações de status
                 if atualizacoes_status:
-                    print(f"📊 Atualizando status para {len(atualizacoes_status)} registros...")
                     SharePointClient.atualizar_lote(atualizacoes_status)
                 
-                # Limpa alterações pendentes deste evento
                 app_state.limpar_alteracoes_evento(evento)
                 
                 if registros_atualizados > 0:
-                    mostrar_mensagem(self.page, f"✅ {registros_atualizados} registro(s) atualizado(s) com sucesso!")
+                    mostrar_mensagem(self.page, f"✅ {registros_atualizados} registro(s) atualizado(s) com sucesso!", "success")
                     
-                    # NOVO: Pequeno delay antes de recarregar (melhor UX)
                     import time
                     time.sleep(0.5)
                     
-                    # Atualiza dados e interface (isso vai recriar a tabela com processando_envio = False)
                     self.app_controller.atualizar_dados()
                 else:
-                    mostrar_mensagem(self.page, "❌ Nenhum registro foi atualizado no SharePoint", True)
-                    # NOVO: Desativa modo processamento em caso de erro
+                    mostrar_mensagem(self.page, "❌ Nenhum registro foi atualizado no SharePoint", "error")
                     self._ativar_modo_processamento(False)
                 
             except Exception as e:
                 print(f"❌ Erro no processamento: {str(e)}")
-                mostrar_mensagem(self.page, f"❌ Erro ao enviar justificativas: {str(e)}", True)
-                # NOVO: Desativa modo processamento em caso de erro
+                mostrar_mensagem(self.page, f"❌ Erro ao enviar justificativas: {str(e)}", "error")
                 self._ativar_modo_processamento(False)
         
-        # Executa em thread separada
         thread = threading.Thread(target=processar, daemon=True)
         thread.start()
 
     def _aprovar_evento(self, evento):
         """Aprova um evento"""
         def confirmar_aprovacao(e):
-            # Fecha o dialog de confirmação
             self.page.dialog.open = False
             self.page.update()
             
-            # Mostra feedback imediato
-            mostrar_mensagem(self.page, "⏳ Aprovando evento...", False)
+            mostrar_mensagem(self.page, "⏳ Aprovando evento...", "info")
 
-            # Processa aprovação em background
             import threading
             def processar_aprovacao():
                 try:
@@ -968,36 +674,30 @@ class TabelaJustificativas:
                     if df_evento.empty:
                         return
 
-                    # Coleta todas as atualizações em lote
                     atualizacoes_aprovacao = []
                     for _, row in df_evento.iterrows():
                         dados = {"Status": "Aprovado"}
                         atualizacoes_aprovacao.append((int(row["ID"]), dados))
 
-                    # Envia todas as aprovações em paralelo
                     if atualizacoes_aprovacao:
                         sucessos = SharePointClient.atualizar_lote(atualizacoes_aprovacao)
                         if sucessos > 0:
-                            mostrar_mensagem(self.page, "✅ Evento aprovado com sucesso!")
+                            mostrar_mensagem(self.page, "✅ Evento aprovado com sucesso!", "success")
                             self.app_controller.atualizar_dados()
                         else:
-                            mostrar_mensagem(self.page, "❌ Erro ao aprovar evento", True)
+                            mostrar_mensagem(self.page, "❌ Erro ao aprovar evento", "error")
                 except Exception as ex:
-                    mostrar_mensagem(self.page, f"❌ Erro ao aprovar evento: {str(ex)}", True)
+                    mostrar_mensagem(self.page, f"❌ Erro ao aprovar evento: {str(ex)}", "error")
 
-            # Executa processamento em thread separada
             thread_aprovacao = threading.Thread(target=processar_aprovacao, daemon=True)
             thread_aprovacao.start()
 
         def cancelar_aprovacao(e):
-            # Fecha o dialog sem fazer nada
             self.page.dialog.open = False
             self.page.update()
 
-        # Parse do evento para exibição
         evento_info = EventoProcessor.parse_titulo_completo(evento)
         
-        # Cria o dialog de confirmação
         confirmation_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Row([
@@ -1067,7 +767,6 @@ class TabelaJustificativas:
             shape=ft.RoundedRectangleBorder(radius=8)
         )
 
-        # Exibe o dialog
         self.page.dialog = confirmation_dialog
         confirmation_dialog.open = True
         self.page.update()
@@ -1083,42 +782,36 @@ class TabelaJustificativas:
 
         def confirmar(e):
             if not justificativa_field.value or not justificativa_field.value.strip():
-                mostrar_mensagem(self.page, "Insira uma justificativa", True)
+                mostrar_mensagem(self.page, "Insira uma justificativa", "warning")
                 return
 
-            # Fecha o modal imediatamente
             modal.open = False
             self.page.update()
             
-            # Mostra feedback imediato
-            mostrar_mensagem(self.page, "⏳ Reprovando evento...", False)
+            mostrar_mensagem(self.page, "⏳ Reprovando evento...", "info")
             
-            # Processa reprovação em background
             import threading
             
             def processar_reprovacao():
                 try:
                     df_evento = app_state.df_desvios[app_state.df_desvios["Titulo"] == evento]
                     
-                    # Coleta todas as atualizações em lote
                     atualizacoes_reprovacao = []
                     for _, row in df_evento.iterrows():
                         dados = {"Status": "Reprovado", "Reprova": justificativa_field.value}
                         atualizacoes_reprovacao.append((int(row["ID"]), dados))
                     
-                    # Envia todas as reprovações em paralelo
                     if atualizacoes_reprovacao:
                         sucessos = SharePointClient.atualizar_lote(atualizacoes_reprovacao)
                         if sucessos > 0:
-                            mostrar_mensagem(self.page, "✅ Evento reprovado com sucesso!")
+                            mostrar_mensagem(self.page, "✅ Evento reprovado com sucesso!", "success")
                             self.app_controller.atualizar_dados()
                         else:
-                            mostrar_mensagem(self.page, "❌ Erro ao reprovar evento", True)
+                            mostrar_mensagem(self.page, "❌ Erro ao reprovar evento", "error")
                     
                 except Exception as ex:
-                    mostrar_mensagem(self.page, f"❌ Erro ao reprovar evento: {str(ex)}", True)
+                    mostrar_mensagem(self.page, f"❌ Erro ao reprovar evento: {str(ex)}", "error")
             
-            # Executa processamento em thread separada
             thread_reprovacao = threading.Thread(target=processar_reprovacao, daemon=True)
             thread_reprovacao.start()
 
@@ -1126,7 +819,6 @@ class TabelaJustificativas:
             modal.open = False
             self.page.update()
 
-        # Modal de reprovação
         modal = ft.AlertDialog(
             modal=True,
             title=ft.Text("Reprovar Evento", size=18, weight=ft.FontWeight.BOLD),

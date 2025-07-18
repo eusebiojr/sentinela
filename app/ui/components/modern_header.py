@@ -723,13 +723,18 @@ class ModernHeader:
         self.page.update()
     
     def _sair_sistema(self):
-        """Confirma logout"""
+        """Confirma logout com modal corrigido"""
         nome = app_state.get_nome_usuario()
         
         def confirmar_logout(e):
             try:
+                # CORRIGIDO: Fecha modal PRIMEIRO
                 modal.open = False
                 self.page.update()
+                
+                # Pequeno delay para garantir que o modal fechou
+                import time
+                time.sleep(0.1)
                 
                 # Reset dos dados
                 app_state.reset_dados()
@@ -745,11 +750,19 @@ class ModernHeader:
                     self.page.add(ft.Text("Logout realizado. Recarregue a página para fazer login novamente."))
                     self.page.update()
                 
-                mostrar_mensagem(self.page, "👋 Logout realizado com sucesso!", "success")
+                # Mostra mensagem de sucesso (opcional, pois já vai para login)
+                # mostrar_mensagem(self.page, "👋 Logout realizado com sucesso!", "success")
                 
             except Exception as ex:
+                # Em caso de erro, força fechamento do modal
+                try:
+                    modal.open = False
+                    self.page.update()
+                except:
+                    pass
                 mostrar_mensagem(self.page, f"❌ Erro ao fazer logout: {str(ex)}", "error")
         
+        # Modal de logout - LAYOUT CORRIGIDO
         modal = ft.AlertDialog(
             title=ft.Row([
                 ft.Icon(ft.icons.LOGOUT, color=ft.colors.RED_600, size=24),
@@ -760,7 +773,8 @@ class ModernHeader:
                     ft.Text(f"Olá, {nome}!", size=16, weight=ft.FontWeight.W_500, color=ft.colors.BLUE_700),
                     ft.Container(height=8),
                     ft.Text("Tem certeza que deseja sair do sistema?", size=14),
-                    ft.Container(height=10),
+                    ft.Container(height=15),  # AUMENTADO espaçamento
+                    # MOVIDO PARA CIMA - aviso antes dos botões
                     ft.Container(
                         content=ft.Text("⚠️ Você precisará fazer login novamente", size=12, color=ft.colors.ORANGE_600),
                         padding=ft.padding.all(8),
@@ -769,7 +783,7 @@ class ModernHeader:
                     )
                 ]),
                 width=300,
-                height=120,
+                height=130,  # AUMENTADO ligeiramente para acomodar melhor
                 padding=15
             ),
             actions=[
