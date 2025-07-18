@@ -1,0 +1,17 @@
+[18/07/2025 09:13:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_091331.log
+[18/07/2025 09:13:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_091331.log
+[18/07/2025 09:13:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_091331.log
+[18/07/2025 09:13:35] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 09:13:35] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 09:13:35] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 09:13:35] INFO: Carregando dados de usuários...
+[18/07/2025 09:13:38] INFO: ✅ 8 registros carregados de 'UsuariosPainelTorre'
+[18/07/2025 09:13:38] INFO: ✅ 8 usuários carregados
+[18/07/2025 09:13:48] INFO: Carregando dados completos...
+[18/07/2025 09:13:51] INFO: ✅ 8 registros carregados de 'Desvios'
+[18/07/2025 09:13:51] INFO: ✅ Dados carregados: 8 desvios
+[18/07/2025 09:13:51] ERROR: ❌ Erro ao carregar dados: module 'flet' has no attribute 'Positioned'
+[18/07/2025 09:13:56] INFO: Carregando dados completos...
+[18/07/2025 09:13:59] INFO: ✅ 8 registros carregados de 'Desvios'
+[18/07/2025 09:13:59] INFO: ✅ Dados carregados: 8 desvios
+[18/07/2025 09:13:59] ERROR: ❌ Erro ao carregar dados: module 'flet' has no attribute 'Positioned'

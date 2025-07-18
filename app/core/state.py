@@ -36,6 +36,7 @@ class AppState:
         self.estado_expansao = {}
         self.dados_carregados = False
         self.carregamento_em_progresso = False
+        print("🔄 Dados do estado resetados (logout)")
     
     def is_usuario_logado(self) -> bool:
         """Verifica se há usuário logado"""
@@ -63,6 +64,68 @@ class AppState:
                 self.usuario.get('nome') or 
                 "Usuário")
     
+    def get_usuario_atual(self) -> Dict[str, Any]:
+        """
+        Retorna dados completos do usuário atual
+        
+        Returns:
+            dict: Dicionário com dados do usuário ou {} se não logado
+        """
+        return self.usuario if self.usuario else {}
+    
+    def get_id_usuario(self):
+        """
+        Retorna ID do usuário atual
+        
+        Returns:
+            str/int: ID do usuário ou None se não logado
+        """
+        return self.usuario.get('ID') if self.usuario else None
+    
+    def atualizar_usuario(self, novos_dados: dict):
+        """
+        Atualiza dados do usuário
+        
+        Args:
+            novos_dados: Dicionário com novos dados para atualizar
+        """
+        if self.usuario:
+            self.usuario.update(novos_dados)
+        else:
+            self.usuario = novos_dados.copy()
+    
+    def salvar_configuracao_usuario(self, chave: str, valor):
+        """
+        Salva uma configuração específica do usuário
+        
+        Args:
+            chave: Nome da configuração
+            valor: Valor da configuração
+        """
+        if not self.usuario:
+            self.usuario = {}
+        
+        if 'configuracoes' not in self.usuario:
+            self.usuario['configuracoes'] = {}
+        
+        self.usuario['configuracoes'][chave] = valor
+        print(f"📝 Configuração salva: {chave} = {valor}")
+    
+    def obter_configuracao_usuario(self, chave: str, padrao=None):
+        """
+        Obtém uma configuração específica do usuário
+        
+        Args:
+            chave: Nome da configuração
+            padrao: Valor padrão se configuração não existir
+            
+        Returns:
+            Valor da configuração ou valor padrão
+        """
+        if self.usuario and 'configuracoes' in self.usuario:
+            return self.usuario['configuracoes'].get(chave, padrao)
+        return padrao
+    
     def atualizar_alteracao(self, chave: str, campo: str, valor: Any):
         """Registra uma alteração pendente"""
         if chave not in self.alteracoes_pendentes:
@@ -83,3 +146,20 @@ class AppState:
 
 # Instância global do estado
 app_state = AppState()
+
+
+# Função auxiliar para salvar configurações (mantém compatibilidade com header)
+def salvar_configuracoes_usuario(config: dict):
+    """
+    Salva configurações do usuário
+    
+    Args:
+        config: Dicionário com configurações
+    """
+    try:
+        for chave, valor in config.items():
+            app_state.salvar_configuracao_usuario(chave, valor)
+        print(f"✅ Configurações salvas: {config}")
+    except Exception as e:
+        print(f"❌ Erro ao salvar configurações: {e}")
+        raise e

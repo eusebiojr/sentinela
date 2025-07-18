@@ -16,7 +16,6 @@ Write-Host "Configurando projeto..." -ForegroundColor Yellow
 gcloud config set project $PROJECT_ID
 
 Write-Host "Iniciando deploy com Dockerfile corrigido..." -ForegroundColor Yellow
-Write-Host "Agora deve funcionar!" -ForegroundColor Green
 Write-Host ""
 
 # Deploy com Dockerfile corrigido
@@ -55,6 +54,6 @@ if ($LASTEXITCODE -eq 0) {
     
 } else {
     Write-Host ""
-    Write-Host "❌ AINDA FALHOU - vamos investigar mais..." -ForegroundColor Red
+    Write-Host "❌ FALHOU - vamos investigar..." -ForegroundColor Red
     Write-Host "Verifique os logs no Cloud Build Console"
 }

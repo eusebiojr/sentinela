@@ -126,3 +126,96 @@ class SharePointClient:
         except Exception as e:
             logger.error(f"❌ Falha na conexão SharePoint: {str(e)}")
             return False
+        
+        
+    @staticmethod
+    def atualizar_senha(usuario_id, senha_atual, nova_senha):
+        """
+        Atualiza senha do usuário no SharePoint
+        
+        Args:
+            usuario_id: ID do usuário
+            senha_atual: Senha atual
+            nova_senha: Nova senha
+            
+        Raises:
+            Exception: Se não conseguir atualizar a senha
+        """
+        try:
+            # IMPLEMENTAR: Sua lógica de integração com SharePoint
+            # Exemplo com requests ou Office365-REST-Python-Client
+            
+            # Por enquanto, simula sucesso
+            print(f"📝 Simulando atualização de senha para usuário ID: {usuario_id}")
+            
+            # Validações básicas
+            if not senha_atual:
+                raise Exception("Senha atual é obrigatória")
+            
+            if len(nova_senha) < 6:
+                raise Exception("Nova senha deve ter pelo menos 6 caracteres")
+            
+            # Aqui você faria a chamada real para o SharePoint
+            # Exemplo:
+            # response = requests.post(sharepoint_url, data={
+            #     'usuario_id': usuario_id,
+            #     'senha_atual': senha_atual,
+            #     'nova_senha': nova_senha
+            # })
+            # 
+            # if response.status_code != 200:
+            #     raise Exception(f"Erro do SharePoint: {response.text}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro ao atualizar senha: {e}")
+            raise e
+    
+    @staticmethod
+    def obter_usuario(usuario_id):
+        """
+        Obtém dados do usuário do SharePoint
+        
+        Args:
+            usuario_id: ID do usuário
+            
+        Returns:
+            dict: Dados do usuário
+        """
+        try:
+            # IMPLEMENTAR: Busca real no SharePoint
+            print(f"📋 Simulando busca de usuário ID: {usuario_id}")
+            
+            # Dados simulados
+            return {
+                'ID': usuario_id,
+                'nome': 'Usuário Teste',
+                'email': 'usuario@empresa.com',
+                'perfil': 'operador',
+                'ultimo_acesso': '2024-01-15 10:30:00'
+            }
+            
+        except Exception as e:
+            print(f"❌ Erro ao obter usuário: {e}")
+            raise e
+    
+    @staticmethod
+    def salvar_configuracoes(usuario_id, configuracoes):
+        """
+        Salva configurações do usuário no SharePoint
+        
+        Args:
+            usuario_id: ID do usuário
+            configuracoes: Dicionário com configurações
+        """
+        try:
+            # IMPLEMENTAR: Salvamento real no SharePoint
+            print(f"⚙️ Simulando salvamento de configurações para usuário ID: {usuario_id}")
+            print(f"📝 Configurações: {configuracoes}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro ao salvar configurações: {e}")
+            raise e

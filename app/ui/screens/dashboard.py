@@ -1,11 +1,12 @@
 """
-Tela principal do dashboard
+Tela principal do dashboard - VERSÃO FINAL LIMPA
 """
 import flet as ft
 from ...core.state import app_state
 from ...utils.ui_utils import get_screen_size
 from ..components.cards import DashboardCards
 from ..components.eventos_otimizado import EventosManagerOtimizado
+from ..components.modern_header import ModernHeader
 
 
 class DashboardScreen:
@@ -15,12 +16,13 @@ class DashboardScreen:
         self.page = page
         self.app_controller = app_controller
         self.cards_component = DashboardCards(page)
-        self.eventos_manager = EventosManagerOtimizado(page, app_controller)  # Versão otimizada
+        self.eventos_manager = EventosManagerOtimizado(page, app_controller)
+        self.modern_header = ModernHeader(page, app_controller)
         
     def mostrar(self):
         """Exibe a tela do dashboard"""
-        # Header
-        header = self._criar_header()
+        # Header moderno
+        header = self.modern_header.criar_header()
         
         # Cards dashboard
         dashboard_cards = self._criar_dashboard_cards()
@@ -31,51 +33,28 @@ class DashboardScreen:
         # Rodapé
         rodape = self._criar_rodape()
         
-        # Layout principal
+        # Layout principal otimizado
+        layout_principal = ft.Column([
+            header,  # Header fixo no topo
+            ft.Container(  # Container para cards com altura controlada
+                content=dashboard_cards,
+                bgcolor=ft.colors.GREY_50
+            ),
+            ft.Container(  # Container para eventos - expansível
+                content=eventos_lista,
+                expand=True,
+                bgcolor=ft.colors.GREY_50
+            ),
+            rodape  # Rodapé fixo
+        ], 
+        spacing=0,
+        expand=True
+        )
+        
+        # Atualiza a página
         self.page.clean()
-        self.page.add(
-            ft.Column([
-                header,
-                dashboard_cards,
-                eventos_lista,
-                rodape
-            ], expand=True)
-        )
+        self.page.add(layout_principal)
         self.page.update()
-    
-    def _criar_header(self):
-        """Cria o header da aplicação"""
-        return ft.Container(
-            content=ft.Row([
-                ft.Row([
-                    ft.Image(
-                        src="images/logo.png",
-                        width=20,
-                        height=20,
-                        fit=ft.ImageFit.CONTAIN
-                    ),
-                    ft.Container(width=10),
-                    ft.Text(
-                        f"Sentinela - {app_state.get_nome_usuario()}", 
-                        size=24, 
-                        weight=ft.FontWeight.BOLD, 
-                        color=ft.colors.WHITE
-                    )
-                ], spacing=0),
-                ft.Container(expand=True),
-                ft.ElevatedButton(
-                    "🔄 Atualizar", 
-                    on_click=lambda e: self.app_controller.atualizar_dados(), 
-                    bgcolor=ft.colors.WHITE, 
-                    color=ft.colors.BLUE_600,
-                    style=ft.ButtonStyle(
-                        shape=ft.RoundedRectangleBorder(radius=6)
-                    )
-                )
-            ]),
-            padding=ft.padding.only(left=20, right=20, top=10, bottom=10),
-            bgcolor=ft.colors.BLUE_600
-        )
     
     def _criar_dashboard_cards(self):
         """Cria os cards do dashboard"""
@@ -84,17 +63,12 @@ class DashboardScreen:
                 ft.Container(height=15), 
                 self.cards_component.criar_cards()
             ]), 
-            padding=ft.padding.only(left=20, right=20, top=10, bottom=15),
-            bgcolor=ft.colors.GREY_50
+            padding=ft.padding.only(left=20, right=20, top=10, bottom=15)
         )
     
     def _criar_eventos_lista(self):
         """Cria a lista de eventos"""
-        return ft.Container(
-            content=self.eventos_manager.criar_lista_eventos(),
-            expand=True,
-            bgcolor=ft.colors.GREY_50
-        )
+        return self.eventos_manager.criar_lista_eventos()
     
     def _criar_rodape(self):
         """Cria o rodapé da aplicação"""

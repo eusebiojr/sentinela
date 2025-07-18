@@ -1,0 +1,10 @@
+[18/07/2025 10:19:13] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_101913.log
+[18/07/2025 10:19:13] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_101913.log
+[18/07/2025 10:19:13] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_101913.log
+[18/07/2025 10:19:17] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 10:19:17] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 10:19:17] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 10:19:17] INFO: Carregando dados de usuários...
+[18/07/2025 10:19:19] INFO: ✅ 8 registros carregados de 'UsuariosPainelTorre'
+[18/07/2025 10:19:19] INFO: ✅ 8 usuários carregados
+[18/07/2025 10:19:28] ERROR: ❌ Erro no login: name 'usuario' is not defined
