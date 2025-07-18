@@ -10,6 +10,8 @@ from ..utils.ui_utils import mostrar_mensagem, get_screen_size
 from ..config.logging_config import setup_logger
 from .screens.login import LoginScreen
 from .screens.dashboard import DashboardScreen
+from typing import Dict, Any, Optional
+from ..config.logging_config import setup_logger
 
 logger = setup_logger()
 
@@ -329,3 +331,276 @@ class SentinelaApp:
         """Atualiza dados da aplicação"""
         mostrar_mensagem(self.page, "🔄 Atualizando dados...", False)
         self._carregar_dados_completos()
+
+try:
+    from ..services.suzano_password_service import suzano_password_service
+    PASSWORD_SERVICE_AVAILABLE = True
+except ImportError:
+    PASSWORD_SERVICE_AVAILABLE = False
+    suzano_password_service = None
+
+
+class PasswordManager:
+    """Gerenciador simplificado para operações de senha"""
+    
+    @staticmethod
+    def is_service_available() -> bool:
+        """
+        Verifica se o serviço de senha está disponível
+        
+        Returns:
+            bool: True se serviço está disponível
+        """
+        return PASSWORD_SERVICE_AVAILABLE and suzano_password_service is not None
+    
+    @staticmethod
+    def validate_password_policy(password: str) -> Dict[str, Any]:
+        """
+        Valida política de senha
+        
+        Args:
+            password: Senha a ser validada
+            
+        Returns:
+            Dict com resultado da validação
+        """
+        if not PasswordManager.is_service_available():
+            return {
+                'valid': False,
+                'error': 'Serviço de senha não disponível'
+            }
+        
+        try:
+            is_valid, message = suzano_password_service.validar_politica_senha(password)
+            return {
+                'valid': is_valid,
+                'message': message,
+                'error': None if is_valid else message
+            }
+        except Exception as e:
+            logger.error(f"❌ Erro ao validar política de senha: {e}")
+            return {
+                'valid': False,
+                'error': f'Erro na validação: {str(e)}'
+            }
+    
+    @staticmethod
+    def change_user_password(email: str, current_password: str, new_password: str) -> Dict[str, Any]:
+        """
+        Altera senha do usuário
+        
+        Args:
+            email: Email do usuário
+            current_password: Senha atual
+            new_password: Nova senha
+            
+        Returns:
+            Dict com resultado da operação
+        """
+        if not PasswordManager.is_service_available():
+            return {
+                'success': False,
+                'error': 'Serviço de senha não disponível',
+                'user_message': 'Funcionalidade de troca de senha temporariamente indisponível'
+            }
+        
+        try:
+            logger.info(f"🔐 Iniciando troca de senha para: {email}")
+            
+            resultado = suzano_password_service.alterar_senha(
+                email=email,
+                senha_atual=current_password,
+                nova_senha=new_password
+            )
+            
+            if resultado.get('sucesso', False):
+                logger.info(f"✅ Senha alterada com sucesso para: {email}")
+                return {
+                    'success': True,
+                    'message': resultado.get('mensagem', 'Senha alterada com sucesso'),
+                    'user_message': '🔐 Sua senha foi alterada com sucesso!',
+                    'user_id': resultado.get('usuario_id')
+                }
+            else:
+                error_msg = resultado.get('erro', 'Erro desconhecido')
+                logger.warning(f"⚠️ Falha na troca de senha para {email}: {error_msg}")
+                
+                # Mapeia erros para mensagens mais amigáveis
+                user_friendly_errors = {
+                    'senha atual incorreta': 'A senha atual informada está incorreta',
+                    'usuário não encontrado': 'Usuário não encontrado no sistema',
+                    'política de senha': 'A nova senha não atende aos requisitos de segurança',
+                    'conexão': 'Erro de conexão com o servidor. Tente novamente.'
+                }
+                
+                user_message = error_msg
+                for key, friendly_msg in user_friendly_errors.items():
+                    if key in error_msg.lower():
+                        user_message = friendly_msg
+                        break
+                
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'user_message': user_message
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Erro crítico na troca de senha: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'user_message': 'Erro interno do sistema. Contate o suporte técnico.'
+            }
+    
+    @staticmethod
+    def verify_current_password(email: str, password: str) -> bool:
+        """
+        Verifica se a senha atual está correta
+        
+        Args:
+            email: Email do usuário
+            password: Senha a ser verificada
+            
+        Returns:
+            bool: True se senha está correta
+        """
+        if not PasswordManager.is_service_available():
+            logger.warning("⚠️ Tentativa de verificação de senha sem serviço disponível")
+            return False
+        
+        try:
+            return suzano_password_service.validar_senha_atual(email, password)
+        except Exception as e:
+            logger.error(f"❌ Erro ao verificar senha atual: {e}")
+            return False
+    
+    @staticmethod
+    def get_user_info(email: str) -> Optional[Dict[str, Any]]:
+        """
+        Obtém informações do usuário
+        
+        Args:
+            email: Email do usuário
+            
+        Returns:
+            Dict com dados do usuário ou None
+        """
+        if not PasswordManager.is_service_available():
+            return None
+        
+        try:
+            return suzano_password_service.obter_dados_usuario(email)
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter dados do usuário: {e}")
+            return None
+    
+    @staticmethod
+    def test_service_connection() -> Dict[str, Any]:
+        """
+        Testa conexão com o serviço
+        
+        Returns:
+            Dict com resultado do teste
+        """
+        if not PasswordManager.is_service_available():
+            return {
+                'connected': False,
+                'message': 'Serviço não disponível',
+                'details': 'Biblioteca ou configuração ausente'
+            }
+        
+        try:
+            connected = suzano_password_service.testar_conexao()
+            return {
+                'connected': connected,
+                'message': 'Conectado com sucesso' if connected else 'Falha na conexão',
+                'details': 'SharePoint acessível' if connected else 'Verificar credenciais e rede'
+            }
+        except Exception as e:
+            return {
+                'connected': False,
+                'message': 'Erro no teste de conexão',
+                'details': str(e)
+            }
+    
+    @staticmethod
+    def get_password_requirements() -> Dict[str, Any]:
+        """
+        Retorna requisitos da política de senha
+        
+        Returns:
+            Dict com requisitos da senha
+        """
+        return {
+            'min_length': 6,
+            'max_length': 50,
+            'requires_letter': False,  # Conforme configuração Suzano
+            'requires_number': False,
+            'requires_special': False,
+            'description': [
+                'Mínimo de 6 caracteres',
+                'Máximo de 50 caracteres',
+                'Não pode estar vazia',
+                'Recomendado: use uma combinação de letras, números e símbolos'
+            ]
+        }
+
+
+# Funções de conveniência para uso direto
+def alterar_senha(email: str, senha_atual: str, nova_senha: str) -> Dict[str, Any]:
+    """
+    Função de conveniência para alterar senha
+    
+    Args:
+        email: Email do usuário
+        senha_atual: Senha atual
+        nova_senha: Nova senha
+        
+    Returns:
+        Dict com resultado da operação
+    """
+    return PasswordManager.change_user_password(email, senha_atual, nova_senha)
+
+
+def validar_senha(senha: str) -> Dict[str, Any]:
+    """
+    Função de conveniência para validar senha
+    
+    Args:
+        senha: Senha a ser validada
+        
+    Returns:
+        Dict com resultado da validação
+    """
+    return PasswordManager.validate_password_policy(senha)
+
+
+def servico_disponivel() -> bool:
+    """
+    Função de conveniência para verificar disponibilidade do serviço
+    
+    Returns:
+        bool: True se serviço está disponível
+    """
+    return PasswordManager.is_service_available()
+
+
+def obter_requisitos_senha() -> Dict[str, Any]:
+    """
+    Função de conveniência para obter requisitos de senha
+    
+    Returns:
+        Dict com requisitos da senha
+    """
+    return PasswordManager.get_password_requirements()
+
+
+def testar_servico() -> Dict[str, Any]:
+    """
+    Função de conveniência para testar serviço
+    
+    Returns:
+        Dict com resultado do teste
+    """
+    return PasswordManager.test_service_connection()

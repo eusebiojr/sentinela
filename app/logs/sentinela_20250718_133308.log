@@ -1,0 +1,45 @@
+[18/07/2025 13:33:08] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133308.log
+[18/07/2025 13:33:08] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133308.log
+[18/07/2025 13:33:08] INFO: 🔐 SuzanoPasswordService inicializado
+[18/07/2025 13:33:08] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133308.log
+[18/07/2025 13:33:08] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133308.log
+[18/07/2025 13:33:08] INFO: ✅ Dependência Office365 OK
+[18/07/2025 13:33:08] INFO: ✅ Serviço de senha OK
+[18/07/2025 13:33:08] INFO: 🔗 Conectando ao SharePoint...
+[18/07/2025 13:33:12] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[18/07/2025 13:33:12] INFO: ✅ Teste de conexão SharePoint passou
+[18/07/2025 13:33:12] INFO: 🔍 Verificando dependências do sistema...
+[18/07/2025 13:33:12] INFO: ✅ Dependência Office365 OK
+[18/07/2025 13:33:12] INFO: ✅ Serviço de senha OK
+[18/07/2025 13:33:12] INFO: 📁 Assets path: assets
+[18/07/2025 13:33:12] INFO: 🔧 Modo desenvolvimento local
+[18/07/2025 13:33:17] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:33:17] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:33:17] INFO: 🔐 Serviço de senha disponível
+[18/07/2025 13:33:17] INFO: 🔗 Conectando ao SharePoint...
+[18/07/2025 13:33:19] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[18/07/2025 13:33:19] INFO: ✅ Teste de conexão SharePoint passou
+[18/07/2025 13:33:19] INFO: ✅ Serviço de senha conectado e funcional
+[18/07/2025 13:33:19] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:33:19] INFO: Carregando dados de usuários...
+[18/07/2025 13:33:21] INFO: ✅ 9 registros carregados de 'UsuariosPainelTorre'
+[18/07/2025 13:33:21] INFO: ✅ 9 usuários carregados
+[18/07/2025 13:33:45] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:33:45] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:33:45] INFO: 🔐 Serviço de senha disponível
+[18/07/2025 13:33:45] INFO: 🔗 Conectando ao SharePoint...
+[18/07/2025 13:33:47] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[18/07/2025 13:33:47] INFO: ✅ Teste de conexão SharePoint passou
+[18/07/2025 13:33:47] INFO: ✅ Serviço de senha conectado e funcional
+[18/07/2025 13:33:47] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:33:47] INFO: Carregando dados de usuários...
+[18/07/2025 13:33:49] INFO: ✅ 9 registros carregados de 'UsuariosPainelTorre'
+[18/07/2025 13:33:49] INFO: ✅ 9 usuários carregados
+[18/07/2025 13:33:59] INFO: Carregando dados completos...
+[18/07/2025 13:34:04] INFO: ✅ 8 registros carregados de 'Desvios'
+[18/07/2025 13:34:06] INFO: ✅ Dados carregados: 8 desvios
+[18/07/2025 13:34:28] INFO: 🔐 Iniciando alteração de senha para: eusebioagj@suzano.com.br
+[18/07/2025 13:34:28] INFO: 🔍 Buscando usuário: eusebioagj@suzano.com.br
+[18/07/2025 13:34:28] WARNING: ⚠️ Usuário não encontrado: eusebioagj@suzano.com.br
+[18/07/2025 13:34:28] ERROR: ❌ Usuário não encontrado: eusebioagj@suzano.com.br
+[18/07/2025 13:37:50] INFO: 🏁 Finalizando aplicação Sentinela

@@ -1,0 +1,139 @@
+[18/07/2025 13:38:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133801.log
+[18/07/2025 13:38:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133801.log
+[18/07/2025 13:38:01] INFO: 🔐 SuzanoPasswordService DEBUG inicializado
+[18/07/2025 13:38:01] INFO: 📋 Site URL: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:01] INFO: 📋 Lista Usuários: UsuariosPainelTorre
+[18/07/2025 13:38:01] INFO: 📋 Username SP: eusebioagj@suzano.com.br
+[18/07/2025 13:38:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133801.log
+[18/07/2025 13:38:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250718_133801.log
+[18/07/2025 13:38:01] INFO: ✅ Dependência Office365 OK
+[18/07/2025 13:38:01] INFO: ✅ Serviço de senha OK
+[18/07/2025 13:38:01] INFO: 🔍 DEBUG Testando conexão...
+[18/07/2025 13:38:01] INFO: 🔗 Conectando ao SharePoint...
+[18/07/2025 13:38:01] INFO: 🔗 URL: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:01] INFO: 🔗 Usuário: eusebioagj@suzano.com.br
+[18/07/2025 13:38:03] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[18/07/2025 13:38:03] INFO: 🔍 DEBUG: Listando TODOS os usuários...
+[18/07/2025 13:38:03] INFO: 📊 DEBUG: Total de itens carregados: 9
+[18/07/2025 13:38:03] INFO: 📋 DEBUG Usuário 1: {'ID': 1, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência', 'Senha': '***'}
+[18/07/2025 13:38:03] INFO: 📋 DEBUG Usuário 2: {'ID': 2, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:03] INFO: 📋 DEBUG Usuário 3: {'ID': 3, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência;fábrica', 'Senha': '***'}
+[18/07/2025 13:38:03] INFO: 📋 DEBUG Usuário 4: {'ID': 4, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:03] INFO: 📋 DEBUG Usuário 5: {'ID': 5, 'Email': '', 'NomeExibicao': 'Wesley', 'Perfil': 'Preenchimento', 'Area': 'fábrica', 'Senha': '***'}
+[18/07/2025 13:38:03] INFO: 📋 DEBUG Campos disponíveis: ['FileSystemObjectType', 'Id', 'ServerRedirectedEmbedUri', 'ServerRedirectedEmbedUrl', 'ContentTypeId', 'Title', 'OData__ColorTag', 'ComplianceAssetId', 'email', 'Senha', 'NomeExibicao', 'Perfil', 'Area', 'ID', 'Modified', 'Created', 'AuthorId', 'EditorId', 'OData__UIVersionString', 'Attachments', 'GUID']
+[18/07/2025 13:38:03] INFO: 📧 DEBUG Campos tipo email: ['email']
+[18/07/2025 13:38:03] INFO: ✅ DEBUG Teste completo: 9 usuários
+[18/07/2025 13:38:03] INFO: 🔍 Verificando dependências do sistema...
+[18/07/2025 13:38:03] INFO: ✅ Dependência Office365 OK
+[18/07/2025 13:38:03] INFO: ✅ Serviço de senha OK
+[18/07/2025 13:38:03] INFO: 📁 Assets path: assets
+[18/07/2025 13:38:03] INFO: 🔧 Modo desenvolvimento local
+[18/07/2025 13:38:05] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:38:05] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:05] INFO: 🔐 Serviço de senha disponível
+[18/07/2025 13:38:05] INFO: 🔍 DEBUG Testando conexão...
+[18/07/2025 13:38:05] INFO: 🔗 Conectando ao SharePoint...
+[18/07/2025 13:38:05] INFO: 🔗 URL: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:05] INFO: 🔗 Usuário: eusebioagj@suzano.com.br
+[18/07/2025 13:38:07] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[18/07/2025 13:38:07] INFO: 🔍 DEBUG: Listando TODOS os usuários...
+[18/07/2025 13:38:07] INFO: 📊 DEBUG: Total de itens carregados: 9
+[18/07/2025 13:38:07] INFO: 📋 DEBUG Usuário 1: {'ID': 1, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência', 'Senha': '***'}
+[18/07/2025 13:38:07] INFO: 📋 DEBUG Usuário 2: {'ID': 2, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:08] INFO: 📋 DEBUG Usuário 3: {'ID': 3, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência;fábrica', 'Senha': '***'}
+[18/07/2025 13:38:08] INFO: 📋 DEBUG Usuário 4: {'ID': 4, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:08] INFO: 📋 DEBUG Usuário 5: {'ID': 5, 'Email': '', 'NomeExibicao': 'Wesley', 'Perfil': 'Preenchimento', 'Area': 'fábrica', 'Senha': '***'}
+[18/07/2025 13:38:08] INFO: 📋 DEBUG Campos disponíveis: ['FileSystemObjectType', 'Id', 'ServerRedirectedEmbedUri', 'ServerRedirectedEmbedUrl', 'ContentTypeId', 'Title', 'OData__ColorTag', 'ComplianceAssetId', 'email', 'Senha', 'NomeExibicao', 'Perfil', 'Area', 'ID', 'Modified', 'Created', 'AuthorId', 'EditorId', 'OData__UIVersionString', 'Attachments', 'GUID']
+[18/07/2025 13:38:08] INFO: 📧 DEBUG Campos tipo email: ['email']
+[18/07/2025 13:38:08] INFO: ✅ DEBUG Teste completo: 9 usuários
+[18/07/2025 13:38:08] INFO: ✅ Serviço de senha conectado e funcional
+[18/07/2025 13:38:08] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:38:08] INFO: Carregando dados de usuários...
+[18/07/2025 13:38:09] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:38:09] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:09] INFO: 🔐 Serviço de senha disponível
+[18/07/2025 13:38:09] INFO: 🔍 DEBUG Testando conexão...
+[18/07/2025 13:38:09] INFO: 🔗 Conectando ao SharePoint...
+[18/07/2025 13:38:09] INFO: 🔗 URL: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:09] INFO: 🔗 Usuário: eusebioagj@suzano.com.br
+[18/07/2025 13:38:10] INFO: ✅ 9 registros carregados de 'UsuariosPainelTorre'
+[18/07/2025 13:38:10] INFO: ✅ 9 usuários carregados
+[18/07/2025 13:38:11] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[18/07/2025 13:38:11] INFO: 🔍 DEBUG: Listando TODOS os usuários...
+[18/07/2025 13:38:11] INFO: 📊 DEBUG: Total de itens carregados: 9
+[18/07/2025 13:38:11] INFO: 📋 DEBUG Usuário 1: {'ID': 1, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência', 'Senha': '***'}
+[18/07/2025 13:38:11] INFO: 📋 DEBUG Usuário 2: {'ID': 2, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:11] INFO: 📋 DEBUG Usuário 3: {'ID': 3, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência;fábrica', 'Senha': '***'}
+[18/07/2025 13:38:11] INFO: 📋 DEBUG Usuário 4: {'ID': 4, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:11] INFO: 📋 DEBUG Usuário 5: {'ID': 5, 'Email': '', 'NomeExibicao': 'Wesley', 'Perfil': 'Preenchimento', 'Area': 'fábrica', 'Senha': '***'}
+[18/07/2025 13:38:11] INFO: 📋 DEBUG Campos disponíveis: ['FileSystemObjectType', 'Id', 'ServerRedirectedEmbedUri', 'ServerRedirectedEmbedUrl', 'ContentTypeId', 'Title', 'OData__ColorTag', 'ComplianceAssetId', 'email', 'Senha', 'NomeExibicao', 'Perfil', 'Area', 'ID', 'Modified', 'Created', 'AuthorId', 'EditorId', 'OData__UIVersionString', 'Attachments', 'GUID']
+[18/07/2025 13:38:11] INFO: 📧 DEBUG Campos tipo email: ['email']
+[18/07/2025 13:38:11] INFO: ✅ DEBUG Teste completo: 9 usuários
+[18/07/2025 13:38:11] INFO: ✅ Serviço de senha conectado e funcional
+[18/07/2025 13:38:11] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:38:11] INFO: Carregando dados de usuários...
+[18/07/2025 13:38:14] INFO: ✅ 9 registros carregados de 'UsuariosPainelTorre'
+[18/07/2025 13:38:14] INFO: ✅ 9 usuários carregados
+[18/07/2025 13:38:17] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:38:17] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:17] INFO: 🔐 Serviço de senha disponível
+[18/07/2025 13:38:17] INFO: 🔍 DEBUG Testando conexão...
+[18/07/2025 13:38:17] INFO: 🔗 Conectando ao SharePoint...
+[18/07/2025 13:38:17] INFO: 🔗 URL: https://suzano.sharepoint.com/sites/Controleoperacional
+[18/07/2025 13:38:17] INFO: 🔗 Usuário: eusebioagj@suzano.com.br
+[18/07/2025 13:38:19] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[18/07/2025 13:38:19] INFO: 🔍 DEBUG: Listando TODOS os usuários...
+[18/07/2025 13:38:19] INFO: 📊 DEBUG: Total de itens carregados: 9
+[18/07/2025 13:38:19] INFO: 📋 DEBUG Usuário 1: {'ID': 1, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência', 'Senha': '***'}
+[18/07/2025 13:38:19] INFO: 📋 DEBUG Usuário 2: {'ID': 2, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:19] INFO: 📋 DEBUG Usuário 3: {'ID': 3, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência;fábrica', 'Senha': '***'}
+[18/07/2025 13:38:19] INFO: 📋 DEBUG Usuário 4: {'ID': 4, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:38:19] INFO: 📋 DEBUG Usuário 5: {'ID': 5, 'Email': '', 'NomeExibicao': 'Wesley', 'Perfil': 'Preenchimento', 'Area': 'fábrica', 'Senha': '***'}
+[18/07/2025 13:38:19] INFO: 📋 DEBUG Campos disponíveis: ['FileSystemObjectType', 'Id', 'ServerRedirectedEmbedUri', 'ServerRedirectedEmbedUrl', 'ContentTypeId', 'Title', 'OData__ColorTag', 'ComplianceAssetId', 'email', 'Senha', 'NomeExibicao', 'Perfil', 'Area', 'ID', 'Modified', 'Created', 'AuthorId', 'EditorId', 'OData__UIVersionString', 'Attachments', 'GUID']
+[18/07/2025 13:38:19] INFO: 📧 DEBUG Campos tipo email: ['email']
+[18/07/2025 13:38:19] INFO: ✅ DEBUG Teste completo: 9 usuários
+[18/07/2025 13:38:19] INFO: ✅ Serviço de senha conectado e funcional
+[18/07/2025 13:38:20] INFO: 🚀 Sentinela iniciando...
+[18/07/2025 13:38:20] INFO: Carregando dados de usuários...
+[18/07/2025 13:38:22] INFO: ✅ 9 registros carregados de 'UsuariosPainelTorre'
+[18/07/2025 13:38:22] INFO: ✅ 9 usuários carregados
+[18/07/2025 13:38:38] INFO: Carregando dados completos...
+[18/07/2025 13:38:40] INFO: ✅ 8 registros carregados de 'Desvios'
+[18/07/2025 13:38:42] INFO: ✅ Dados carregados: 8 desvios
+[18/07/2025 13:39:04] INFO: 🔐 DEBUG Iniciando alteração de senha para: eusebioagj@suzano.com.br
+[18/07/2025 13:39:04] INFO: 🔍 DEBUG: Buscando usuário: eusebioagj@suzano.com.br
+[18/07/2025 13:39:04] INFO: 🔍 DEBUG: Listando TODOS os usuários...
+[18/07/2025 13:39:04] INFO: 📊 DEBUG: Total de itens carregados: 9
+[18/07/2025 13:39:04] INFO: 📋 DEBUG Usuário 1: {'ID': 1, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência', 'Senha': '***'}
+[18/07/2025 13:39:04] INFO: 📋 DEBUG Usuário 2: {'ID': 2, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:39:04] INFO: 📋 DEBUG Usuário 3: {'ID': 3, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência;fábrica', 'Senha': '***'}
+[18/07/2025 13:39:04] INFO: 📋 DEBUG Usuário 4: {'ID': 4, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:39:04] INFO: 📋 DEBUG Usuário 5: {'ID': 5, 'Email': '', 'NomeExibicao': 'Wesley', 'Perfil': 'Preenchimento', 'Area': 'fábrica', 'Senha': '***'}
+[18/07/2025 13:39:04] INFO: 📋 DEBUG Campos disponíveis: ['FileSystemObjectType', 'Id', 'ServerRedirectedEmbedUri', 'ServerRedirectedEmbedUrl', 'ContentTypeId', 'Title', 'OData__ColorTag', 'ComplianceAssetId', 'email', 'Senha', 'NomeExibicao', 'Perfil', 'Area', 'ID', 'Modified', 'Created', 'AuthorId', 'EditorId', 'OData__UIVersionString', 'Attachments', 'GUID']
+[18/07/2025 13:39:04] INFO: 📧 DEBUG Campos tipo email: ['email']
+[18/07/2025 13:39:04] INFO: 📊 DEBUG: 9 usuários na lista
+[18/07/2025 13:39:04] INFO: 🔍 DEBUG Email normalizado: 'eusebioagj@suzano.com.br'
+[18/07/2025 13:39:04] INFO: 📊 DEBUG: Processando 9 itens...
+[18/07/2025 13:39:04] INFO: 🔍 DEBUG Item 1 - Campo 'email': 'eusebioagj@suzano.com.br'
+[18/07/2025 13:39:04] INFO: ✅ DEBUG ENCONTRADO! Item 1, Campo 'email'
+[18/07/2025 13:39:04] INFO: 🔐 DEBUG Validando senha atual para: eusebioagj@suzano.com.br
+[18/07/2025 13:39:04] INFO: 🔍 DEBUG: Buscando usuário: eusebioagj@suzano.com.br
+[18/07/2025 13:39:04] INFO: 🔍 DEBUG: Listando TODOS os usuários...
+[18/07/2025 13:39:05] INFO: 📊 DEBUG: Total de itens carregados: 9
+[18/07/2025 13:39:05] INFO: 📋 DEBUG Usuário 1: {'ID': 1, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência', 'Senha': '***'}
+[18/07/2025 13:39:05] INFO: 📋 DEBUG Usuário 2: {'ID': 2, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:39:05] INFO: 📋 DEBUG Usuário 3: {'ID': 3, 'Email': '', 'NomeExibicao': 'Eusebio', 'Perfil': 'Preenchimento', 'Area': 'P.A. Água Clara;Terminal Inocência;fábrica', 'Senha': '***'}
+[18/07/2025 13:39:05] INFO: 📋 DEBUG Usuário 4: {'ID': 4, 'Email': '', 'NomeExibicao': 'Eusebio Junior', 'Perfil': 'Aprovador', 'Area': 'Torre', 'Senha': '***'}
+[18/07/2025 13:39:05] INFO: 📋 DEBUG Usuário 5: {'ID': 5, 'Email': '', 'NomeExibicao': 'Wesley', 'Perfil': 'Preenchimento', 'Area': 'fábrica', 'Senha': '***'}
+[18/07/2025 13:39:05] INFO: 📋 DEBUG Campos disponíveis: ['FileSystemObjectType', 'Id', 'ServerRedirectedEmbedUri', 'ServerRedirectedEmbedUrl', 'ContentTypeId', 'Title', 'OData__ColorTag', 'ComplianceAssetId', 'email', 'Senha', 'NomeExibicao', 'Perfil', 'Area', 'ID', 'Modified', 'Created', 'AuthorId', 'EditorId', 'OData__UIVersionString', 'Attachments', 'GUID']
+[18/07/2025 13:39:05] INFO: 📧 DEBUG Campos tipo email: ['email']
+[18/07/2025 13:39:05] INFO: 📊 DEBUG: 9 usuários na lista
+[18/07/2025 13:39:05] INFO: 🔍 DEBUG Email normalizado: 'eusebioagj@suzano.com.br'
+[18/07/2025 13:39:05] INFO: 📊 DEBUG: Processando 9 itens...
+[18/07/2025 13:39:05] INFO: 🔍 DEBUG Item 1 - Campo 'email': 'eusebioagj@suzano.com.br'
+[18/07/2025 13:39:05] INFO: ✅ DEBUG ENCONTRADO! Item 1, Campo 'email'
+[18/07/2025 13:39:05] INFO: 🔐 DEBUG Senha armazenada (tamanho): 11 caracteres
+[18/07/2025 13:39:05] INFO: 🔐 DEBUG Senha informada (tamanho): 11 caracteres
+[18/07/2025 13:39:05] INFO: ✅ DEBUG Senha atual validada para: eusebioagj@suzano.com.br
+[18/07/2025 13:39:06] INFO: ✅ DEBUG Senha alterada com sucesso no SharePoint: eusebioagj@suzano.com.br
+[18/07/2025 14:22:56] INFO: 🏁 Finalizando aplicação Sentinela

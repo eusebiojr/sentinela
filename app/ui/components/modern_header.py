@@ -1,21 +1,23 @@
 """
-Header com layout organizado - mantém solução sem retângulo cinza
+Header com layout organizado e logo Suzano - VERSÃO FINAL AJUSTADA
+Substitui o arquivo app/ui/components/modern_header.py
 """
 import flet as ft
 from ...core.state import app_state
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
 
-# Importações adicionais para funcionalidades
+# Importa o serviço funcional de senha
 try:
-    from ...services.sharepoint_client import SharePointClient
+    from ...services.suzano_password_service import suzano_password_service
+    PASSWORD_SERVICE_AVAILABLE = True
 except ImportError:
-    SharePointClient = None
+    PASSWORD_SERVICE_AVAILABLE = False
+    suzano_password_service = None
 
 # Função auxiliar para salvar configurações
 def salvar_configuracoes_usuario(config: dict):
     """Salva configurações do usuário"""
     try:
-        # Usa a instância global do app_state
         for chave, valor in config.items():
             app_state.salvar_configuracao_usuario(chave, valor)
         print(f"Configurações salvas: {config}")
@@ -25,7 +27,7 @@ def salvar_configuracoes_usuario(config: dict):
 
 
 class ModernHeader:
-    """Header com layout organizado e sem problemas visuais"""
+    """Header com layout organizado e logo Suzano"""
     
     def __init__(self, page: ft.Page, app_controller):
         self.page = page
@@ -34,7 +36,7 @@ class ModernHeader:
         self.menu_container = None
         
     def criar_header(self):
-        """Cria header com layout organizado"""
+        """Cria header com layout organizado e logo Suzano"""
         
         # Configurações responsivas
         screen_size = get_screen_size(self.page.window_width)
@@ -62,15 +64,15 @@ class ModernHeader:
         perfil_usuario = app_state.get_perfil_usuario().title()
         iniciais = self._obter_iniciais(nome_usuario)
 
-        # SEÇÃO ESQUERDA: Logo + Título (ORGANIZADOS EM GRUPO)
+        # SEÇÃO ESQUERDA: Logo Suzano + Título
         secao_esquerda = ft.Row([
-            # Logo
-            ft.Icon(
-                ft.icons.SECURITY,  # Para trocar: ft.Image(src="/images/logo.png", width=logo_size, height=logo_size, fit=ft.ImageFit.CONTAIN)
-                size=logo_size,
-                color=ft.colors.WHITE
+            # Logo Suzano
+            ft.Image(
+                src="/images/logo.png",  # Logo da Suzano
+                width=logo_size,
+                height=logo_size,
+                fit=ft.ImageFit.CONTAIN
             ),
-            # Textos agrupados verticalmente
             ft.Column([
                 ft.Text(
                     "Sentinela",
@@ -84,12 +86,11 @@ class ModernHeader:
                     color=ft.colors.with_opacity(0.9, ft.colors.WHITE),
                     italic=True
                 )
-            ], spacing=2)  # Espaçamento mínimo entre título e subtítulo
-        ], spacing=12)  # Espaçamento entre logo e textos
+            ], spacing=2)
+        ], spacing=12)
         
-        # SEÇÃO DIREITA: Botões + Usuário (ORGANIZADOS EM GRUPO)
+        # SEÇÃO DIREITA: Botões + Usuário
         secao_direita = ft.Row([
-            # Botão Atualizar
             ft.ElevatedButton(
                 content=ft.Row([
                     ft.Icon(ft.icons.REFRESH, size=16, color=ft.colors.BLUE_600),
@@ -105,10 +106,8 @@ class ModernHeader:
                 tooltip="Atualizar dados do sistema"
             ),
             
-            # Área do Usuário (Avatar + Info + Menu)
             ft.Container(
                 content=ft.Row([
-                    # Avatar
                     ft.Container(
                         content=ft.Text(
                             iniciais,
@@ -123,8 +122,6 @@ class ModernHeader:
                         alignment=ft.alignment.center,
                         border=ft.border.all(2, ft.colors.WHITE)
                     ),
-                    
-                    # Info do usuário
                     ft.Column([
                         ft.Text(
                             nome_usuario,
@@ -140,8 +137,6 @@ class ModernHeader:
                             color=ft.colors.with_opacity(0.8, ft.colors.WHITE)
                         )
                     ], spacing=0, alignment=ft.MainAxisAlignment.CENTER),
-                    
-                    # Ícone de menu
                     ft.Icon(
                         ft.icons.KEYBOARD_ARROW_DOWN,
                         color=ft.colors.WHITE,
@@ -157,16 +152,13 @@ class ModernHeader:
                 ink=True,
                 tooltip=f"Menu de {nome_usuario} - Clique para ver opções"
             )
-            
-        ], spacing=15)  # Espaçamento entre botão atualizar e área do usuário
+        ], spacing=15)
         
-        # HEADER PRINCIPAL - LAYOUT LIMPO SEM CONTAINERS PROBLEMÁTICOS
+        # HEADER PRINCIPAL
         header_content = ft.Row([
             secao_esquerda,
             secao_direita
-        ], 
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-        )
+        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         
         header_principal = ft.Container(
             content=header_content,
@@ -181,21 +173,20 @@ class ModernHeader:
             )
         )
         
-        # MENU DROPDOWN - CORREÇÃO DO ESPAÇAMENTO
+        # MENU DROPDOWN
         self.menu_container = ft.Container(
             content=ft.Row([
-                ft.Container(expand=True),  # Espaço à esquerda
+                ft.Container(expand=True),
                 self._criar_menu_dropdown(),
-                ft.Container(width=padding_horizontal + 10)  # AUMENTADO: Margem direita maior para não cortar
+                ft.Container(width=padding_horizontal + 10)
             ]),
-            height=0,  # Inicialmente oculto
+            height=0,
             animate_size=ft.animation.Animation(300, ft.AnimationCurve.EASE_OUT),
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
             bgcolor=ft.colors.TRANSPARENT,
-            padding=ft.padding.only(top=5)  # ADICIONADO: Padding superior
+            padding=ft.padding.only(top=5)
         )
         
-        # LAYOUT FINAL
         return ft.Column([
             header_principal,
             self.menu_container
@@ -248,7 +239,6 @@ class ModernHeader:
                 ink=True
             )
             
-            # Hover effect
             def create_hover(container):
                 def on_hover(e):
                     if e.data == "true":
@@ -272,9 +262,9 @@ class ModernHeader:
                 offset=ft.Offset(0, 4)
             ),
             border=ft.border.all(1, ft.colors.with_opacity(0.1, ft.colors.GREY_400)),
-            padding=ft.padding.all(10),  # AUMENTADO: de 8 para 10
-            width=220,  # AUMENTADO: de 200 para 220 para mais espaço
-            margin=ft.margin.only(right=5)  # ADICIONADO: Margem direita
+            padding=ft.padding.all(10),
+            width=220,
+            margin=ft.margin.only(right=5)
         )
     
     def _toggle_menu_usuario(self, e):
@@ -282,7 +272,7 @@ class ModernHeader:
         self.menu_visible = not self.menu_visible
         
         if self.menu_visible:
-            self.menu_container.height = 200  # AUMENTADO: de 180 para 200 para dar mais espaço
+            self.menu_container.height = 200
         else:
             self.menu_container.height = 0
         
@@ -317,9 +307,8 @@ class ModernHeader:
             perfil = app_state.get_perfil_usuario().title()
             areas = app_state.get_areas_usuario()
             
-            # Informações adicionais do usuário
             usuario = app_state.get_usuario_atual()
-            email = usuario.get('email', 'Não informado') if usuario else 'Não informado'
+            email = usuario.get('Email', 'Não informado') if usuario else 'Não informado'
             ultimo_acesso = usuario.get('ultimo_acesso', 'Não informado') if usuario else 'Não informado'
             
             modal = ft.AlertDialog(
@@ -347,17 +336,25 @@ class ModernHeader:
             self.page.update()
             
         except Exception as e:
-                            mostrar_mensagem(self.page, f"❌ Erro ao carregar perfil: {str(e)}")
+            mostrar_mensagem(self.page, f"❌ Erro ao carregar perfil: {str(e)}", "error")
     
     def _trocar_senha(self):
-        """Modal para trocar senha - IMPLEMENTADO"""
+        """Modal para trocar senha com caixa ajustada"""
+        
+        # Verifica se o serviço está disponível
+        if not PASSWORD_SERVICE_AVAILABLE:
+            mostrar_mensagem(self.page, "❌ Serviço de senha temporariamente indisponível", "error")
+            return
+        
+        # Campos do modal
         senha_atual_field = ft.TextField(
             label="Senha Atual",
             password=True,
             can_reveal_password=True,
             width=320,
             autofocus=True,
-            border_radius=8
+            border_radius=8,
+            helper_text="Informe sua senha atual"
         )
         
         nova_senha_field = ft.TextField(
@@ -365,7 +362,8 @@ class ModernHeader:
             password=True,
             can_reveal_password=True,
             width=320,
-            border_radius=8
+            border_radius=8,
+            helper_text="Mínimo 6 caracteres"
         )
         
         confirmar_senha_field = ft.TextField(
@@ -373,71 +371,167 @@ class ModernHeader:
             password=True,
             can_reveal_password=True,
             width=320,
-            border_radius=8
+            border_radius=8,
+            helper_text="Digite novamente a nova senha"
         )
         
+        # Indicadores visuais
         error_text = ft.Text("", color=ft.colors.RED, size=12, visible=False)
+        loading_indicator = ft.ProgressRing(width=20, height=20, visible=False)
+        
+        # Status do botão
+        btn_confirmar = ft.ElevatedButton(
+            "Confirmar Alteração",
+            bgcolor=ft.colors.GREEN_600,
+            color=ft.colors.WHITE,
+            icon=ft.icons.CHECK_CIRCLE,
+            disabled=False
+        )
+        
+        def mostrar_loading(ativo: bool):
+            """Controla estado de loading"""
+            loading_indicator.visible = ativo
+            btn_confirmar.disabled = ativo
+            senha_atual_field.disabled = ativo
+            nova_senha_field.disabled = ativo
+            confirmar_senha_field.disabled = ativo
+            
+            if ativo:
+                btn_confirmar.text = "Processando..."
+                btn_confirmar.icon = None
+            else:
+                btn_confirmar.text = "Confirmar Alteração"
+                btn_confirmar.icon = ft.icons.CHECK_CIRCLE
+            
+            self.page.update()
+        
+        def mostrar_erro(mensagem: str):
+            """Mostra mensagem de erro no modal"""
+            error_text.value = f"⚠️ {mensagem}"
+            error_text.visible = True
+            self.page.update()
+        
+        def limpar_erro():
+            """Limpa mensagem de erro"""
+            error_text.visible = False
+            self.page.update()
         
         def confirmar_troca(e):
-            # Reset error
-            error_text.visible = False
+            """Processa a troca de senha"""
+            # Reset do estado
+            limpar_erro()
             
-            # Validações
+            # Validações básicas
             if not senha_atual_field.value:
-                error_text.value = "⚠️ Informe a senha atual"
-                error_text.visible = True
-                self.page.update()
+                mostrar_erro("Informe a senha atual")
                 return
             
             if not nova_senha_field.value:
-                error_text.value = "⚠️ Informe a nova senha"
-                error_text.visible = True
-                self.page.update()
+                mostrar_erro("Informe a nova senha")
                 return
             
             if nova_senha_field.value != confirmar_senha_field.value:
-                error_text.value = "⚠️ As senhas não conferem"
-                error_text.visible = True
-                self.page.update()
+                mostrar_erro("As senhas não conferem")
                 return
             
             if len(nova_senha_field.value) < 6:
-                error_text.value = "⚠️ A nova senha deve ter pelo menos 6 caracteres"
-                error_text.visible = True
-                self.page.update()
+                mostrar_erro("A nova senha deve ter pelo menos 6 caracteres")
                 return
             
-            # Lógica de troca de senha
-            try:
-                if SharePointClient:
-                    # Tentativa de integração com SharePoint
-                    usuario_id = app_state.get_id_usuario()
+            # Ativa loading
+            mostrar_loading(True)
+            
+            # Processa em background para não travar a UI
+            import threading
+            
+            def processar_troca():
+                try:
+                    # Obtém email do usuário logado
+                    usuario_atual = app_state.get_usuario_atual()
+                    email_usuario = usuario_atual.get('Email', '') if usuario_atual else ''
                     
-                    if usuario_id:
-                        SharePointClient.atualizar_senha(
-                            usuario_id=usuario_id,
-                            senha_atual=senha_atual_field.value,
-                            nova_senha=nova_senha_field.value
+                    if not email_usuario:
+                        # Busca email em outras possíveis chaves
+                        for key in ['email', 'Email', 'EMAIL']:
+                            if key in usuario_atual:
+                                email_usuario = usuario_atual[key]
+                                break
+                    
+                    if not email_usuario:
+                        raise Exception("Email do usuário não encontrado no sistema")
+                    
+                    # Chama o serviço de troca de senha
+                    resultado = suzano_password_service.alterar_senha(
+                        email=email_usuario,
+                        senha_atual=senha_atual_field.value,
+                        nova_senha=nova_senha_field.value
+                    )
+                    
+                    # Desativa loading
+                    mostrar_loading(False)
+                    
+                    if resultado['sucesso']:
+                        # Sucesso - fecha modal e mostra mensagem
+                        modal_senha.open = False
+                        self.page.update()
+                        
+                        mostrar_mensagem(
+                            self.page, 
+                            "🔐 Senha alterada com sucesso! Sua nova senha já está ativa.", 
+                            "success"
                         )
+                        
                     else:
-                        raise Exception("ID do usuário não encontrado")
-                else:
-                    # Simulação de troca de senha quando SharePoint não está disponível
-                    print(f"Simulando troca de senha para usuário: {app_state.get_nome_usuario()}")
-                    
-                modal_senha.open = False
-                self.page.update()
-                mostrar_mensagem(self.page, "🔐 Senha alterada com sucesso!")
+                        # Erro do serviço
+                        mostrar_erro(resultado.get('erro', 'Erro desconhecido'))
                 
-            except Exception as ex:
-                error_text.value = f"Erro ao alterar senha: {str(ex)}"
-                error_text.visible = True
-                self.page.update()
+                except Exception as ex:
+                    # Desativa loading em caso de erro
+                    mostrar_loading(False)
+                    
+                    # Trata erros específicos
+                    erro_msg = str(ex)
+                    if "não encontrado" in erro_msg.lower():
+                        mostrar_erro("Usuário não encontrado no sistema")
+                    elif "senha atual incorreta" in erro_msg.lower():
+                        mostrar_erro("Senha atual incorreta")
+                    elif "conexão" in erro_msg.lower():
+                        mostrar_erro("Erro de conexão com o servidor")
+                    else:
+                        mostrar_erro(f"Erro: {erro_msg}")
+            
+            # Executa em thread separada
+            thread = threading.Thread(target=processar_troca, daemon=True)
+            thread.start()
         
         def cancelar(e):
+            """Cancela e fecha o modal"""
             modal_senha.open = False
             self.page.update()
         
+        # Validação em tempo real para confirmação de senha
+        def validar_confirmacao(e):
+            """Valida confirmação de senha em tempo real"""
+            if confirmar_senha_field.value and nova_senha_field.value:
+                if nova_senha_field.value != confirmar_senha_field.value:
+                    confirmar_senha_field.border_color = ft.colors.RED_400
+                    confirmar_senha_field.helper_text = "Senhas não conferem"
+                else:
+                    confirmar_senha_field.border_color = ft.colors.GREEN_400
+                    confirmar_senha_field.helper_text = "Senhas conferem ✓"
+            else:
+                confirmar_senha_field.border_color = None
+                confirmar_senha_field.helper_text = "Digite novamente a nova senha"
+            self.page.update()
+        
+        # Conecta validação
+        confirmar_senha_field.on_change = validar_confirmacao
+        nova_senha_field.on_change = validar_confirmacao
+        
+        # Conecta ação do botão
+        btn_confirmar.on_click = confirmar_troca
+        
+        # Modal principal - CAIXA AUMENTADA
         modal_senha = ft.AlertDialog(
             modal=True,
             title=ft.Row([
@@ -447,11 +541,15 @@ class ModernHeader:
             content=ft.Container(
                 content=ft.Column([
                     ft.Container(
-                        content=ft.Text(
-                            "🔐 Altere sua senha de acesso ao sistema:",
-                            size=14,
-                            color=ft.colors.GREY_700
-                        ),
+                        content=ft.Row([
+                            ft.Icon(ft.icons.SECURITY, color=ft.colors.GREEN_600, size=20),
+                            ft.Text(
+                                "🔐 Altere sua senha de acesso ao sistema:",
+                                size=14,
+                                color=ft.colors.GREY_700,
+                                weight=ft.FontWeight.W_500
+                            )
+                        ], spacing=8),
                         padding=ft.padding.only(bottom=15)
                     ),
                     senha_atual_field,
@@ -459,33 +557,38 @@ class ModernHeader:
                     nova_senha_field,
                     ft.Container(height=12),
                     confirmar_senha_field,
-                    ft.Container(height=15),
-                    error_text,
+                    ft.Container(height=10),
+                    
+                    # Dicas de segurança - MOVIDAS PARA CIMA
                     ft.Container(
                         content=ft.Column([
-                            ft.Text("💡 Requisitos da senha:", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREEN_600),
-                            ft.Text("• Mínimo de 6 caracteres", size=11, color=ft.colors.GREY_600),
-                            ft.Text("• Recomendado: letras, números e símbolos", size=11, color=ft.colors.GREY_600)
-                        ], spacing=2),
+                            ft.Row([
+                                ft.Icon(ft.icons.LIGHTBULB, color=ft.colors.GREEN_600, size=16),
+                                ft.Text("Dicas de Segurança:", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREEN_600)
+                            ], spacing=5),
+                            ft.Text("• Use uma senha forte e única", size=11, color=ft.colors.GREY_600),
+                            ft.Text("• Não compartilhe sua senha com ninguém", size=11, color=ft.colors.GREY_600),
+                            ft.Text("• A alteração é imediata no sistema", size=11, color=ft.colors.GREY_600)
+                        ], spacing=3),
                         padding=ft.padding.all(12),
                         bgcolor=ft.colors.GREEN_50,
                         border_radius=8,
                         border=ft.border.all(1, ft.colors.GREEN_200)
-                    )
+                    ),
+                    
+                    ft.Container(height=15),
+                    ft.Row([
+                        loading_indicator,
+                        error_text
+                    ], spacing=10)
                 ], tight=True),
-                width=370,
-                height=350,
+                width=400,  # AUMENTADO de 370 para 400
+                height=500, # AUMENTADO de 420 para 500
                 padding=20
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=cancelar),
-                ft.ElevatedButton(
-                    "Confirmar Alteração",
-                    on_click=confirmar_troca,
-                    bgcolor=ft.colors.GREEN_600,
-                    color=ft.colors.WHITE,
-                    icon=ft.icons.CHECK_CIRCLE
-                )
+                btn_confirmar
             ],
             shape=ft.RoundedRectangleBorder(radius=12)
         )
@@ -495,7 +598,7 @@ class ModernHeader:
         self.page.update()
     
     def _configuracoes(self):
-        """Modal de configurações - IMPLEMENTADO"""
+        """Modal de configurações com caixa ajustada"""
         
         # Carregar configurações existentes
         usuario = app_state.get_usuario_atual()
@@ -525,10 +628,10 @@ class ModernHeader:
                 
                 modal_config.open = False
                 self.page.update()
-                mostrar_mensagem(self.page, "⚙️ Configurações salvas com sucesso!")
+                mostrar_mensagem(self.page, "⚙️ Configurações salvas com sucesso!", "success")
                 
             except Exception as ex:
-                mostrar_mensagem(self.page, f"❌ Erro ao salvar configurações: {str(ex)}")
+                mostrar_mensagem(self.page, f"❌ Erro ao salvar configurações: {str(ex)}", "error")
         
         def resetar_config(e):
             tema_claro.value = True
@@ -536,6 +639,7 @@ class ModernHeader:
             auto_refresh.value = False
             self.page.update()
         
+        # Modal de configurações - CAIXA AUMENTADA
         modal_config = ft.AlertDialog(
             modal=True,
             title=ft.Row([
@@ -582,7 +686,7 @@ class ModernHeader:
                     
                     ft.Container(height=15),
                     
-                    # Informações do sistema
+                    # Informações do sistema - DENTRO DO CONTEÚDO
                     ft.Container(
                         content=ft.Column([
                             ft.Text("ℹ️ Informações do Sistema", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_600),
@@ -596,8 +700,8 @@ class ModernHeader:
                         border=ft.border.all(1, ft.colors.GREY_200)
                     )
                 ], tight=True),
-                width=380,
-                height=400,
+                width=420,  # AUMENTADO de 380 para 420
+                height=480, # AUMENTADO de 400 para 480
                 padding=20
             ),
             actions=[
@@ -641,10 +745,10 @@ class ModernHeader:
                     self.page.add(ft.Text("Logout realizado. Recarregue a página para fazer login novamente."))
                     self.page.update()
                 
-                mostrar_mensagem(self.page, "👋 Logout realizado com sucesso!")
+                mostrar_mensagem(self.page, "👋 Logout realizado com sucesso!", "success")
                 
             except Exception as ex:
-                mostrar_mensagem(self.page, f"❌ Erro ao fazer logout: {str(ex)}")
+                mostrar_mensagem(self.page, f"❌ Erro ao fazer logout: {str(ex)}", "error")
         
         modal = ft.AlertDialog(
             title=ft.Row([
@@ -682,3 +786,36 @@ class ModernHeader:
         """Fecha modal"""
         modal.open = False
         self.page.update()
+
+
+# Funções auxiliares para compatibilidade
+def get_password_service_status():
+    """Retorna status do serviço de senha"""
+    return {
+        'disponivel': PASSWORD_SERVICE_AVAILABLE,
+        'funcional': PASSWORD_SERVICE_AVAILABLE and suzano_password_service is not None
+    }
+
+
+def testar_servico_senha():
+    """Testa o serviço de senha"""
+    if not PASSWORD_SERVICE_AVAILABLE:
+        return {
+            'connected': False,
+            'message': 'Serviço não disponível',
+            'details': 'Biblioteca ou configuração ausente'
+        }
+    
+    try:
+        connected = suzano_password_service.testar_conexao()
+        return {
+            'connected': connected,
+            'message': 'Conectado com sucesso' if connected else 'Falha na conexão',
+            'details': 'SharePoint acessível' if connected else 'Verificar credenciais e rede'
+        }
+    except Exception as e:
+        return {
+            'connected': False,
+            'message': 'Erro no teste de conexão',
+            'details': str(e)
+        }
