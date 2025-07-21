@@ -1,5 +1,5 @@
 """
-Componente de tabela de justificativas para eventos - COM AUDITORIA INTEGRADA
+Componente de tabela de justificativas para eventos - VERSÃO COMPLETA COM AUDITORIA E MULTI-LOCALIZAÇÃO
 """
 import flet as ft
 import pandas as pd
@@ -9,7 +9,7 @@ from ...services.evento_processor import EventoProcessor
 from ...services.data_validator import DataValidator
 from ...services.data_formatter import DataFormatter
 from ...services.sharepoint_client import SharePointClient
-from ...services.audit_service import audit_service  # NOVO
+from ...services.audit_service import audit_service
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
 
 
@@ -49,10 +49,11 @@ class TabelaJustificativas:
             font_size = 14
             field_height = 42
         
-        # Determina motivos disponíveis
+        # Determina motivos disponíveis COM LOCALIZAÇÃO
         evento_info = EventoProcessor.parse_titulo_completo(evento)
         poi_amigavel = evento_info["poi_amigavel"]
-        motivos = EventoProcessor.determinar_motivos_por_poi(poi_amigavel)
+        localizacao = evento_info.get("localizacao", "RRP")  # NOVO: Extrai localização
+        motivos = EventoProcessor.determinar_motivos_por_poi(poi_amigavel, localizacao)  # NOVO: Passa localização
         
         # Verifica se usuário pode editar
         perfil = app_state.get_perfil_usuario()
@@ -129,7 +130,7 @@ class TabelaJustificativas:
         )
     
     def _normalizar_colunas(self, df_evento):
-        """Normaliza colunas do DataFrame (sem alterações)"""
+        """Normaliza colunas do DataFrame"""
         df_evento = df_evento.rename(columns={
             "Id": "ID", "id": "ID",
             "data/hora entrada": "Data/Hora Entrada",
@@ -150,7 +151,7 @@ class TabelaJustificativas:
     def _criar_linha_tabela(self, evento, row, motivos, pode_editar, 
                           placa_width, motivo_width, previsao_width, obs_width, 
                           font_size, field_height):
-        """Cria uma linha da tabela (sem alterações significativas)"""
+        """Cria uma linha da tabela"""
         
         evento_str = str(evento).strip()
         
@@ -177,7 +178,7 @@ class TabelaJustificativas:
     def _criar_campos_editaveis(self, row, motivos, chave_alteracao,
                                placa_width, motivo_width, previsao_width, obs_width,
                                font_size, field_height):
-        """Cria campos editáveis para uma linha (sem alterações)"""
+        """Cria campos editáveis para uma linha"""
         
         campos_desabilitados = self.processando_envio
         
@@ -232,7 +233,7 @@ class TabelaJustificativas:
                 obs_field.border_color = None
                 icone_alerta.visible = False
             
-            print(f"🔄 [UI] Alteração motivo: {chave_alteracao} = {motivo_selecionado}")
+            # REMOVIDO: Debug log
             app_state.atualizar_alteracao(chave_alteracao, "Motivo", motivo_selecionado)
             self.page.update()
         
@@ -251,6 +252,7 @@ class TabelaJustificativas:
                 obs_field.border_color = None
                 icone_alerta.visible = False
             
+            # REMOVIDO: Debug log
             app_state.atualizar_alteracao(chave_alteracao, "Observacoes", obs_value)
             self.page.update()
         
@@ -308,7 +310,7 @@ class TabelaJustificativas:
         ]
     
     def _criar_campos_readonly(self, row, placa_width, font_size):
-        """Cria campos apenas leitura (sem alterações)"""
+        """Cria campos apenas leitura"""
         return [
             ft.DataCell(ft.Container(
                 ft.Text(DataFormatter.safe_str(row["Placa"]), size=15, weight=ft.FontWeight.W_500), 
@@ -334,7 +336,7 @@ class TabelaJustificativas:
         ]
     
     def _criar_campo_previsao(self, valor_inicial, chave_alteracao, row, previsao_width, font_size, field_height):
-        """Cria campo de previsão com modal personalizado (sem alterações significativas)"""
+        """Cria campo de previsão com modal personalizado para seleção de data/hora"""
         
         # Parse do valor inicial
         display_value = ""
@@ -389,7 +391,7 @@ class TabelaJustificativas:
         ], spacing=2)
 
     def _mostrar_modal_data_hora(self, campo_display, chave_alteracao, row):
-        """Mostra modal personalizado para seleção de data/hora (sem alterações)"""
+        """Mostra modal personalizado para seleção de data/hora com dropdown de horários"""
         
         # Função para gerar opções de horário (meia em meia hora)
         def gerar_opcoes_horario():
@@ -692,7 +694,7 @@ class TabelaJustificativas:
         return ft.Container()
     
     def _enviar_justificativas(self, evento, df_evento):
-        """ATUALIZADO: Envia justificativas com auditoria integrada"""
+        """Envia justificativas para o SharePoint com bloqueio de interface"""
         
         # Verifica se já está processando
         if self.processando_envio:
@@ -729,7 +731,7 @@ class TabelaJustificativas:
             print(f"⚠️ [PROCESSAMENTO] Erro ao atualizar interface: {e}")
     
     def _processar_envio_com_auditoria(self, evento, df_evento):
-        """NOVO: Processa envio das justificativas COM auditoria integrada"""
+        """Processa envio das justificativas COM auditoria integrada"""
         
         # Processa em background
         import threading
@@ -802,7 +804,7 @@ class TabelaJustificativas:
         thread.start()
 
     def _mostrar_modal_validacao(self, erros_validacao):
-        """Mostra modal de erro com validações pendentes (sem alterações)"""
+        """Mostra modal de erro com validações pendentes"""
         
         def fechar_erro(e):
             modal_erro.open = False
@@ -910,7 +912,7 @@ class TabelaJustificativas:
         self.page.update()
     
     def _aprovar_evento(self, evento):
-        """ATUALIZADO: Aprova um evento COM auditoria"""
+        """Aprova um evento COM auditoria"""
         def confirmar_aprovacao(e):
             # Fecha o dialog de confirmação
             self.page.dialog.open = False
@@ -1031,7 +1033,7 @@ class TabelaJustificativas:
         self.page.update()
     
     def _reprovar_evento(self, evento):
-        """ATUALIZADO: Reprova um evento COM auditoria"""
+        """Reprova um evento COM auditoria"""
         justificativa_field = ft.TextField(
             label="Motivo da reprovação", 
             multiline=True, 

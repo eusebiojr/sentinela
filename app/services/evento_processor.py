@@ -1,21 +1,34 @@
 """
-Processador de eventos - lógica de negócio para eventos
+Processador de eventos - lógica de negócio para eventos - COM SUPORTE MULTI-LOCALIZAÇÃO
 """
 import pandas as pd
 import pytz
 from datetime import datetime
 from typing import Dict, Any, List
-from ..config.settings import config
+
+# NOVO: Import do processador de localização
+try:
+    from .location_processor import location_processor
+    LOCATION_PROCESSOR_AVAILABLE = True
+except ImportError:
+    LOCATION_PROCESSOR_AVAILABLE = False
 
 
 class EventoProcessor:
-    """Classe especializada para processamento de eventos"""
+    """Classe especializada para processamento de eventos com suporte multi-localização"""
     
     @staticmethod
     def parse_titulo_completo(titulo: str) -> Dict[str, Any]:
-        """Parse completo do título do evento com todas as informações"""
+        """Parse completo do título do evento COM suporte a localização"""
+        
+        # NOVO: Usa processador de localização se disponível
+        if LOCATION_PROCESSOR_AVAILABLE:
+            return location_processor.parse_titulo_com_localizacao(titulo)
+        
+        # FALLBACK: Lógica original (apenas RRP)
         resultado = {
             "titulo_original": titulo,
+            "localizacao": "RRP",  # Assume RRP como padrão
             "tipo_amigavel": "",
             "poi_amigavel": "",
             "datahora_fmt": "",
@@ -33,7 +46,7 @@ class EventoProcessor:
             data_str = partes[-2]
             hora_str = partes[-1]
             
-            # Mapeamento de POIs
+            # Mapeamento de POIs (original)
             poi_map = {
                 "PAAGUACLARA": "P.A. Água Clara",
                 "CARREGAMENTOFABRICARRP": "Fábrica RRP",
@@ -78,7 +91,7 @@ class EventoProcessor:
     
     @staticmethod
     def calcular_tempo_decorrido(data_entrada: str) -> Dict[str, Any]:
-        """Calcula tempo decorrido desde a entrada"""
+        """Calcula tempo decorrido desde a entrada (sem alterações)"""
         resultado = {
             "horas": 0,
             "texto_formatado": "0h",
@@ -150,11 +163,19 @@ class EventoProcessor:
         return resultado
     
     @staticmethod
-    def determinar_motivos_por_poi(poi_amigavel: str) -> List[str]:
-        """Determina motivos disponíveis baseado no POI"""
-        if poi_amigavel == "P.A. Água Clara":
+    def determinar_motivos_por_poi(poi_amigavel: str, localizacao: str = "RRP") -> List[str]:
+        """Determina motivos disponíveis baseado no POI COM suporte a localização"""
+        
+        # NOVO: Usa processador de localização se disponível
+        if LOCATION_PROCESSOR_AVAILABLE:
+            return location_processor.obter_motivos_por_poi_e_localizacao(poi_amigavel, localizacao)
+        
+        # FALLBACK: Lógica original
+        from ..config.settings import config
+        
+        if "P.A. Água Clara" in poi_amigavel:
             return config.motivos_poi["PA Agua Clara"]
-        elif "MANUTEN" in poi_amigavel.upper():
+        elif "MANUTEN" in poi_amigavel.upper() or "OFICINA" in poi_amigavel.upper():
             return config.motivos_poi["Manutenção"]
         elif "TERMINAL" in poi_amigavel.upper():
             return config.motivos_poi["Terminal"]
@@ -164,8 +185,16 @@ class EventoProcessor:
             return ["Outros"]
     
     @staticmethod
-    def validar_acesso_usuario(poi_amigavel: str, areas_usuario: List[str]) -> bool:
-        """Verifica se usuário tem acesso ao POI"""
+    def validar_acesso_usuario(poi_amigavel: str, areas_usuario: List[str], localizacao: str = "RRP") -> bool:
+        """Verifica se usuário tem acesso ao POI COM suporte a localização"""
+        
+        # NOVO: Usa processador de localização se disponível
+        if LOCATION_PROCESSOR_AVAILABLE:
+            return location_processor.validar_acesso_usuario_por_localizacao(
+                poi_amigavel, localizacao, areas_usuario
+            )
+        
+        # FALLBACK: Lógica original
         if not areas_usuario:
             return False
         
@@ -178,7 +207,7 @@ class EventoProcessor:
     
     @staticmethod
     def calcular_status_evento(df_evento: pd.DataFrame, alteracoes_pendentes: Dict) -> str:
-        """Calcula status do evento baseado no preenchimento de TODOS os registros"""
+        """Calcula status do evento baseado no preenchimento de TODOS os registros (sem alterações)"""
         if df_evento.empty:
             return "Pendente"
 
