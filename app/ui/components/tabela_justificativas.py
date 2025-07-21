@@ -1,5 +1,5 @@
 """
-Componente de tabela de justificativas para eventos - VERSÃO COMPLETA COM MODAL
+Componente de tabela de justificativas para eventos - COM AUDITORIA INTEGRADA
 """
 import flet as ft
 import pandas as pd
@@ -9,11 +9,12 @@ from ...services.evento_processor import EventoProcessor
 from ...services.data_validator import DataValidator
 from ...services.data_formatter import DataFormatter
 from ...services.sharepoint_client import SharePointClient
+from ...services.audit_service import audit_service  # NOVO
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
 
 
 class TabelaJustificativas:
-    """Componente para exibir e editar justificativas de eventos"""
+    """Componente para exibir e editar justificativas de eventos com auditoria"""
     
     def __init__(self, page: ft.Page, app_controller):
         self.page = page
@@ -21,7 +22,7 @@ class TabelaJustificativas:
         self.processando_envio = False
         
     def criar_tabela(self, evento: str, df_evento: pd.DataFrame):
-        """Cria tabela completa de justificativas"""
+        """Cria tabela completa de justificativas sem painel de auditoria"""
         
         # Configurações responsivas
         screen_size = get_screen_size(self.page.window_width)
@@ -117,7 +118,7 @@ class TabelaJustificativas:
         # Botões de ação
         botoes = self._criar_botoes_acao(evento, df_evento, pode_editar)
         
-        # Container final
+        # Container final SEM painel de auditoria
         return ft.Container(
             content=ft.Column([
                 tabela_container, 
@@ -128,7 +129,7 @@ class TabelaJustificativas:
         )
     
     def _normalizar_colunas(self, df_evento):
-        """Normaliza colunas do DataFrame"""
+        """Normaliza colunas do DataFrame (sem alterações)"""
         df_evento = df_evento.rename(columns={
             "Id": "ID", "id": "ID",
             "data/hora entrada": "Data/Hora Entrada",
@@ -149,7 +150,7 @@ class TabelaJustificativas:
     def _criar_linha_tabela(self, evento, row, motivos, pode_editar, 
                           placa_width, motivo_width, previsao_width, obs_width, 
                           font_size, field_height):
-        """Cria uma linha da tabela"""
+        """Cria uma linha da tabela (sem alterações significativas)"""
         
         evento_str = str(evento).strip()
         
@@ -176,7 +177,7 @@ class TabelaJustificativas:
     def _criar_campos_editaveis(self, row, motivos, chave_alteracao,
                                placa_width, motivo_width, previsao_width, obs_width,
                                font_size, field_height):
-        """Cria campos editáveis para uma linha"""
+        """Cria campos editáveis para uma linha (sem alterações)"""
         
         campos_desabilitados = self.processando_envio
         
@@ -250,7 +251,6 @@ class TabelaJustificativas:
                 obs_field.border_color = None
                 icone_alerta.visible = False
             
-            print(f"🔄 [UI] Alteração observação: {chave_alteracao} = {obs_value}")
             app_state.atualizar_alteracao(chave_alteracao, "Observacoes", obs_value)
             self.page.update()
         
@@ -308,7 +308,7 @@ class TabelaJustificativas:
         ]
     
     def _criar_campos_readonly(self, row, placa_width, font_size):
-        """Cria campos apenas leitura"""
+        """Cria campos apenas leitura (sem alterações)"""
         return [
             ft.DataCell(ft.Container(
                 ft.Text(DataFormatter.safe_str(row["Placa"]), size=15, weight=ft.FontWeight.W_500), 
@@ -334,7 +334,7 @@ class TabelaJustificativas:
         ]
     
     def _criar_campo_previsao(self, valor_inicial, chave_alteracao, row, previsao_width, font_size, field_height):
-        """Cria campo de previsão com modal personalizado para seleção de data/hora"""
+        """Cria campo de previsão com modal personalizado (sem alterações significativas)"""
         
         # Parse do valor inicial
         display_value = ""
@@ -389,7 +389,7 @@ class TabelaJustificativas:
         ], spacing=2)
 
     def _mostrar_modal_data_hora(self, campo_display, chave_alteracao, row):
-        """Mostra modal personalizado para seleção de data/hora com dropdown de horários"""
+        """Mostra modal personalizado para seleção de data/hora (sem alterações)"""
         
         # Função para gerar opções de horário (meia em meia hora)
         def gerar_opcoes_horario():
@@ -692,7 +692,7 @@ class TabelaJustificativas:
         return ft.Container()
     
     def _enviar_justificativas(self, evento, df_evento):
-        """Envia justificativas para o SharePoint com bloqueio de interface"""
+        """ATUALIZADO: Envia justificativas com auditoria integrada"""
         
         # Verifica se já está processando
         if self.processando_envio:
@@ -716,7 +716,7 @@ class TabelaJustificativas:
         
         # Se validação passou, processa envio
         mostrar_mensagem(self.page, "⏳ Enviando justificativas...", "info")
-        self._processar_envio(evento, df_evento)
+        self._processar_envio_com_auditoria(evento, df_evento)
 
     def _ativar_modo_processamento(self, ativo: bool):
         """Ativa/desativa modo processamento - bloqueia/desbloqueia interface"""
@@ -728,8 +728,81 @@ class TabelaJustificativas:
         except Exception as e:
             print(f"⚠️ [PROCESSAMENTO] Erro ao atualizar interface: {e}")
     
+    def _processar_envio_com_auditoria(self, evento, df_evento):
+        """NOVO: Processa envio das justificativas COM auditoria integrada"""
+        
+        # Processa em background
+        import threading
+        def processar():
+            try:
+                # Verifica se há alterações pendentes para este evento
+                alteracoes_evento = {k: v for k, v in app_state.alteracoes_pendentes.items() 
+                                if k.startswith(f"{evento}_")}
+                
+                if not alteracoes_evento:
+                    mostrar_mensagem(self.page, "⚠️ Nenhuma alteração detectada.", "warning")
+                    # Desativa modo processamento
+                    self._ativar_modo_processamento(False)
+                    return
+                
+                # NOVO: Usa função simplificada que SEMPRE atualiza timestamp
+                atualizacoes_lote = audit_service.processar_preenchimento_com_auditoria(
+                    evento, df_evento, app_state.alteracoes_pendentes
+                )
+                
+                # Envia todas as alterações em paralelo
+                if atualizacoes_lote:
+                    print(f"📊 Enviando {len(atualizacoes_lote)} registros com auditoria...")
+                    registros_atualizados = SharePointClient.atualizar_lote(atualizacoes_lote)
+                    print(f"✅ {registros_atualizados} registros atualizados no SharePoint")
+                    
+                    # Atualiza status de TODOS os registros do evento
+                    status_evento = EventoProcessor.calcular_status_evento(df_evento, app_state.alteracoes_pendentes)
+                    
+                    atualizacoes_status = []
+                    for _, row in df_evento.iterrows():
+                        row_id = str(row["ID"]).strip()
+                        dados_status = {"Status": status_evento}
+                        atualizacoes_status.append((int(row_id), dados_status))
+                    
+                    # Envia atualizações de status
+                    if atualizacoes_status:
+                        print(f"📊 Atualizando status para {len(atualizacoes_status)} registros...")
+                        SharePointClient.atualizar_lote(atualizacoes_status)
+                    
+                    # Limpa alterações pendentes deste evento
+                    app_state.limpar_alteracoes_evento(evento)
+                    
+                    if registros_atualizados > 0:
+                        mostrar_mensagem(self.page, f"✅ {registros_atualizados} registro(s) atualizado(s) com sucesso!", "success")
+                        
+                        # Pequeno delay antes de recarregar (melhor UX)
+                        import time
+                        time.sleep(0.5)
+                        
+                        # Atualiza dados e interface
+                        self.app_controller.atualizar_dados()
+                    else:
+                        mostrar_mensagem(self.page, "❌ Nenhum registro foi atualizado no SharePoint", "error")
+                        # Desativa modo processamento em caso de erro
+                        self._ativar_modo_processamento(False)
+                else:
+                    mostrar_mensagem(self.page, "⚠️ Nenhuma alteração para processar.", "warning")
+                    # Desativa modo processamento
+                    self._ativar_modo_processamento(False)
+                
+            except Exception as e:
+                print(f"❌ Erro no processamento: {str(e)}")
+                mostrar_mensagem(self.page, f"❌ Erro ao enviar justificativas: {str(e)}", "error")
+                # Desativa modo processamento em caso de erro
+                self._ativar_modo_processamento(False)
+        
+        # Executa em thread separada
+        thread = threading.Thread(target=processar, daemon=True)
+        thread.start()
+
     def _mostrar_modal_validacao(self, erros_validacao):
-        """Mostra modal de erro com validações pendentes"""
+        """Mostra modal de erro com validações pendentes (sem alterações)"""
         
         def fechar_erro(e):
             modal_erro.open = False
@@ -836,104 +909,8 @@ class TabelaJustificativas:
         modal_erro.open = True
         self.page.update()
     
-    def _processar_envio(self, evento, df_evento):
-        """Processa envio das justificativas com controle de bloqueio"""
-        
-        # Processa em background
-        import threading
-        def processar():
-            try:
-                registros_atualizados = 0
-                
-                # Verifica se há alterações pendentes para este evento
-                alteracoes_evento = {k: v for k, v in app_state.alteracoes_pendentes.items() 
-                                if k.startswith(f"{evento}_")}
-                
-                if not alteracoes_evento:
-                    mostrar_mensagem(self.page, "⚠️ Nenhuma alteração detectada.", "warning")
-                    # Desativa modo processamento
-                    self._ativar_modo_processamento(False)
-                    return
-                
-                # Coleta todas as atualizações em lote
-                atualizacoes_lote = []
-                status_evento = EventoProcessor.calcular_status_evento(df_evento, app_state.alteracoes_pendentes)
-                
-                # Processa registros com alterações
-                for _, row in df_evento.iterrows():
-                    row_id = str(row["ID"]).strip()
-                    chave_alteracao = f"{evento}_{row_id}"
-                    
-                    if chave_alteracao in app_state.alteracoes_pendentes:
-                        alteracoes = app_state.alteracoes_pendentes[chave_alteracao]
-                        
-                        # Valores atuais do DataFrame
-                        valor_motivo_df = row.get("Motivo", "")
-                        valor_previsao_df = row.get("Previsao_Liberacao", "")
-                        valor_obs_df = row.get("Observacoes", "")
-                        
-                        # Aplica alterações pendentes
-                        valor_motivo_final = alteracoes.get("Motivo", valor_motivo_df)
-                        valor_previsao_final = alteracoes.get("Previsao_Liberacao", valor_previsao_df)
-                        valor_obs_final = alteracoes.get("Observacoes", valor_obs_df)
-                        
-                        # Prepara dados para SharePoint
-                        dados = {
-                            "Motivo": DataFormatter.formatar_valor_sharepoint(valor_motivo_final),
-                            "Previsao_Liberacao": DataFormatter.formatar_valor_sharepoint(valor_previsao_final, "Previsao_Liberacao"),
-                            "Observacoes": DataFormatter.formatar_valor_sharepoint(valor_obs_final),
-                            "Status": status_evento
-                        }
-                                                
-                        atualizacoes_lote.append((int(row_id), dados))
-                
-                # Envia todas as alterações em paralelo
-                if atualizacoes_lote:
-                    print(f"📊 Enviando {len(atualizacoes_lote)} registros...")
-                    registros_atualizados = SharePointClient.atualizar_lote(atualizacoes_lote)
-                    print(f"✅ {registros_atualizados} registros atualizados no SharePoint")
-                
-                # Atualiza status de TODOS os registros do evento
-                atualizacoes_status = []
-                for _, row in df_evento.iterrows():
-                    row_id = str(row["ID"]).strip()
-                    dados_status = {"Status": status_evento}
-                    atualizacoes_status.append((int(row_id), dados_status))
-                
-                # Envia atualizações de status
-                if atualizacoes_status:
-                    print(f"📊 Atualizando status para {len(atualizacoes_status)} registros...")
-                    SharePointClient.atualizar_lote(atualizacoes_status)
-                
-                # Limpa alterações pendentes deste evento
-                app_state.limpar_alteracoes_evento(evento)
-                
-                if registros_atualizados > 0:
-                    mostrar_mensagem(self.page, f"✅ {registros_atualizados} registro(s) atualizado(s) com sucesso!", "success")
-                    
-                    # Pequeno delay antes de recarregar (melhor UX)
-                    import time
-                    time.sleep(0.5)
-                    
-                    # Atualiza dados e interface (isso vai recriar a tabela com processando_envio = False)
-                    self.app_controller.atualizar_dados()
-                else:
-                    mostrar_mensagem(self.page, "❌ Nenhum registro foi atualizado no SharePoint", "error")
-                    # Desativa modo processamento em caso de erro
-                    self._ativar_modo_processamento(False)
-                
-            except Exception as e:
-                print(f"❌ Erro no processamento: {str(e)}")
-                mostrar_mensagem(self.page, f"❌ Erro ao enviar justificativas: {str(e)}", "error")
-                # Desativa modo processamento em caso de erro
-                self._ativar_modo_processamento(False)
-        
-        # Executa em thread separada
-        thread = threading.Thread(target=processar, daemon=True)
-        thread.start()
-
     def _aprovar_evento(self, evento):
-        """Aprova um evento"""
+        """ATUALIZADO: Aprova um evento COM auditoria"""
         def confirmar_aprovacao(e):
             # Fecha o dialog de confirmação
             self.page.dialog.open = False
@@ -950,11 +927,10 @@ class TabelaJustificativas:
                     if df_evento.empty:
                         return
 
-                    # Coleta todas as atualizações em lote
-                    atualizacoes_aprovacao = []
-                    for _, row in df_evento.iterrows():
-                        dados = {"Status": "Aprovado"}
-                        atualizacoes_aprovacao.append((int(row["ID"]), dados))
+                    # NOVO: Usa função simplificada para aprovação
+                    atualizacoes_aprovacao = audit_service.processar_aprovacao_com_auditoria(
+                        df_evento, "Aprovado"
+                    )
 
                     # Envia todas as aprovações em paralelo
                     if atualizacoes_aprovacao:
@@ -1015,7 +991,7 @@ class TabelaJustificativas:
                         border_radius=6,
                         border=ft.border.all(1, ft.colors.BLUE_200)
                     ),
-                    ft.Container(height=5),
+                    ft.Container(height=8),
                     ft.Text(
                         "⚠️ Esta ação não pode ser desfeita.",
                         size=12,
@@ -1023,7 +999,7 @@ class TabelaJustificativas:
                         italic=True
                     )
                 ], tight=True),
-                width=400,
+                width=420,
                 padding=10
             ),
             actions=[
@@ -1055,7 +1031,7 @@ class TabelaJustificativas:
         self.page.update()
     
     def _reprovar_evento(self, evento):
-        """Reprova um evento"""
+        """ATUALIZADO: Reprova um evento COM auditoria"""
         justificativa_field = ft.TextField(
             label="Motivo da reprovação", 
             multiline=True, 
@@ -1082,11 +1058,10 @@ class TabelaJustificativas:
                 try:
                     df_evento = app_state.df_desvios[app_state.df_desvios["Titulo"] == evento]
                     
-                    # Coleta todas as atualizações em lote
-                    atualizacoes_reprovacao = []
-                    for _, row in df_evento.iterrows():
-                        dados = {"Status": "Reprovado", "Reprova": justificativa_field.value}
-                        atualizacoes_reprovacao.append((int(row["ID"]), dados))
+                    # NOVO: Usa função simplificada para reprovação
+                    atualizacoes_reprovacao = audit_service.processar_aprovacao_com_auditoria(
+                        df_evento, "Reprovado", justificativa_field.value
+                    )
                     
                     # Envia todas as reprovações em paralelo
                     if atualizacoes_reprovacao:
@@ -1108,28 +1083,58 @@ class TabelaJustificativas:
             modal.open = False
             self.page.update()
 
+        # Parse do evento para exibição
+        evento_info = EventoProcessor.parse_titulo_completo(evento)
+
         # Modal de reprovação
         modal = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Reprovar Evento", size=18, weight=ft.FontWeight.BOLD),
+            title=ft.Row([
+                ft.Icon(ft.icons.CANCEL, color=ft.colors.RED_600, size=24),
+                ft.Text("Reprovar Evento", size=18, weight=ft.FontWeight.BOLD, color=ft.colors.RED_600)
+            ], spacing=8),
             content=ft.Container(
                 content=ft.Column([
+                    ft.Container(
+                        content=ft.Column([
+                            ft.Text(
+                                f"📋 Evento:",
+                                size=12,
+                                color=ft.colors.BLUE_800,
+                                weight=ft.FontWeight.BOLD
+                            ),
+                            ft.Container(height=3),
+                            ft.Text(
+                                f"{evento_info['tipo_amigavel']} - {evento_info['poi_amigavel']} - {evento_info['datahora_fmt']}",
+                                size=14,
+                                color=ft.colors.BLUE_700,
+                                weight=ft.FontWeight.W_500
+                            )
+                        ], spacing=0),
+                        padding=ft.padding.all(12),
+                        bgcolor=ft.colors.BLUE_50,
+                        border_radius=6,
+                        border=ft.border.all(1, ft.colors.BLUE_200),
+                        margin=ft.margin.only(bottom=15)
+                    ),
                     ft.Text("Motivo da reprovação:", size=14, weight=ft.FontWeight.W_500),
                     ft.Container(height=10),
-                    justificativa_field
+                    justificativa_field,
+                    ft.Container(height=15)
                 ]),
                 width=800,
-                height=180,
+                height=220,
                 padding=10,
                 border_radius=4
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=fechar),
                 ft.ElevatedButton(
-                    "Confirmar", 
+                    "Confirmar Reprovação", 
                     on_click=confirmar, 
-                    bgcolor=ft.colors.BLUE_600, 
-                    color=ft.colors.WHITE
+                    bgcolor=ft.colors.RED_600, 
+                    color=ft.colors.WHITE,
+                    icon=ft.icons.CANCEL
                 )
             ],
             shape=ft.RoundedRectangleBorder(radius=4)
