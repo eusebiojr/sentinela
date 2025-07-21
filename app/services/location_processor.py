@@ -1,5 +1,5 @@
 """
-Processador de Localização - Suporte para RRP e TLS
+Processador de Localização - Suporte para RRP e TLS - CORRIGIDO
 """
 from typing import Dict, Any, List
 from ..config.logging_config import setup_logger
@@ -266,13 +266,13 @@ class LocationProcessor:
         for area in areas_normalizadas:
             if localizacao.lower() in area:
                 # Verifica se a área corresponde ao POI
-                if self._area_corresponde_poi(area, poi_amigavel):
+                if LocationProcessor._area_corresponde_poi(area, poi_amigavel):
                     return True
         
         # 2. FORMATO ANTIGO (Compatibilidade) - Apenas área genérica
         # Ex: "P.A. Água Clara", "fábrica", "Terminal Inocência"
         for area in areas_normalizadas:
-            if self._area_generica_corresponde_poi(area, poi_amigavel):
+            if LocationProcessor._area_generica_corresponde_poi(area, poi_amigavel):
                 return True
         
         # 3. ÁREAS ESPECIAIS

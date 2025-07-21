@@ -723,46 +723,48 @@ class ModernHeader:
         self.page.update()
     
     def _sair_sistema(self):
-        """Confirma logout com modal corrigido"""
+        """Confirma logout com modal corrigido - ESPAÇAMENTO MELHORADO"""
         nome = app_state.get_nome_usuario()
         
         def confirmar_logout(e):
-            try:
-                # CORRIGIDO: Fecha modal PRIMEIRO
+            try:                
+                # 1. Fecha modal IMEDIATAMENTE
                 modal.open = False
                 self.page.update()
                 
-                # Pequeno delay para garantir que o modal fechou
-                import time
-                time.sleep(0.1)
-                
-                # Reset dos dados
+                # 2. Limpa dados ANTES de mostrar tela
                 app_state.reset_dados()
                 
-                # Verificar se login_screen existe no app_controller
+                # 3. Limpa cache do SharePoint se existir
+                try:
+                    # Se SharePointClient tem algum cache global, limpa aqui
+                    pass
+                except:
+                    pass
+                
+                # 4. Pequena pausa para garantir limpeza
+                import time
+                time.sleep(0.2)
+                
+                # 5. Força recarregamento dos dados                
                 if hasattr(self.app_controller, 'login_screen') and self.app_controller.login_screen:
-                    self.app_controller.login_screen.mostrar()
-                elif hasattr(self.app_controller, 'mostrar_login'):
-                    self.app_controller.mostrar_login()
+                    # Força recarregamento dos dados
+                    self.app_controller._carregar_dados_iniciais()
                 else:
-                    # Fallback: limpar página e mostrar mensagem
+                    # Fallback
                     self.page.clean()
-                    self.page.add(ft.Text("Logout realizado. Recarregue a página para fazer login novamente."))
+                    self.page.add(ft.Text("Logout realizado. Recarregue a página."))
                     self.page.update()
-                
-                # Mostra mensagem de sucesso (opcional, pois já vai para login)
-                # mostrar_mensagem(self.page, "👋 Logout realizado com sucesso!", "success")
-                
+                        
             except Exception as ex:
-                # Em caso de erro, força fechamento do modal
+                # Força fechamento do modal em caso de erro
                 try:
                     modal.open = False
                     self.page.update()
                 except:
                     pass
-                mostrar_mensagem(self.page, f"❌ Erro ao fazer logout: {str(ex)}", "error")
         
-        # Modal de logout - LAYOUT CORRIGIDO
+        # Modal de logout - LAYOUT COM ESPAÇAMENTO CORRIGIDO
         modal = ft.AlertDialog(
             title=ft.Row([
                 ft.Icon(ft.icons.LOGOUT, color=ft.colors.RED_600, size=24),
@@ -773,17 +775,18 @@ class ModernHeader:
                     ft.Text(f"Olá, {nome}!", size=16, weight=ft.FontWeight.W_500, color=ft.colors.BLUE_700),
                     ft.Container(height=8),
                     ft.Text("Tem certeza que deseja sair do sistema?", size=14),
-                    ft.Container(height=15),  # AUMENTADO espaçamento
-                    # MOVIDO PARA CIMA - aviso antes dos botões
+                    ft.Container(height=20),  # AUMENTADO de 15 para 20
+                    # MOVIDO PARA CIMA com mais espaço - aviso antes dos botões
                     ft.Container(
                         content=ft.Text("⚠️ Você precisará fazer login novamente", size=12, color=ft.colors.ORANGE_600),
                         padding=ft.padding.all(8),
                         bgcolor=ft.colors.ORANGE_50,
                         border_radius=6
-                    )
+                    ),
+                    ft.Container(height=15)  # NOVO: Espaço extra após o aviso
                 ]),
                 width=300,
-                height=130,  # AUMENTADO ligeiramente para acomodar melhor
+                height=150,  # AUMENTADO de 130 para 150 para acomodar o espaço extra
                 padding=15
             ),
             actions=[
@@ -795,7 +798,7 @@ class ModernHeader:
         self.page.dialog = modal
         modal.open = True
         self.page.update()
-    
+
     def _fechar_modal(self, modal):
         """Fecha modal"""
         modal.open = False

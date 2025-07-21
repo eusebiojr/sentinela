@@ -1,0 +1,37 @@
+[21/07/2025 16:39:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163931.log
+[21/07/2025 16:39:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163931.log
+[21/07/2025 16:39:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163931.log
+[21/07/2025 16:39:31] INFO: 🔐 SuzanoPasswordService inicializado
+[21/07/2025 16:39:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163931.log
+[21/07/2025 16:39:31] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163931.log
+[21/07/2025 16:39:31] INFO: ✅ Dependência Office365 OK
+[21/07/2025 16:39:31] INFO: ✅ Serviço de senha OK
+[21/07/2025 16:39:31] INFO: 🔗 Conectando ao SharePoint...
+[21/07/2025 16:39:33] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[21/07/2025 16:39:33] INFO: ✅ Teste de conexão SharePoint passou
+[21/07/2025 16:39:33] INFO: 🔍 Verificando dependências do sistema...
+[21/07/2025 16:39:33] INFO: ✅ Dependência Office365 OK
+[21/07/2025 16:39:33] INFO: ✅ Serviço de senha OK
+[21/07/2025 16:39:33] INFO: 📁 Assets path: assets
+[21/07/2025 16:39:33] INFO: 🔧 Modo desenvolvimento local
+[21/07/2025 16:39:35] INFO: 🚀 Sentinela iniciando...
+[21/07/2025 16:39:35] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[21/07/2025 16:39:35] INFO: 🔐 Serviço de senha disponível
+[21/07/2025 16:39:35] INFO: 🔗 Conectando ao SharePoint...
+[21/07/2025 16:39:37] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[21/07/2025 16:39:37] INFO: ✅ Teste de conexão SharePoint passou
+[21/07/2025 16:39:37] INFO: ✅ Serviço de senha conectado e funcional
+[21/07/2025 16:39:37] INFO: 🚀 Sentinela iniciando...
+[21/07/2025 16:39:37] INFO: Carregando dados de usuários (fresh)...
+[21/07/2025 16:39:39] INFO: ✅ 24 registros carregados de 'UsuariosPainelTorre'
+[21/07/2025 16:39:39] INFO: ✅ 24 usuários carregados (fresh)
+[21/07/2025 16:39:52] INFO: Carregando dados completos...
+[21/07/2025 16:39:55] INFO: ✅ 138 registros carregados de 'Desvios'
+[21/07/2025 16:39:55] INFO: ✅ Dados carregados: 138 desvios
+[21/07/2025 16:40:02] INFO: Carregando dados de usuários (fresh)...
+[21/07/2025 16:40:04] INFO: ✅ 24 registros carregados de 'UsuariosPainelTorre'
+[21/07/2025 16:40:04] INFO: ✅ 24 usuários carregados (fresh)
+[21/07/2025 16:40:15] INFO: Carregando dados completos...
+[21/07/2025 16:40:17] INFO: ✅ 138 registros carregados de 'Desvios'
+[21/07/2025 16:40:17] INFO: ✅ Dados carregados: 138 desvios
+[21/07/2025 16:45:34] INFO: 🏁 Finalizando aplicação Sentinela

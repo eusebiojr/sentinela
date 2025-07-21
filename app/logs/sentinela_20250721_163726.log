@@ -1,0 +1,31 @@
+[21/07/2025 16:37:26] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163726.log
+[21/07/2025 16:37:26] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163726.log
+[21/07/2025 16:37:26] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163726.log
+[21/07/2025 16:37:26] INFO: 🔐 SuzanoPasswordService inicializado
+[21/07/2025 16:37:26] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163726.log
+[21/07/2025 16:37:26] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250721_163726.log
+[21/07/2025 16:37:26] INFO: ✅ Dependência Office365 OK
+[21/07/2025 16:37:26] INFO: ✅ Serviço de senha OK
+[21/07/2025 16:37:26] INFO: 🔗 Conectando ao SharePoint...
+[21/07/2025 16:37:28] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[21/07/2025 16:37:28] INFO: ✅ Teste de conexão SharePoint passou
+[21/07/2025 16:37:28] INFO: 🔍 Verificando dependências do sistema...
+[21/07/2025 16:37:28] INFO: ✅ Dependência Office365 OK
+[21/07/2025 16:37:28] INFO: ✅ Serviço de senha OK
+[21/07/2025 16:37:28] INFO: 📁 Assets path: assets
+[21/07/2025 16:37:28] INFO: 🔧 Modo desenvolvimento local
+[21/07/2025 16:37:30] INFO: 🚀 Sentinela iniciando...
+[21/07/2025 16:37:30] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[21/07/2025 16:37:30] INFO: 🔐 Serviço de senha disponível
+[21/07/2025 16:37:30] INFO: 🔗 Conectando ao SharePoint...
+[21/07/2025 16:37:32] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[21/07/2025 16:37:32] INFO: ✅ Teste de conexão SharePoint passou
+[21/07/2025 16:37:32] INFO: ✅ Serviço de senha conectado e funcional
+[21/07/2025 16:37:32] INFO: 🚀 Sentinela iniciando...
+[21/07/2025 16:37:32] INFO: Carregando dados de usuários (fresh)...
+[21/07/2025 16:37:35] INFO: ✅ 24 registros carregados de 'UsuariosPainelTorre'
+[21/07/2025 16:37:35] INFO: ✅ 24 usuários carregados (fresh)
+[21/07/2025 16:37:46] INFO: Carregando dados completos...
+[21/07/2025 16:37:48] INFO: ✅ 138 registros carregados de 'Desvios'
+[21/07/2025 16:37:49] INFO: ✅ Dados carregados: 138 desvios
+[21/07/2025 16:39:26] INFO: 🏁 Finalizando aplicação Sentinela

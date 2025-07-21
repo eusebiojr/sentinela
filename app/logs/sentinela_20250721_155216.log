@@ -36,3 +36,7 @@
 [21/07/2025 15:52:24] INFO: ✅ 24 usuários carregados
 [21/07/2025 15:52:25] INFO: ✅ 24 registros carregados de 'UsuariosPainelTorre'
 [21/07/2025 15:52:25] INFO: ✅ 24 usuários carregados
+[21/07/2025 16:00:13] INFO: Carregando dados completos...
+[21/07/2025 16:00:16] INFO: ✅ 211 registros carregados de 'Desvios'
+[21/07/2025 16:00:16] INFO: ✅ Dados carregados: 211 desvios
+[21/07/2025 16:06:32] INFO: 🏁 Finalizando aplicação Sentinela
