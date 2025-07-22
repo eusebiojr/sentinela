@@ -391,9 +391,131 @@ def obter_motivos_por_poi_e_localizacao(poi_amigavel: str, localizacao: str) -> 
     return location_processor.obter_motivos_por_poi_e_localizacao(poi_amigavel, localizacao)
 
 
-def validar_acesso_usuario_por_localizacao(poi_amigavel: str, localizacao: str, areas_usuario: List[str]) -> bool:
-    """Valida acesso considerando localização"""
-    return location_processor.validar_acesso_usuario_por_localizacao(poi_amigavel, localizacao, areas_usuario)
+"""
+Correção da validação de acesso no LocationProcessor
+Substitua o método validar_acesso_usuario_por_localizacao no arquivo:
+app/services/location_processor.py (linha ~200-250)
+"""
+
+@staticmethod
+def validar_acesso_usuario_por_localizacao(
+    poi_amigavel: str, 
+    localizacao: str, 
+    areas_usuario: List[str]
+) -> bool:
+    """
+    Verifica se usuário tem acesso ao POI considerando localização
+    VERSÃO CORRIGIDA - Match mais rigoroso para evitar conflitos
+    """
+    if not areas_usuario:
+        return False
+    
+    # Normaliza áreas do usuário
+    areas_normalizadas = [area.strip().lower() for area in areas_usuario]
+    poi_lower = poi_amigavel.lower()
+    
+    print(f"🔍 DEBUG ACESSO: POI='{poi_amigavel}' | Áreas={areas_usuario}")  # DEBUG temporário
+    
+    # 1. FORMATO NOVO (Preferido) - Match EXATO com localização
+    for area in areas_normalizadas:
+        if localizacao.lower() in area:
+            # Match rigoroso por categoria E localização
+            acesso_concedido = LocationProcessor._validar_acesso_rigoroso(area, poi_lower, localizacao.lower())
+            if acesso_concedido:
+                print(f"✅ ACESSO CONCEDIDO (novo): {area} -> {poi_amigavel}")  # DEBUG
+                return True
+    
+    # 2. FORMATO ANTIGO (Compatibilidade) - Match mais específico
+    for area in areas_normalizadas:
+        if not any(loc in area for loc in ["rrp", "tls"]):  # Só processa se não tem localização
+            acesso_concedido = LocationProcessor._validar_acesso_legado_rigoroso(area, poi_lower)
+            if acesso_concedido:
+                print(f"✅ ACESSO CONCEDIDO (legado): {area} -> {poi_amigavel}")  # DEBUG
+                return True
+    
+    # 3. ÁREAS ESPECIAIS
+    for area in areas_normalizadas:
+        if area in ["geral", "all", "todos", "todas"]:
+            print(f"✅ ACESSO CONCEDIDO (especial): {area}")  # DEBUG
+            return True
+    
+    print(f"❌ ACESSO NEGADO: {areas_usuario} não tem acesso a {poi_amigavel}")  # DEBUG
+    return False
+
+@staticmethod
+def _validar_acesso_rigoroso(area_normalizada: str, poi_lower: str, localizacao_lower: str) -> bool:
+    """
+    Validação rigorosa para formato novo (Área + Localização)
+    """
+    # Remove localização da área para comparação limpa
+    area_sem_localizacao = area_normalizada.replace(f" {localizacao_lower}", "").strip()
+    
+    # Mapeamentos EXATOS por categoria
+    if "fábrica" in area_sem_localizacao or "fabrica" in area_sem_localizacao:
+        # FÁBRICA: só aceita se POI contém fábrica/carregamento
+        return any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+    
+    elif "terminal" in area_sem_localizacao:
+        # TERMINAL: só aceita se POI contém terminal/inocência/descarga
+        return any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+    
+    elif any(palavra in area_sem_localizacao for palavra in ["pa agua clara", "agua clara"]):
+        # P.A. ÁGUA CLARA: só aceita se POI contém água clara/p.a.
+        return any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
+    
+    elif any(palavra in area_sem_localizacao for palavra in ["manutenção", "manutencao", "oficina"]):
+        # MANUTENÇÃO: só aceita se POI contém oficina/manutenção
+        return any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+    
+    return False
+
+@staticmethod  
+def _validar_acesso_legado_rigoroso(area_normalizada: str, poi_lower: str) -> bool:
+    """
+    Validação rigorosa para formato antigo (sem localização específica)
+    """
+    # FÁBRICA - Match EXATO
+    if "fábrica" in area_normalizada or "fabrica" in area_normalizada:
+        # Só concede acesso se POI é REALMENTE de fábrica
+        is_fabrica = any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+        # E NÃO é de outras categorias
+        not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+        not_pa = not any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
+        not_oficina = not any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+        
+        return is_fabrica and not_terminal and not_pa and not_oficina
+    
+    # TERMINAL - Match EXATO
+    elif any(palavra in area_normalizada for palavra in ["terminal", "inocência", "inocencia"]):
+        is_terminal = any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+        # E NÃO é de outras categorias
+        not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+        not_pa = not any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
+        not_oficina = not any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+        
+        return is_terminal and not_fabrica and not_pa and not_oficina
+    
+    # P.A. ÁGUA CLARA - Match EXATO
+    elif any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "água clara"]):
+        is_pa = any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
+        # E NÃO é de outras categorias
+        not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+        not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+        not_oficina = not any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+        
+        return is_pa and not_fabrica and not_terminal and not_oficina
+    
+    # MANUTENÇÃO/OFICINA - Match EXATO
+    elif any(palavra in area_normalizada for palavra in ["oficina", "manutenção", "manutencao"]):
+        is_oficina = any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+        # E NÃO é de outras categorias
+        not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+        not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+        not_pa = not any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
+        
+        return is_oficina and not_fabrica and not_terminal and not_pa
+    
+    return False
 
 
 def obter_areas_disponiveis() -> Dict[str, List[str]]:

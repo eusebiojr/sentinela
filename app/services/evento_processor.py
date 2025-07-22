@@ -185,25 +185,65 @@ class EventoProcessor:
         else:
             return ["Outros"]
     
+    """
+Correção do EventoProcessor para validação rigorosa
+Substitua o método validar_acesso_usuario no arquivo:
+app/services/evento_processor.py (linha ~195-210)
+"""
+
     @staticmethod
     def validar_acesso_usuario(poi_amigavel: str, areas_usuario: List[str], localizacao: str = "RRP") -> bool:
-        """Verifica se usuário tem acesso ao POI COM suporte a localização"""
-        
-        # NOVO: Usa processador de localização se disponível
-        if LOCATION_PROCESSOR_AVAILABLE:
-            return location_processor.validar_acesso_usuario_por_localizacao(
-                poi_amigavel, localizacao, areas_usuario
-            )
-        
-        # FALLBACK: Lógica original
+        """
+        Verifica se usuário tem acesso ao POI - VERSÃO RIGOROSA
+        """
         if not areas_usuario:
             return False
         
+        poi_lower = poi_amigavel.lower()
+        
+        print(f"🔍 DEBUG EVENTO: POI='{poi_amigavel}' | Áreas={areas_usuario}")  # DEBUG temporário
+        
         for area in areas_usuario:
-            if (area.strip().lower() in poi_amigavel.strip().lower() or 
-                poi_amigavel.strip().lower() in area.strip().lower()):
+            area_normalizada = area.strip().lower()
+            
+            # VALIDAÇÃO RIGOROSA - cada categoria só acessa o que é dela
+            
+            # FÁBRICA - só acessa fábrica, não terminal
+            if "fábrica" in area_normalizada or "fabrica" in area_normalizada:
+                is_fabrica = any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+                not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+                if is_fabrica and not_terminal:
+                    print(f"✅ ACESSO FÁBRICA: {area} -> {poi_amigavel}")  # DEBUG
+                    return True
+            
+            # TERMINAL - só acessa terminal, não fábrica  
+            elif "terminal" in area_normalizada or "inocência" in area_normalizada or "inocencia" in area_normalizada:
+                is_terminal = any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+                not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+                if is_terminal and not_fabrica:
+                    print(f"✅ ACESSO TERMINAL: {area} -> {poi_amigavel}")  # DEBUG
+                    return True
+            
+            # P.A. - só acessa P.A.
+            elif any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "água clara", "pa "]):
+                is_pa = any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
+                if is_pa:
+                    print(f"✅ ACESSO P.A.: {area} -> {poi_amigavel}")  # DEBUG
+                    return True
+            
+            # OFICINA/MANUTENÇÃO - só acessa oficina
+            elif any(palavra in area_normalizada for palavra in ["oficina", "manutenção", "manutencao"]):
+                is_oficina = any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+                if is_oficina:
+                    print(f"✅ ACESSO OFICINA: {area} -> {poi_amigavel}")  # DEBUG
+                    return True
+            
+            # ÁREAS ESPECIAIS
+            elif area_normalizada in ["geral", "all", "todos", "todas"]:
+                print(f"✅ ACESSO ESPECIAL: {area}")  # DEBUG
                 return True
         
+        print(f"❌ ACESSO NEGADO RIGOROSO: {areas_usuario} não acessa {poi_amigavel}")  # DEBUG
         return False
     
     @staticmethod
