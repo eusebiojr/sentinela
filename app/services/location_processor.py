@@ -414,15 +414,12 @@ def validar_acesso_usuario_por_localizacao(
     areas_normalizadas = [area.strip().lower() for area in areas_usuario]
     poi_lower = poi_amigavel.lower()
     
-    print(f"🔍 DEBUG ACESSO: POI='{poi_amigavel}' | Áreas={areas_usuario}")  # DEBUG temporário
-    
     # 1. FORMATO NOVO (Preferido) - Match EXATO com localização
     for area in areas_normalizadas:
         if localizacao.lower() in area:
             # Match rigoroso por categoria E localização
             acesso_concedido = LocationProcessor._validar_acesso_rigoroso(area, poi_lower, localizacao.lower())
             if acesso_concedido:
-                print(f"✅ ACESSO CONCEDIDO (novo): {area} -> {poi_amigavel}")  # DEBUG
                 return True
     
     # 2. FORMATO ANTIGO (Compatibilidade) - Match mais específico
@@ -430,16 +427,13 @@ def validar_acesso_usuario_por_localizacao(
         if not any(loc in area for loc in ["rrp", "tls"]):  # Só processa se não tem localização
             acesso_concedido = LocationProcessor._validar_acesso_legado_rigoroso(area, poi_lower)
             if acesso_concedido:
-                print(f"✅ ACESSO CONCEDIDO (legado): {area} -> {poi_amigavel}")  # DEBUG
                 return True
     
     # 3. ÁREAS ESPECIAIS
     for area in areas_normalizadas:
         if area in ["geral", "all", "todos", "todas"]:
-            print(f"✅ ACESSO CONCEDIDO (especial): {area}")  # DEBUG
             return True
-    
-    print(f"❌ ACESSO NEGADO: {areas_usuario} não tem acesso a {poi_amigavel}")  # DEBUG
+
     return False
 
 @staticmethod

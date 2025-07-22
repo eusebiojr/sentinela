@@ -201,8 +201,6 @@ app/services/evento_processor.py (linha ~195-210)
         
         poi_lower = poi_amigavel.lower()
         
-        print(f"🔍 DEBUG EVENTO: POI='{poi_amigavel}' | Áreas={areas_usuario}")  # DEBUG temporário
-        
         for area in areas_usuario:
             area_normalizada = area.strip().lower()
             
@@ -213,7 +211,6 @@ app/services/evento_processor.py (linha ~195-210)
                 is_fabrica = any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
                 not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
                 if is_fabrica and not_terminal:
-                    print(f"✅ ACESSO FÁBRICA: {area} -> {poi_amigavel}")  # DEBUG
                     return True
             
             # TERMINAL - só acessa terminal, não fábrica  
@@ -221,29 +218,24 @@ app/services/evento_processor.py (linha ~195-210)
                 is_terminal = any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
                 not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
                 if is_terminal and not_fabrica:
-                    print(f"✅ ACESSO TERMINAL: {area} -> {poi_amigavel}")  # DEBUG
                     return True
             
             # P.A. - só acessa P.A.
             elif any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "água clara", "pa "]):
                 is_pa = any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
                 if is_pa:
-                    print(f"✅ ACESSO P.A.: {area} -> {poi_amigavel}")  # DEBUG
                     return True
             
             # OFICINA/MANUTENÇÃO - só acessa oficina
             elif any(palavra in area_normalizada for palavra in ["oficina", "manutenção", "manutencao"]):
                 is_oficina = any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
                 if is_oficina:
-                    print(f"✅ ACESSO OFICINA: {area} -> {poi_amigavel}")  # DEBUG
                     return True
             
             # ÁREAS ESPECIAIS
             elif area_normalizada in ["geral", "all", "todos", "todas"]:
-                print(f"✅ ACESSO ESPECIAL: {area}")  # DEBUG
                 return True
         
-        print(f"❌ ACESSO NEGADO RIGOROSO: {areas_usuario} não acessa {poi_amigavel}")  # DEBUG
         return False
     
     @staticmethod
