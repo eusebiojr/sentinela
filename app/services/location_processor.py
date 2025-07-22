@@ -19,7 +19,8 @@ class LocationProcessor:
                 "PAAGUACLARA": "P.A. Água Clara - RRP",
                 "CARREGAMENTOFABRICARRP": "Fábrica RRP",
                 "OFICINAJSL": "Oficina JSL - RRP",
-                "TERMINALINOCENCIA": "Terminal Inocência - RRP"
+                "TERMINALINOCENCIA": "Terminal Inocência - RRP",
+                "DESCARGAINOCENCIA": "Terminal Inocência - RRP"
             },
             "areas_usuario": [
                 "PA Agua Clara RRP",
@@ -305,7 +306,7 @@ class LocationProcessor:
             # Manutenção
             ("manutenção", "manutencao"): ["oficina", "manutenção", "manutencao"],
             # Terminal
-            ("terminal",): ["terminal", "inocência", "inocencia"]
+            ("terminal",): ["terminal", "inocência", "inocencia", "descarga"]
         }
         
         for palavras_area, palavras_poi in mapeamentos.items():
@@ -334,7 +335,7 @@ class LocationProcessor:
             return any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
         
         elif any(palavra in area_normalizada for palavra in ["fábrica", "fabrica"]):
-            return any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+            return any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
         
         elif any(palavra in area_normalizada for palavra in ["terminal", "inocência", "inocencia"]):
             return any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia"])

@@ -51,7 +51,8 @@ class EventoProcessor:
                 "PAAGUACLARA": "P.A. Água Clara",
                 "CARREGAMENTOFABRICARRP": "Fábrica RRP",
                 "OFICINAJSL": "Oficina JSL",
-                "TERMINALINOCENCIA": "Terminal Inocência"
+                "TERMINALINOCENCIA": "Terminal Inocência",
+                "DESCARGAINOCENCIA": "Terminal Inocência"
             }
             
             # Mapeamento de tipos
@@ -177,7 +178,7 @@ class EventoProcessor:
             return config.motivos_poi["PA Agua Clara"]
         elif "MANUTEN" in poi_amigavel.upper() or "OFICINA" in poi_amigavel.upper():
             return config.motivos_poi["Manutenção"]
-        elif "TERMINAL" in poi_amigavel.upper():
+        elif "TERMINAL" in poi_amigavel.upper() or "INOCÊNCIA" in poi_amigavel.upper():
             return config.motivos_poi["Terminal"]
         elif "FÁBRICA" in poi_amigavel.upper() or "FABRICA" in poi_amigavel.upper():
             return config.motivos_poi["Fábrica"]
