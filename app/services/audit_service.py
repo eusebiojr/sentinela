@@ -1,5 +1,5 @@
 """
-Serviço de Auditoria - Rastreamento de preenchimentos e aprovações - VERSÃO SIMPLIFICADA
+Serviço de Auditoria - Rastreamento de preenchimentos e aprovações - VERSÃO CORRIGIDA COM SESSÃO
 """
 from datetime import datetime
 import pytz
@@ -21,8 +21,8 @@ class AuditService:
     
     @staticmethod
     def obter_email_usuario_atual(page) -> str:
-        session = get_session_state(page)
         """Obtém email do usuário logado"""
+        session = get_session_state(page)
         usuario = session.get_usuario_atual()
         if not usuario:
             return "sistema@suzano.com.br"
@@ -45,6 +45,7 @@ class AuditService:
         Adiciona dados de auditoria para preenchimento - SEMPRE atualiza timestamp
         
         Args:
+            page: Página do Flet para acessar sessão
             dados: Dados que serão enviados ao SharePoint
             
         Returns:
@@ -77,6 +78,7 @@ class AuditService:
         Adiciona dados de auditoria para aprovação/reprovação
         
         Args:
+            page: Página do Flet para acessar sessão
             dados: Dados base
             status: "Aprovado" ou "Reprovado"
             justificativa: Justificativa da reprovação (opcional)
@@ -116,6 +118,7 @@ class AuditService:
         Processa preenchimento SEMPRE com auditoria atualizada
         
         Args:
+            page: Página do Flet para acessar sessão
             evento: Nome do evento
             df_evento: DataFrame do evento
             alteracoes_pendentes: Alterações pendentes do estado
@@ -159,7 +162,7 @@ class AuditService:
                 }
                 
                 # SEMPRE adiciona auditoria de preenchimento para qualquer alteração
-                dados_finais = AuditService.adicionar_auditoria_preenchimento(dados_base)
+                dados_finais = AuditService.adicionar_auditoria_preenchimento(page, dados_base)
                 
                 atualizacoes_lote.append((int(row_id), dados_finais))
         
@@ -177,6 +180,7 @@ class AuditService:
         Processa aprovação/reprovação com auditoria
         
         Args:
+            page: Página do Flet para acessar sessão
             df_evento: DataFrame do evento
             status: "Aprovado" ou "Reprovado"
             justificativa: Justificativa da reprovação
@@ -190,7 +194,7 @@ class AuditService:
         dados_base = {}
         
         # Adiciona auditoria de aprovação
-        dados_finais = AuditService.adicionar_auditoria_aprovacao(dados_base, status, justificativa)
+        dados_finais = AuditService.adicionar_auditoria_aprovacao(page, dados_base, status, justificativa)
         
         # Aplica para todos os registros do evento
         for _, row in df_evento.iterrows():
@@ -204,20 +208,20 @@ class AuditService:
 audit_service = AuditService()
 
 
-# Funções de conveniência para uso direto
+# Funções de conveniência para uso direto - CORRIGIDAS
 def processar_preenchimento_com_auditoria(page, evento: str, df_evento, alteracoes_pendentes: Dict[str, Dict[str, Any]]) -> List[Tuple[int, Dict[str, Any]]]:
     """Processa preenchimento com auditoria sempre atualizada"""
     return audit_service.processar_preenchimento_com_auditoria(page, evento, df_evento, alteracoes_pendentes)
 
 
-def processar_aprovacao_com_auditoria(df_evento, status: str, justificativa: str = None) -> List[Tuple[int, Dict[str, Any]]]:
+def processar_aprovacao_com_auditoria(page, df_evento, status: str, justificativa: str = None) -> List[Tuple[int, Dict[str, Any]]]:
     """Processa aprovação com auditoria"""
-    return audit_service.processar_aprovacao_com_auditoria(df_evento, status, justificativa)
+    return audit_service.processar_aprovacao_com_auditoria(page, df_evento, status, justificativa)
 
 
-def obter_usuario_logado() -> str:
+def obter_usuario_logado(page) -> str:
     """Obtém email do usuário logado"""
-    return audit_service.obter_email_usuario_atual()
+    return audit_service.obter_email_usuario_atual(page)
 
 
 def obter_timestamp_atual() -> str:

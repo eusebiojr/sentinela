@@ -755,7 +755,7 @@ class TabelaJustificativas:
                 
                 # NOVO: Usa função simplificada que SEMPRE atualiza timestamp
                 atualizacoes_lote = audit_service.processar_preenchimento_com_auditoria(
-                    evento, df_evento, session.alteracoes_pendentes
+                    self.page, evento, df_evento, session.alteracoes_pendentes
                 )
                 
                 # Envia todas as alterações em paralelo
@@ -938,7 +938,7 @@ class TabelaJustificativas:
 
                     # NOVO: Usa função simplificada para aprovação
                     atualizacoes_aprovacao = audit_service.processar_aprovacao_com_auditoria(
-                        df_evento, "Aprovado"
+                        self.page, df_evento, "Aprovado"
                     )
 
                     # Envia todas as aprovações em paralelo
@@ -1070,7 +1070,7 @@ class TabelaJustificativas:
                     
                     # NOVO: Usa função simplificada para reprovação
                     atualizacoes_reprovacao = audit_service.processar_aprovacao_com_auditoria(
-                        df_evento, "Reprovado", justificativa_field.value
+                        self.page, df_evento, "Reprovado", justificativa_field.value
                     )
                     
                     # Envia todas as reprovações em paralelo
