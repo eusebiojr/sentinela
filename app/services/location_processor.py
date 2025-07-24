@@ -1,5 +1,5 @@
 """
-Processador de Localização - Suporte para RRP e TLS - CORRIGIDO
+Processador de Localização - Suporte para RRP e TLS - MAPEAMENTO COMPLETO ATUALIZADO
 """
 from typing import Dict, Any, List
 from ..config.logging_config import setup_logger
@@ -8,23 +8,25 @@ logger = setup_logger("location_processor")
 
 
 class LocationProcessor:
-    """Processador para diferentes localizações (RRP, TLS)"""
+    """Processador para diferentes localizações (RRP, TLS) com mapeamento completo"""
     
-    # Configurações por localização
+    # Configurações por localização - ATUALIZADO COM TODOS OS POIs
     LOCATIONS_CONFIG = {
         "RRP": {
             "nome_completo": "Ribas do Rio Pardo",
             "codigo": "RRP",
             "pois": {
                 "PAAGUACLARA": "P.A. Água Clara - RRP",
-                "CARREGAMENTOFABRICARRP": "Fábrica RRP",
-                "OFICINAJSL": "Oficina JSL - RRP",
+                "CARREGAMENTOFABRICARRP": "Carregamento Fábrica - RRP",
+                "CARREGAMENTOFABRICA": "Carregamento Fábrica - RRP",  # Fallback
+                "OFICINAJSL": "Manutenção - RRP",
+                "OFICINA": "Manutenção - RRP",  # Fallback
                 "TERMINALINOCENCIA": "Terminal Inocência - RRP",
                 "DESCARGAINOCENCIA": "Terminal Inocência - RRP"
             },
             "areas_usuario": [
                 "PA Agua Clara RRP",
-                "Fábrica RRP", 
+                "Carregamento Fábrica RRP", 
                 "Manutenção RRP",
                 "Terminal RRP"
             ]
@@ -33,14 +35,18 @@ class LocationProcessor:
             "nome_completo": "Três Lagoas",
             "codigo": "TLS",
             "pois": {
-                "PAAGUACLARA": "P.A. Água Clara - TLS",
-                "CARREGAMENTOFABRICATLS": "Fábrica TLS",
-                "OFICINA": "Oficina - TLS",
-                "TERMINAL": "Terminal - TLS"
+                "PACELULOSE": "P.A. Celulose - TLS",
+                "PAAGUACLARA": "P.A. Celulose - TLS",  # Fallback para TLS
+                "CARREGAMENTOFABRICATLS": "Carregamento Fábrica - TLS",
+                "CARREGAMENTOFABRICA": "Carregamento Fábrica - TLS",  # Detecção por localização
+                "DESCARGATAP": "Terminal Aparecida - TLS",
+                "DESCARGA": "Terminal Aparecida - TLS",  # Fallback
+                "TERMINAL": "Terminal Aparecida - TLS",  # Fallback
+                "OFICINA": "Manutenção - TLS"
             },
             "areas_usuario": [
-                "PA Agua Clara TLS",
-                "Fábrica TLS",
+                "PA Celulose TLS",
+                "Carregamento Fábrica TLS",
                 "Manutenção TLS", 
                 "Terminal TLS"
             ]
@@ -68,23 +74,26 @@ class LocationProcessor:
             return "TLS"
         else:
             # Fallback: tenta detectar pelo conteúdo
-            if "RRP" in titulo.upper():
+            titulo_upper = titulo.upper()
+            
+            # Busca por indicadores específicos
+            if "RRP" in titulo_upper or "INOCENCIA" in titulo_upper or "PAAGUACLARA" in titulo_upper:
                 return "RRP"
-            elif "TLS" in titulo.upper():
+            elif "TLS" in titulo_upper or "CELULOSE" in titulo_upper or "TAP" in titulo_upper:
                 return "TLS"
             
-            return "UNKNOWN"
+            return "RRP"  # Default para compatibilidade
     
     @staticmethod
     def parse_titulo_com_localizacao(titulo: str) -> Dict[str, Any]:
         """
-        Parse completo do título considerando localização
+        Parse completo do título considerando localização - FORMATO PADRONIZADO
         
         Args:
             titulo: Título do evento
             
         Returns:
-            Dict com informações parsed incluindo localização
+            Dict com informações parsed incluindo localização e formato padronizado
         """
         resultado = {
             "titulo_original": titulo,
@@ -116,23 +125,8 @@ class LocationProcessor:
             config_loc = LocationProcessor.LOCATIONS_CONFIG.get(localizacao, {})
             pois_map = config_loc.get("pois", {})
             
-            # Mapeamento de POIs com localização
-            poi_amigavel = pois_map.get(poi_raw, poi_raw.title())
-            
-            # Se não encontrou na configuração específica, usa fallback genérico
-            if poi_amigavel == poi_raw.title():
-                pois_genericos = {
-                    "PAAGUACLARA": "P.A. Água Clara",
-                    "CARREGAMENTOFABRICA": "Fábrica",
-                    "OFICINA": "Oficina",
-                    "TERMINAL": "Terminal"
-                }
-                
-                # Busca por substring
-                for key, value in pois_genericos.items():
-                    if key in poi_raw:
-                        poi_amigavel = f"{value} - {localizacao}"
-                        break
+            # NOVO: Mapeamento inteligente de POIs
+            poi_amigavel = LocationProcessor._mapear_poi_inteligente(poi_raw, localizacao, pois_map)
             
             # Mapeamento de tipos (universal)
             tipo_map = {
@@ -164,6 +158,72 @@ class LocationProcessor:
             logger.error(f"Erro ao fazer parse do título: {e}")
         
         return resultado
+    
+    @staticmethod
+    def _mapear_poi_inteligente(poi_raw: str, localizacao: str, pois_map: Dict[str, str]) -> str:
+        """
+        NOVO: Mapeamento inteligente de POIs com fallbacks e detecção por contexto
+        
+        Args:
+            poi_raw: POI raw do título
+            localizacao: Código da localização (RRP/TLS)
+            pois_map: Mapa de POIs da localização
+            
+        Returns:
+            Nome amigável do POI com unidade
+        """
+        # 1. Tentativa direta no mapeamento
+        if poi_raw in pois_map:
+            return pois_map[poi_raw]
+        
+        # 2. Busca por substring (para casos como "CARREGAMENTOFABRICARRP")
+        for key, value in pois_map.items():
+            if key in poi_raw or poi_raw in key:
+                return value
+        
+        # 3. Mapeamento por padrões específicos
+        poi_patterns = {
+            # P.A. / Pátios
+            "PA": f"P.A. {LocationProcessor._get_unit_name(localizacao)} - {localizacao}",
+            "PATIO": f"P.A. {LocationProcessor._get_unit_name(localizacao)} - {localizacao}",
+            
+            # Carregamento/Fábrica
+            "CARREGAMENTO": f"Carregamento Fábrica - {localizacao}",
+            "FABRICA": f"Carregamento Fábrica - {localizacao}",
+            
+            # Descarga/Terminal
+            "DESCARGA": f"Terminal {LocationProcessor._get_terminal_name(localizacao)} - {localizacao}",
+            "TERMINAL": f"Terminal {LocationProcessor._get_terminal_name(localizacao)} - {localizacao}",
+            
+            # Manutenção/Oficina
+            "OFICINA": f"Manutenção - {localizacao}",
+            "MANUTENCAO": f"Manutenção - {localizacao}"
+        }
+        
+        # Busca por padrões
+        poi_upper = poi_raw.upper()
+        for pattern, formatted_name in poi_patterns.items():
+            if pattern in poi_upper:
+                return formatted_name
+        
+        # 4. Fallback - nome com localização
+        return f"{poi_raw.title()} - {localizacao}"
+    
+    @staticmethod
+    def _get_unit_name(localizacao: str) -> str:
+        """Retorna nome da unidade para P.A."""
+        if localizacao == "TLS":
+            return "Celulose"
+        else:  # RRP
+            return "Água Clara"
+    
+    @staticmethod
+    def _get_terminal_name(localizacao: str) -> str:
+        """Retorna nome do terminal"""
+        if localizacao == "TLS":
+            return "Aparecida"
+        else:  # RRP
+            return "Inocência"
     
     @staticmethod
     def obter_motivos_por_poi_e_localizacao(poi_amigavel: str, localizacao: str) -> List[str]:
@@ -221,20 +281,16 @@ class LocationProcessor:
         # Detecta tipo baseado no POI
         poi_upper = poi_amigavel.upper()
         
-        if "P.A." in poi_upper or "AGUA CLARA" in poi_upper:
+        if "P.A." in poi_upper or "AGUA CLARA" in poi_upper or "CELULOSE" in poi_upper:
             motivos = motivos_base["PA_AGUA_CLARA"]
-        elif "OFICINA" in poi_upper or "MANUTENÇÃO" in poi_upper:
+        elif "MANUTENÇÃO" in poi_upper or "MANUTENCAO" in poi_upper:
             motivos = motivos_base["MANUTENCAO"]
-        elif "TERMINAL" in poi_upper:
+        elif "TERMINAL" in poi_upper or "APARECIDA" in poi_upper or "INOCÊNCIA" in poi_upper:
             motivos = motivos_base["TERMINAL"]
-        elif "FÁBRICA" in poi_upper or "FABRICA" in poi_upper:
+        elif "FÁBRICA" in poi_upper or "FABRICA" in poi_upper or "CARREGAMENTO" in poi_upper:
             motivos = motivos_base["FABRICA"]
         else:
             motivos = ["Outros"]
-        
-        # Futuramente, pode-se adicionar motivos específicos por localização
-        # if localizacao == "TLS":
-        #     motivos.extend(["Motivo específico TLS"])
         
         return motivos
     
@@ -246,102 +302,81 @@ class LocationProcessor:
     ) -> bool:
         """
         Verifica se usuário tem acesso ao POI considerando localização
-        COMPATÍVEL com formato antigo E novo
-        
-        Args:
-            poi_amigavel: Nome amigável do POI
-            localizacao: Código da localização
-            areas_usuario: Lista de áreas do usuário
-            
-        Returns:
-            bool: True se tem acesso
+        VERSÃO RIGOROSA para evitar conflitos
         """
         if not areas_usuario:
             return False
         
         # Normaliza áreas do usuário
         areas_normalizadas = [area.strip().lower() for area in areas_usuario]
+        poi_lower = poi_amigavel.lower()
         
-        # 1. FORMATO NOVO (Preferido) - Área + Localização
-        # Ex: "PA Agua Clara RRP", "Fábrica TLS"
+        # 1. FORMATO NOVO (Preferido) - Match EXATO com localização
         for area in areas_normalizadas:
             if localizacao.lower() in area:
-                # Verifica se a área corresponde ao POI
-                if LocationProcessor._area_corresponde_poi(area, poi_amigavel):
+                # Match rigoroso por categoria E localização
+                acesso_concedido = LocationProcessor._validar_acesso_rigoroso(area, poi_lower, localizacao.lower())
+                if acesso_concedido:
                     return True
         
-        # 2. FORMATO ANTIGO (Compatibilidade) - Apenas área genérica
-        # Ex: "P.A. Água Clara", "fábrica", "Terminal Inocência"
+        # 2. FORMATO ANTIGO (Compatibilidade) - Match mais específico
         for area in areas_normalizadas:
-            if LocationProcessor._area_generica_corresponde_poi(area, poi_amigavel):
-                return True
+            if not any(loc in area for loc in ["rrp", "tls"]):  # Só processa se não tem localização
+                acesso_concedido = LocationProcessor._validar_acesso_legado_rigoroso(area, poi_lower)
+                if acesso_concedido:
+                    return True
         
         # 3. ÁREAS ESPECIAIS
         for area in areas_normalizadas:
             if area in ["geral", "all", "todos", "todas"]:
                 return True
-        
+
         return False
     
     @staticmethod
-    def _area_corresponde_poi(area_normalizada: str, poi_amigavel: str) -> bool:
-        """
-        Verifica se área específica (com localização) corresponde ao POI
+    def _validar_acesso_rigoroso(area_normalizada: str, poi_lower: str, localizacao_lower: str) -> bool:
+        """Validação rigorosa para formato novo (Área + Localização)"""
+        # Remove localização da área para comparação limpa
+        area_sem_localizacao = area_normalizada.replace(f" {localizacao_lower}", "").strip()
         
-        Args:
-            area_normalizada: Área normalizada (ex: "fábrica rrp")
-            poi_amigavel: POI amigável (ex: "Fábrica RRP")
-            
-        Returns:
-            bool: True se corresponde
-        """
-        poi_lower = poi_amigavel.lower()
+        # Mapeamentos EXATOS por categoria
+        if "carregamento" in area_sem_localizacao or "fábrica" in area_sem_localizacao or "fabrica" in area_sem_localizacao:
+            return any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
         
-        # Mapeamentos diretos
-        mapeamentos = {
-            # Água Clara
-            ("pa agua clara", "agua clara"): ["agua clara", "p.a.", "pa"],
-            # Fábrica  
-            ("fábrica", "fabrica"): ["fábrica", "fabrica", "carregamento"],
-            # Manutenção
-            ("manutenção", "manutencao"): ["oficina", "manutenção", "manutencao"],
-            # Terminal
-            ("terminal",): ["terminal", "inocência", "inocencia", "descarga"]
-        }
+        elif "terminal" in area_sem_localizacao:
+            return any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "aparecida"])
         
-        for palavras_area, palavras_poi in mapeamentos.items():
-            if any(palavra in area_normalizada for palavra in palavras_area):
-                if any(palavra in poi_lower for palavra in palavras_poi):
-                    return True
+        elif any(palavra in area_sem_localizacao for palavra in ["pa ", "agua clara", "celulose"]):
+            return any(palavra in poi_lower for palavra in ["agua clara", "celulose", "p.a."])
+        
+        elif any(palavra in area_sem_localizacao for palavra in ["manutenção", "manutencao", "oficina"]):
+            return any(palavra in poi_lower for palavra in ["manutenção", "manutencao"])
         
         return False
     
     @staticmethod  
-    def _area_generica_corresponde_poi(area_normalizada: str, poi_amigavel: str) -> bool:
-        """
-        Verifica se área genérica (formato antigo) corresponde ao POI
+    def _validar_acesso_legado_rigoroso(area_normalizada: str, poi_lower: str) -> bool:
+        """Validação rigorosa para formato antigo (sem localização específica)"""
+        # Match por tipo de área
+        if any(palavra in area_normalizada for palavra in ["carregamento", "fábrica", "fabrica"]):
+            is_fabrica = any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+            not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "aparecida"])
+            not_pa = not any(palavra in poi_lower for palavra in ["agua clara", "celulose", "p.a."])
+            return is_fabrica and not_terminal and not_pa
         
-        Args:
-            area_normalizada: Área normalizada (ex: "p.a. água clara")
-            poi_amigavel: POI amigável (ex: "P.A. Água Clara - RRP")
-            
-        Returns:
-            bool: True se corresponde
-        """
-        poi_lower = poi_amigavel.lower()
+        elif any(palavra in area_normalizada for palavra in ["terminal", "inocência", "inocencia", "aparecida"]):
+            is_terminal = any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "aparecida"])
+            not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+            return is_terminal and not_fabrica
         
-        # Mapeamentos do formato antigo
-        if any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "água clara"]):
-            return any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
+        elif any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "celulose"]):
+            is_pa = any(palavra in poi_lower for palavra in ["agua clara", "celulose", "p.a."])
+            not_others = not any(palavra in poi_lower for palavra in ["terminal", "fábrica", "manutenção"])
+            return is_pa and not_others
         
-        elif any(palavra in area_normalizada for palavra in ["fábrica", "fabrica"]):
-            return any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-        
-        elif any(palavra in area_normalizada for palavra in ["terminal", "inocência", "inocencia"]):
-            return any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia"])
-        
-        elif any(palavra in area_normalizada for palavra in ["oficina", "manutenção", "manutencao"]):
-            return any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+        elif any(palavra in area_normalizada for palavra in ["manutenção", "manutencao"]):
+            is_manutencao = "manutenção" in poi_lower or "manutencao" in poi_lower
+            return is_manutencao
         
         return False
     
@@ -367,7 +402,7 @@ class LocationProcessor:
             "areas": [
                 "Geral",
                 "PA Agua Clara",
-                "Fábrica", 
+                "Carregamento Fábrica", 
                 "Manutenção",
                 "Terminal"
             ]
@@ -391,125 +426,9 @@ def obter_motivos_por_poi_e_localizacao(poi_amigavel: str, localizacao: str) -> 
     return location_processor.obter_motivos_por_poi_e_localizacao(poi_amigavel, localizacao)
 
 
-"""
-Correção da validação de acesso no LocationProcessor
-Substitua o método validar_acesso_usuario_por_localizacao no arquivo:
-app/services/location_processor.py (linha ~200-250)
-"""
-
-@staticmethod
-def validar_acesso_usuario_por_localizacao(
-    poi_amigavel: str, 
-    localizacao: str, 
-    areas_usuario: List[str]
-) -> bool:
-    """
-    Verifica se usuário tem acesso ao POI considerando localização
-    VERSÃO CORRIGIDA - Match mais rigoroso para evitar conflitos
-    """
-    if not areas_usuario:
-        return False
-    
-    # Normaliza áreas do usuário
-    areas_normalizadas = [area.strip().lower() for area in areas_usuario]
-    poi_lower = poi_amigavel.lower()
-    
-    # 1. FORMATO NOVO (Preferido) - Match EXATO com localização
-    for area in areas_normalizadas:
-        if localizacao.lower() in area:
-            # Match rigoroso por categoria E localização
-            acesso_concedido = LocationProcessor._validar_acesso_rigoroso(area, poi_lower, localizacao.lower())
-            if acesso_concedido:
-                return True
-    
-    # 2. FORMATO ANTIGO (Compatibilidade) - Match mais específico
-    for area in areas_normalizadas:
-        if not any(loc in area for loc in ["rrp", "tls"]):  # Só processa se não tem localização
-            acesso_concedido = LocationProcessor._validar_acesso_legado_rigoroso(area, poi_lower)
-            if acesso_concedido:
-                return True
-    
-    # 3. ÁREAS ESPECIAIS
-    for area in areas_normalizadas:
-        if area in ["geral", "all", "todos", "todas"]:
-            return True
-
-    return False
-
-@staticmethod
-def _validar_acesso_rigoroso(area_normalizada: str, poi_lower: str, localizacao_lower: str) -> bool:
-    """
-    Validação rigorosa para formato novo (Área + Localização)
-    """
-    # Remove localização da área para comparação limpa
-    area_sem_localizacao = area_normalizada.replace(f" {localizacao_lower}", "").strip()
-    
-    # Mapeamentos EXATOS por categoria
-    if "fábrica" in area_sem_localizacao or "fabrica" in area_sem_localizacao:
-        # FÁBRICA: só aceita se POI contém fábrica/carregamento
-        return any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
-    
-    elif "terminal" in area_sem_localizacao:
-        # TERMINAL: só aceita se POI contém terminal/inocência/descarga
-        return any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-    
-    elif any(palavra in area_sem_localizacao for palavra in ["pa agua clara", "agua clara"]):
-        # P.A. ÁGUA CLARA: só aceita se POI contém água clara/p.a.
-        return any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
-    
-    elif any(palavra in area_sem_localizacao for palavra in ["manutenção", "manutencao", "oficina"]):
-        # MANUTENÇÃO: só aceita se POI contém oficina/manutenção
-        return any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
-    
-    return False
-
-@staticmethod  
-def _validar_acesso_legado_rigoroso(area_normalizada: str, poi_lower: str) -> bool:
-    """
-    Validação rigorosa para formato antigo (sem localização específica)
-    """
-    # FÁBRICA - Match EXATO
-    if "fábrica" in area_normalizada or "fabrica" in area_normalizada:
-        # Só concede acesso se POI é REALMENTE de fábrica
-        is_fabrica = any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
-        # E NÃO é de outras categorias
-        not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-        not_pa = not any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
-        not_oficina = not any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
-        
-        return is_fabrica and not_terminal and not_pa and not_oficina
-    
-    # TERMINAL - Match EXATO
-    elif any(palavra in area_normalizada for palavra in ["terminal", "inocência", "inocencia"]):
-        is_terminal = any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-        # E NÃO é de outras categorias
-        not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
-        not_pa = not any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
-        not_oficina = not any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
-        
-        return is_terminal and not_fabrica and not_pa and not_oficina
-    
-    # P.A. ÁGUA CLARA - Match EXATO
-    elif any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "água clara"]):
-        is_pa = any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
-        # E NÃO é de outras categorias
-        not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
-        not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-        not_oficina = not any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
-        
-        return is_pa and not_fabrica and not_terminal and not_oficina
-    
-    # MANUTENÇÃO/OFICINA - Match EXATO
-    elif any(palavra in area_normalizada for palavra in ["oficina", "manutenção", "manutencao"]):
-        is_oficina = any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
-        # E NÃO é de outras categorias
-        not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
-        not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-        not_pa = not any(palavra in poi_lower for palavra in ["agua clara", "p.a."])
-        
-        return is_oficina and not_fabrica and not_terminal and not_pa
-    
-    return False
+def validar_acesso_usuario_por_localizacao(poi_amigavel: str, localizacao: str, areas_usuario: List[str]) -> bool:
+    """Valida acesso do usuário ao POI"""
+    return location_processor.validar_acesso_usuario_por_localizacao(poi_amigavel, localizacao, areas_usuario)
 
 
 def obter_areas_disponiveis() -> Dict[str, List[str]]:

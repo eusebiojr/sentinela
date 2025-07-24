@@ -1,0 +1,55 @@
+[24/07/2025 14:14:54] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_141454.log
+[24/07/2025 14:14:54] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_141454.log
+[24/07/2025 14:14:54] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_141454.log
+[24/07/2025 14:14:54] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_141454.log
+[24/07/2025 14:14:54] INFO: 🔐 SuzanoPasswordService inicializado
+[24/07/2025 14:14:54] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_141454.log
+[24/07/2025 14:14:54] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_141454.log
+[24/07/2025 14:14:54] INFO: ✅ Dependência Office365 OK
+[24/07/2025 14:14:54] INFO: ✅ Serviço de senha OK
+[24/07/2025 14:14:54] INFO: 🔗 Conectando ao SharePoint...
+[24/07/2025 14:14:56] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[24/07/2025 14:14:56] INFO: ✅ Teste de conexão SharePoint passou
+[24/07/2025 14:14:56] INFO: 🔍 Verificando dependências do sistema...
+[24/07/2025 14:14:56] INFO: ✅ Dependência Office365 OK
+[24/07/2025 14:14:56] INFO: ✅ Serviço de senha OK
+[24/07/2025 14:14:56] INFO: 📁 Assets path: assets
+[24/07/2025 14:14:56] INFO: 🔧 Modo desenvolvimento local
+[24/07/2025 14:14:58] INFO: 🚀 Sentinela iniciando...
+[24/07/2025 14:14:58] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[24/07/2025 14:14:58] INFO: 🔐 Serviço de senha disponível
+[24/07/2025 14:14:58] INFO: 🔗 Conectando ao SharePoint...
+[24/07/2025 14:15:01] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[24/07/2025 14:15:01] INFO: ✅ Teste de conexão SharePoint passou
+[24/07/2025 14:15:01] INFO: ✅ Serviço de senha conectado e funcional
+[24/07/2025 14:15:01] INFO: 🚀 Sentinela iniciando...
+[24/07/2025 14:15:01] INFO: Carregando dados de usuários...
+[24/07/2025 14:15:01] INFO: 🔐 [NOVA SESSÃO] ID: ee0a7ea2, Thread: 14668
+[24/07/2025 14:15:01] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2349458421072
+[24/07/2025 14:15:03] INFO: ✅ 30 registros carregados de 'UsuariosPainelTorre'
+[24/07/2025 14:15:03] INFO: ✅ 30 usuários carregados
+[24/07/2025 14:15:12] INFO: ✅ Login bem-sucedido: eusebioagj@suzano.com.br na sessão ee0a7ea2
+[24/07/2025 14:15:12] INFO: Carregando dados completos...
+[24/07/2025 14:15:16] INFO: ✅ 702 registros carregados de 'Desvios'
+[24/07/2025 14:15:17] INFO: ✅ Dados carregados: 702 desvios
+[24/07/2025 14:18:50] INFO: Carregando dados completos...
+[24/07/2025 14:18:53] INFO: ✅ 696 registros carregados de 'Desvios'
+[24/07/2025 14:18:53] INFO: ✅ Dados carregados: 696 desvios
+[24/07/2025 14:18:59] INFO: Carregando dados completos...
+[24/07/2025 14:19:02] INFO: ✅ 690 registros carregados de 'Desvios'
+[24/07/2025 14:19:02] INFO: ✅ Dados carregados: 690 desvios
+[24/07/2025 14:19:09] INFO: Carregando dados completos...
+[24/07/2025 14:19:12] INFO: ✅ 683 registros carregados de 'Desvios'
+[24/07/2025 14:19:12] INFO: ✅ Dados carregados: 683 desvios
+[24/07/2025 14:19:22] INFO: 🔄 [RESET SESSÃO ee0a7ea2] Usuário antes: Eusebio
+[24/07/2025 14:19:22] INFO: ✅ [RESET COMPLETO] Sessão ee0a7ea2 limpa
+[24/07/2025 14:19:22] INFO: Carregando dados de usuários...
+[24/07/2025 14:19:24] INFO: ✅ 30 registros carregados de 'UsuariosPainelTorre'
+[24/07/2025 14:19:24] INFO: ✅ 30 usuários carregados
+[24/07/2025 14:19:47] INFO: ✅ Login bem-sucedido: eusebioagj@suzano.com.br na sessão ee0a7ea2
+[24/07/2025 14:19:47] INFO: Carregando dados completos...
+[24/07/2025 14:19:50] INFO: ✅ 655 registros carregados de 'Desvios'
+[24/07/2025 14:19:50] INFO: ✅ Dados carregados: 655 desvios
+[24/07/2025 14:19:58] INFO: Carregando dados completos...
+[24/07/2025 14:20:01] INFO: ✅ 647 registros carregados de 'Desvios'
+[24/07/2025 14:20:01] INFO: ✅ Dados carregados: 647 desvios

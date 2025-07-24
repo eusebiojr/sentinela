@@ -19,13 +19,13 @@ class EventoProcessor:
     
     @staticmethod
     def parse_titulo_completo(titulo: str) -> Dict[str, Any]:
-        """Parse completo do título do evento COM suporte a localização"""
+        """Parse completo do título do evento COM suporte a localização PADRONIZADA"""
         
         # NOVO: Usa processador de localização se disponível
         if LOCATION_PROCESSOR_AVAILABLE:
             return location_processor.parse_titulo_com_localizacao(titulo)
         
-        # FALLBACK: Lógica original (apenas RRP)
+        # FALLBACK: Lógica original (apenas RRP) - ATUALIZADA
         resultado = {
             "titulo_original": titulo,
             "localizacao": "RRP",  # Assume RRP como padrão
@@ -46,14 +46,27 @@ class EventoProcessor:
             data_str = partes[-2]
             hora_str = partes[-1]
             
-            # Mapeamento de POIs (original)
+            # Mapeamento de POIs ATUALIZADO COM UNIDADE
             poi_map = {
-                "PAAGUACLARA": "P.A. Água Clara",
-                "CARREGAMENTOFABRICARRP": "Fábrica RRP",
-                "OFICINAJSL": "Oficina JSL",
-                "TERMINALINOCENCIA": "Terminal Inocência",
-                "DESCARGAINOCENCIA": "Terminal Inocência"
+                "PAAGUACLARA": "P.A. Água Clara - RRP",
+                "CARREGAMENTOFABRICARRP": "Carregamento Fábrica - RRP",
+                "CARREGAMENTOFABRICA": "Carregamento Fábrica - RRP",
+                "OFICINAJSL": "Manutenção - RRP",
+                "OFICINA": "Manutenção - RRP",
+                "TERMINALINOCENCIA": "Terminal Inocência - RRP",
+                "DESCARGAINOCENCIA": "Terminal Inocência - RRP"
             }
+            
+            # Processa POI com fallback inteligente
+            poi_amigavel = poi_map.get(poi_raw)
+            if not poi_amigavel:
+                # Busca por substring
+                for key, value in poi_map.items():
+                    if key in poi_raw or poi_raw in key:
+                        poi_amigavel = value
+                        break
+                else:
+                    poi_amigavel = f"{poi_raw.title()} - RRP"
             
             # Mapeamento de tipos
             tipo_map = {
@@ -61,9 +74,6 @@ class EventoProcessor:
                 "N1": "Tratativa N1", "N2": "Tratativa N2",
                 "N3": "Tratativa N3", "N4": "Tratativa N4"
             }
-            
-            # Processa POI
-            poi_amigavel = next((v for k, v in poi_map.items() if k in poi_raw), poi_raw.title())
             
             # Processa tipo
             tipo_amigavel = tipo_map.get(tipo, tipo)
@@ -89,7 +99,7 @@ class EventoProcessor:
             pass
         
         return resultado
-    
+
     @staticmethod
     def calcular_tempo_decorrido(data_entrada: str) -> Dict[str, Any]:
         """Calcula tempo decorrido desde a entrada (sem alterações)"""
