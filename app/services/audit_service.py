@@ -50,7 +50,7 @@ class AuditService:
         Returns:
             Dict com dados + auditoria de preenchimento
         """
-        email_usuario = AuditService.obter_email_usuario_atual(self.page)
+        email_usuario = AuditService.obter_email_usuario_atual(page)
         timestamp = AuditService.obter_timestamp_brasilia()
         
         # Copia dados originais
@@ -84,7 +84,7 @@ class AuditService:
         Returns:
             Dict com dados + auditoria de aprovação
         """
-        email_usuario = AuditService.obter_email_usuario_atual()
+        email_usuario = AuditService.obter_email_usuario_atual(page)
         timestamp = AuditService.obter_timestamp_brasilia()
         
         # Copia dados base
@@ -205,9 +205,9 @@ audit_service = AuditService()
 
 
 # Funções de conveniência para uso direto
-def processar_preenchimento_com_auditoria(evento: str, df_evento, alteracoes_pendentes: Dict[str, Dict[str, Any]]) -> List[Tuple[int, Dict[str, Any]]]:
+def processar_preenchimento_com_auditoria(page, evento: str, df_evento, alteracoes_pendentes: Dict[str, Dict[str, Any]]) -> List[Tuple[int, Dict[str, Any]]]:
     """Processa preenchimento com auditoria sempre atualizada"""
-    return audit_service.processar_preenchimento_com_auditoria(evento, df_evento, alteracoes_pendentes)
+    return audit_service.processar_preenchimento_com_auditoria(page, evento, df_evento, alteracoes_pendentes)
 
 
 def processar_aprovacao_com_auditoria(df_evento, status: str, justificativa: str = None) -> List[Tuple[int, Dict[str, Any]]]:
