@@ -13,7 +13,7 @@ class DataUtils:
     
     @staticmethod
     def processar_desvios(df: pd.DataFrame) -> pd.DataFrame:
-        """Processa e normaliza dados de desvios incluindo colunas de auditoria"""
+        """Processa e normaliza dados de desvios incluindo verificação automática de status"""
         if df.empty:
             return df
 
@@ -38,7 +38,7 @@ class DataUtils:
             except:
                 pass
 
-        # NOVO: Processa colunas de auditoria de datas
+        # Processa colunas de auditoria de datas
         colunas_data_auditoria = ["Data_Preenchimento", "Data_Aprovacao"]
         for coluna in colunas_data_auditoria:
             if coluna in df.columns:
@@ -57,21 +57,34 @@ class DataUtils:
         }
         df = df.rename(columns=rename_map)
 
-        # ATUALIZADO: Adiciona todas as colunas necessárias incluindo auditoria
+        # Adiciona todas as colunas necessárias incluindo auditoria
         colunas_necessarias = [
             "Observacoes", "Status", "Motivo",
-            "Preenchido_por", "Data_Preenchimento",  # NOVO: Colunas de auditoria preenchimento
-            "Aprovado_por", "Data_Aprovacao"         # NOVO: Colunas de auditoria aprovação
+            "Preenchido_por", "Data_Preenchimento",
+            "Aprovado_por", "Data_Aprovacao"
         ]
         
         for col in colunas_necessarias:
             if col not in df.columns:
                 if col in ["Data_Preenchimento", "Data_Aprovacao"]:
-                    df[col] = pd.NaT  # Para colunas de data
+                    df[col] = pd.NaT
                 else:
-                    df[col] = ""      # Para colunas de texto
+                    df[col] = ""
 
-        return df
+        # NOVO: Executa verificação automática de status "Não Tratado"
+        try:
+            from ..services.auto_status_service import executar_verificacao_automatica
+            df_processado, atualizacoes = executar_verificacao_automatica(df)
+            
+            if atualizacoes > 0:
+                print(f"🔄 Sistema processou {atualizacoes} evento(s) como 'Não Tratado' automaticamente")
+            
+            return df_processado
+            
+        except Exception as e:
+            print(f"⚠️ Erro na verificação automática de status: {e}")
+            # Em caso de erro, apenas filtra os "Não Tratado" existentes
+            return df[df["Status"] != "Não Tratado"].copy() if "Status" in df.columns else df
 
     @staticmethod
     def parse_titulo(titulo: str) -> tuple:

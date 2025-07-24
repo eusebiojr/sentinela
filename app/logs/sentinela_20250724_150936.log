@@ -1,0 +1,7 @@
+[24/07/2025 15:09:36] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_150936.log
+[24/07/2025 15:09:36] INFO: 🔄 Iniciando verificação automática de status 'Não Tratado'...
+[24/07/2025 15:09:36] INFO: 🔍 Encontrados 1 registros para marcar como 'Não Tratado'
+[24/07/2025 15:09:36] INFO: 📤 Enviando 1 atualizações para SharePoint...
+[24/07/2025 15:09:39] INFO: ✅ 1 evento(s) marcado(s) como 'Não Tratado' automaticamente
+[24/07/2025 15:09:39] INFO: 🚫 65 evento(s) 'Não Tratado' filtrado(s) da interface
+[24/07/2025 15:09:39] INFO: ✅ Verificação automática de status concluída

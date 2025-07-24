@@ -88,7 +88,7 @@ class EventosManagerOtimizado:
         """Filtra dados baseado no perfil e áreas do usuário"""
         # Filtra dados não aprovados
         df_nao_aprovados = session.df_desvios[
-            session.df_desvios["Status"].ne("Aprovado")
+            ~session.df_desvios["Status"].isin(["Aprovado", "Não Tratado"])
         ] if "Status" in session.df_desvios.columns else session.df_desvios
         
         perfil = session.get_perfil_usuario()
