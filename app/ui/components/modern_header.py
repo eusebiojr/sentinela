@@ -3,7 +3,7 @@ Header com layout organizado e logo Suzano - VERSÃO FINAL AJUSTADA
 Substitui o arquivo app/ui/components/modern_header.py
 """
 import flet as ft
-from ...core.state import app_state
+from ...core.session_state import get_session_state
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
 
 # Importa o serviço funcional de senha
@@ -15,11 +15,12 @@ except ImportError:
     suzano_password_service = None
 
 # Função auxiliar para salvar configurações
-def salvar_configuracoes_usuario(config: dict):
+def salvar_configuracoes_usuario(page, config: dict):
     """Salva configurações do usuário"""
     try:
+        session = get_session_state(page)
         for chave, valor in config.items():
-            app_state.salvar_configuracao_usuario(chave, valor)
+            session.salvar_configuracao_usuario(chave, valor)
         print(f"Configurações salvas: {config}")
     except Exception as e:
         print(f"Erro ao salvar configurações: {e}")
@@ -36,6 +37,7 @@ class ModernHeader:
         self.menu_container = None
         
     def criar_header(self):
+        session = get_session_state(self.page)
         """Cria header com layout organizado e logo Suzano"""
         
         # Configurações responsivas
@@ -60,8 +62,8 @@ class ModernHeader:
             avatar_size = 40
             padding_horizontal = 25
 
-        nome_usuario = app_state.get_nome_usuario()
-        perfil_usuario = app_state.get_perfil_usuario().title()
+        nome_usuario = session.get_nome_usuario()
+        perfil_usuario = session.get_perfil_usuario().title()
         iniciais = self._obter_iniciais(nome_usuario)
 
         # SEÇÃO ESQUERDA: Logo Suzano + Título
@@ -301,13 +303,14 @@ class ModernHeader:
             return (palavras[0][0] + palavras[-1][0]).upper()
     
     def _ver_perfil(self):
+        session = get_session_state(self.page)
         """Mostra perfil do usuário"""
         try:
-            nome = app_state.get_nome_usuario()
-            perfil = app_state.get_perfil_usuario().title()
-            areas = app_state.get_areas_usuario()
+            nome = session.get_nome_usuario()
+            perfil = session.get_perfil_usuario().title()
+            areas = session.get_areas_usuario()
             
-            usuario = app_state.get_usuario_atual()
+            usuario = session.get_usuario_atual()
             email = usuario.get('Email', 'Não informado') if usuario else 'Não informado'
             ultimo_acesso = usuario.get('ultimo_acesso', 'Não informado') if usuario else 'Não informado'
             
@@ -445,9 +448,10 @@ class ModernHeader:
             import threading
             
             def processar_troca():
+                session = get_session_state(self.page)
                 try:
                     # Obtém email do usuário logado
-                    usuario_atual = app_state.get_usuario_atual()
+                    usuario_atual = session.get_usuario_atual()
                     email_usuario = usuario_atual.get('Email', '') if usuario_atual else ''
                     
                     if not email_usuario:
@@ -598,10 +602,11 @@ class ModernHeader:
         self.page.update()
     
     def _configuracoes(self):
+        session = get_session_state(self.page)
         """Modal de configurações com caixa ajustada"""
         
         # Carregar configurações existentes
-        usuario = app_state.get_usuario_atual()
+        usuario = session.get_usuario_atual()
         config_atual = usuario.get('configuracoes', {}) if usuario else {}
         
         tema_claro = ft.Switch(
@@ -624,7 +629,7 @@ class ModernHeader:
                     "notificacoes": notificacoes.value,
                     "auto_refresh": auto_refresh.value
                 }
-                salvar_configuracoes_usuario(config)
+                salvar_configuracoes_usuario(self.page, config)
                 
                 modal_config.open = False
                 self.page.update()
@@ -634,6 +639,7 @@ class ModernHeader:
                 mostrar_mensagem(self.page, f"❌ Erro ao salvar configurações: {str(ex)}", "error")
         
         def resetar_config(e):
+            session = get_session_state(self.page)
             tema_claro.value = True
             notificacoes.value = True
             auto_refresh.value = False
@@ -690,8 +696,8 @@ class ModernHeader:
                     ft.Container(
                         content=ft.Column([
                             ft.Text("ℹ️ Informações do Sistema", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_600),
-                            ft.Text(f"• Usuário: {app_state.get_nome_usuario()}", size=10, color=ft.colors.GREY_500),
-                            ft.Text(f"• Perfil: {app_state.get_perfil_usuario().title()}", size=10, color=ft.colors.GREY_500),
+                            ft.Text(f"• Usuário: {session.get_nome_usuario()}", size=10, color=ft.colors.GREY_500),
+                            ft.Text(f"• Perfil: {session.get_perfil_usuario().title()}", size=10, color=ft.colors.GREY_500),
                             ft.Text("• Versão: 2.0.0", size=10, color=ft.colors.GREY_500),
                         ], spacing=2),
                         padding=ft.padding.all(10),
@@ -723,8 +729,9 @@ class ModernHeader:
         self.page.update()
     
     def _sair_sistema(self):
+        session = get_session_state(self.page)
         """Confirma logout com modal corrigido - ESPAÇAMENTO MELHORADO"""
-        nome = app_state.get_nome_usuario()
+        nome = session.get_nome_usuario()
         
         def confirmar_logout(e):
             try:                
@@ -733,7 +740,7 @@ class ModernHeader:
                 self.page.update()
                 
                 # 2. Limpa dados ANTES de mostrar tela
-                app_state.reset_dados()
+                session.reset_dados()
                 
                 # 3. Limpa cache do SharePoint se existir
                 try:

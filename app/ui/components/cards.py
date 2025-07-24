@@ -3,7 +3,7 @@ Componente de cards do dashboard
 """
 import flet as ft
 import pandas as pd
-from ...core.state import app_state
+from ...core.session_state import get_session_state
 from ...services.evento_processor import EventoProcessor
 from ...services.data_formatter import DataFormatter
 from ...utils.ui_utils import get_screen_size
@@ -257,14 +257,15 @@ class DashboardCards:
         return cards_container
     
     def _filtrar_dados_por_usuario(self):
+        session = get_session_state(self.page)
         """Filtra dados baseado no perfil e áreas do usuário"""
         # Filtra dados não aprovados
-        df_nao_aprovados = app_state.df_desvios[
-            app_state.df_desvios["Status"].ne("Aprovado")
-        ] if "Status" in app_state.df_desvios.columns else app_state.df_desvios
+        df_nao_aprovados = session.df_desvios[
+            session.df_desvios["Status"].ne("Aprovado")
+        ] if "Status" in session.df_desvios.columns else session.df_desvios
         
-        perfil = app_state.get_perfil_usuario()
-        areas = app_state.get_areas_usuario()
+        perfil = session.get_perfil_usuario()
+        areas = session.get_areas_usuario()
         
         # Se não é aprovador nem torre, filtrar por área
         if perfil not in ("aprovador", "torre"):

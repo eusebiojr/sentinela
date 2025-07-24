@@ -5,7 +5,7 @@ import flet as ft
 import pandas as pd
 import re
 from datetime import datetime
-from ...core.state import app_state
+from ...core.session_state import get_session_state
 from ...services.evento_processor import EventoProcessor
 from ...utils.ui_utils import get_screen_size
 
@@ -81,14 +81,15 @@ class EventosManager:
         )
     
     def _filtrar_dados_por_usuario(self):
+        session = get_session_state(self.page)
         """Filtra dados baseado no perfil e áreas do usuário"""
         # Filtra dados não aprovados
-        df_nao_aprovados = app_state.df_desvios[
-            app_state.df_desvios["Status"].ne("Aprovado")
-        ] if "Status" in app_state.df_desvios.columns else app_state.df_desvios
+        df_nao_aprovados = session.df_desvios[
+            session.df_desvios["Status"].ne("Aprovado")
+        ] if "Status" in session.df_desvios.columns else session.df_desvios
         
-        perfil = app_state.get_perfil_usuario()
-        areas = app_state.get_areas_usuario()
+        perfil = session.get_perfil_usuario()
+        areas = session.get_areas_usuario()
         
         # Se não é aprovador nem torre, filtrar por área
         if perfil not in ("aprovador", "torre"):
@@ -120,6 +121,7 @@ class EventosManager:
         return datetime.max
     
     def _criar_card_evento(self, evento, df_evento):
+        session = get_session_state(self.page)
         """Cria card individual para um evento"""
         # Parse do título
         evento_info = EventoProcessor.parse_titulo_completo(evento)
@@ -128,8 +130,8 @@ class EventosManager:
         datahora_fmt = evento_info["datahora_fmt"]
         
         # Verifica acesso do usuário
-        perfil = app_state.get_perfil_usuario()
-        areas = app_state.get_areas_usuario()
+        perfil = session.get_perfil_usuario()
+        areas = session.get_areas_usuario()
         
         if perfil not in ("aprovador", "torre"):
             if not EventoProcessor.validar_acesso_usuario(poi_amigavel, areas):
@@ -159,16 +161,16 @@ class EventosManager:
         icone_arquivo = icones_eventos.get(tipo_amigavel, "info.png")
         
         # Estado de expansão
-        if evento not in app_state.estado_expansao:
-            app_state.estado_expansao[evento] = False
+        if evento not in session.estado_expansao:
+            session.estado_expansao[evento] = False
         
         # Função para alternar expansão
         def alternar_expansao(e):
-            app_state.estado_expansao[evento] = not app_state.estado_expansao[evento]
+            session.estado_expansao[evento] = not session.estado_expansao[evento]
             self.app_controller.dashboard_screen.mostrar()
         
         # Ícone de expansão
-        icone_expansao = ft.icons.KEYBOARD_ARROW_DOWN if app_state.estado_expansao[evento] else ft.icons.KEYBOARD_ARROW_RIGHT
+        icone_expansao = ft.icons.KEYBOARD_ARROW_DOWN if session.estado_expansao[evento] else ft.icons.KEYBOARD_ARROW_RIGHT
         
         # Lado esquerdo do header
         lado_esquerdo = ft.Row([
@@ -221,7 +223,7 @@ class EventosManager:
         
         # Conteúdo expansível
         conteudo_expansivel = ft.Container()
-        if app_state.estado_expansao[evento]:
+        if session.estado_expansao[evento]:
             conteudo_expansivel = self._criar_conteudo_expansivel(evento, df_evento)
         
         # Configurações responsivas

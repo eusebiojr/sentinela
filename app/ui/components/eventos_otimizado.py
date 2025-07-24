@@ -5,7 +5,7 @@ import flet as ft
 import pandas as pd
 import re
 from datetime import datetime
-from ...core.state import app_state
+from ...core.session_state import get_session_state
 from ...services.evento_processor import EventoProcessor
 from ...utils.ui_utils import get_screen_size
 
@@ -84,14 +84,15 @@ class EventosManagerOtimizado:
         )
     
     def _filtrar_dados_por_usuario(self):
+        session = get_session_state(self.page)
         """Filtra dados baseado no perfil e áreas do usuário"""
         # Filtra dados não aprovados
-        df_nao_aprovados = app_state.df_desvios[
-            app_state.df_desvios["Status"].ne("Aprovado")
-        ] if "Status" in app_state.df_desvios.columns else app_state.df_desvios
+        df_nao_aprovados = session.df_desvios[
+            session.df_desvios["Status"].ne("Aprovado")
+        ] if "Status" in session.df_desvios.columns else session.df_desvios
         
-        perfil = app_state.get_perfil_usuario()
-        areas = app_state.get_areas_usuario()
+        perfil = session.get_perfil_usuario()
+        areas = session.get_areas_usuario()
         
         # Se não é aprovador nem torre, filtrar por área
         if perfil not in ("aprovador", "torre"):
@@ -123,6 +124,7 @@ class EventosManagerOtimizado:
         return datetime.max
     
     def _criar_card_evento_otimizado(self, evento, df_evento):
+        session = get_session_state(self.page)
         """Cria card individual para um evento com expansão otimizada"""
         # Parse do título
         evento_info = EventoProcessor.parse_titulo_completo(evento)
@@ -131,8 +133,8 @@ class EventosManagerOtimizado:
         datahora_fmt = evento_info["datahora_fmt"]
         
         # Verifica acesso do usuário
-        perfil = app_state.get_perfil_usuario()
-        areas = app_state.get_areas_usuario()
+        perfil = session.get_perfil_usuario()
+        areas = session.get_areas_usuario()
         
         if perfil not in ("aprovador", "torre"):
             if not EventoProcessor.validar_acesso_usuario(poi_amigavel, areas):
@@ -162,27 +164,27 @@ class EventosManagerOtimizado:
         icone_arquivo = icones_eventos.get(tipo_amigavel, "info.png")
         
         # Estado de expansão
-        if evento not in app_state.estado_expansao:
-            app_state.estado_expansao[evento] = False
+        if evento not in session.estado_expansao:
+            session.estado_expansao[evento] = False
         
         # Container para conteúdo expansível (criado uma vez)
         conteudo_expansivel_container = ft.Container(
-            visible=app_state.estado_expansao[evento],
+            visible=session.estado_expansao[evento],
             animate=ft.animation.Animation(300, ft.AnimationCurve.EASE_IN_OUT)
         )
         
         # Atualiza conteúdo se expandido
-        if app_state.estado_expansao[evento]:
+        if session.estado_expansao[evento]:
             conteudo_expansivel_container.content = self._criar_conteudo_expansivel(evento, df_evento)
         
         # Função otimizada para alternar expansão
         def alternar_expansao_otimizada(e):
             # Alterna estado
-            app_state.estado_expansao[evento] = not app_state.estado_expansao[evento]
+            session.estado_expansao[evento] = not session.estado_expansao[evento]
             
             # Atualiza ícone
             icone_button = e.control
-            if app_state.estado_expansao[evento]:
+            if session.estado_expansao[evento]:
                 icone_button.icon = ft.icons.KEYBOARD_ARROW_DOWN
                 # Cria conteúdo da tabela
                 conteudo_expansivel_container.content = self._criar_conteudo_expansivel(evento, df_evento)
@@ -192,13 +194,13 @@ class EventosManagerOtimizado:
                 conteudo_expansivel_container.content = None
             
             # Mostra/esconde container
-            conteudo_expansivel_container.visible = app_state.estado_expansao[evento]
+            conteudo_expansivel_container.visible = session.estado_expansao[evento]
             
             # Atualiza apenas este card (sem recarregar página)
             self.page.update()
         
         # Ícone de expansão inicial
-        icone_expansao = ft.icons.KEYBOARD_ARROW_DOWN if app_state.estado_expansao[evento] else ft.icons.KEYBOARD_ARROW_RIGHT
+        icone_expansao = ft.icons.KEYBOARD_ARROW_DOWN if session.estado_expansao[evento] else ft.icons.KEYBOARD_ARROW_RIGHT
         
         # Lado esquerdo do header
         lado_esquerdo = ft.Row([

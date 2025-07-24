@@ -4,7 +4,7 @@ Componente de tabela de justificativas para eventos - VERSÃO COMPLETA COM AUDIT
 import flet as ft
 import pandas as pd
 from datetime import datetime
-from ...core.state import app_state
+from ...core.session_state import get_session_state
 from ...services.evento_processor import EventoProcessor
 from ...services.data_validator import DataValidator
 from ...services.data_formatter import DataFormatter
@@ -22,6 +22,7 @@ class TabelaJustificativas:
         self.processando_envio = False
         
     def criar_tabela(self, evento: str, df_evento: pd.DataFrame):
+        session = get_session_state(self.page)
         """Cria tabela completa de justificativas sem painel de auditoria"""
         
         # Configurações responsivas
@@ -56,7 +57,7 @@ class TabelaJustificativas:
         motivos = EventoProcessor.determinar_motivos_por_poi(poi_amigavel, localizacao)  # NOVO: Passa localização
         
         # Verifica se usuário pode editar
-        perfil = app_state.get_perfil_usuario()
+        perfil = session.get_perfil_usuario()
         status = df_evento["Status"].iloc[0] if "Status" in df_evento.columns else "Pendente"
         pode_editar = perfil not in ("aprovador", "torre") and status != "Aprovado"
         
@@ -217,6 +218,7 @@ class TabelaJustificativas:
         
         # Validadores
         def validar_motivo_mudanca(e):
+            session = get_session_state(self.page)
             if campos_desabilitados:
                 return
             
@@ -233,11 +235,11 @@ class TabelaJustificativas:
                 obs_field.border_color = None
                 icone_alerta.visible = False
             
-            # REMOVIDO: Debug log
-            app_state.atualizar_alteracao(chave_alteracao, "Motivo", motivo_selecionado)
+            session.atualizar_alteracao(chave_alteracao, "Motivo", motivo_selecionado)
             self.page.update()
         
         def validar_observacao_mudanca(e):
+            session = get_session_state(self.page)
             if campos_desabilitados:
                 return
             
@@ -252,8 +254,7 @@ class TabelaJustificativas:
                 obs_field.border_color = None
                 icone_alerta.visible = False
             
-            # REMOVIDO: Debug log
-            app_state.atualizar_alteracao(chave_alteracao, "Observacoes", obs_value)
+            session.atualizar_alteracao(chave_alteracao, "Observacoes", obs_value)
             self.page.update()
         
         # Dropdown de motivo
@@ -444,13 +445,14 @@ class TabelaJustificativas:
         error_text = ft.Text("", color=ft.colors.RED, size=12, visible=False)
         
         def confirmar_data_hora(e):
+            session = get_session_state(self.page)
             try:
                 data_str = temp_data_field.value.strip()
                 hora_str = temp_hora_dropdown.value
                 
                 if not data_str and not hora_str:
                     campo_display.value = ""
-                    app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", "")
+                    session.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", "")
                     modal_datetime.open = False
                     self.page.update()
                     return
@@ -480,7 +482,7 @@ class TabelaJustificativas:
                 novo_valor = f"{data_str} {hora_str}"
                 campo_display.value = novo_valor
                 
-                app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", novo_valor)
+                session.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", novo_valor)
                 
                 modal_datetime.open = False
                 self.page.update()
@@ -495,11 +497,12 @@ class TabelaJustificativas:
             self.page.update()
         
         def limpar_campos(e):
+            session = get_session_state(self.page)
             temp_data_field.value = ""
             temp_hora_dropdown.value = None
             error_text.visible = False
             campo_display.value = ""
-            app_state.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", "")
+            session.atualizar_alteracao(chave_alteracao, "Previsao_Liberacao", "")
             self.page.update()
         
         # Função para definir como "hoje + 1 hora"
@@ -640,6 +643,7 @@ class TabelaJustificativas:
         self.page.update()
 
     def _criar_botoes_acao(self, evento, df_evento, pode_editar):
+        session = get_session_state(self.page)
         """Cria botões de ação para o evento"""
         if pode_editar:
             # Texto e cor dinâmicos baseados no estado
@@ -666,7 +670,7 @@ class TabelaJustificativas:
             return ft.Row([btn_enviar], alignment=ft.MainAxisAlignment.END)
         
         else:
-            perfil = app_state.get_perfil_usuario()
+            perfil = session.get_perfil_usuario()
             status = df_evento["Status"].iloc[0] if "Status" in df_evento.columns else "Pendente"
             
             if perfil in ("aprovador", "torre") and status == "Preenchido":
@@ -694,6 +698,7 @@ class TabelaJustificativas:
         return ft.Container()
     
     def _enviar_justificativas(self, evento, df_evento):
+        session = get_session_state(self.page)
         """Envia justificativas para o SharePoint com bloqueio de interface"""
         
         # Verifica se já está processando
@@ -704,7 +709,7 @@ class TabelaJustificativas:
         mostrar_mensagem(self.page, "⏳ Validando dados...", "info")
         
         # Validação usando DataValidator
-        validacao_resultado = DataValidator.validar_justificativas_evento(df_evento, app_state.alteracoes_pendentes)
+        validacao_resultado = DataValidator.validar_justificativas_evento(df_evento, session.alteracoes_pendentes)
         erros_validacao = validacao_resultado["erros"]
 
         # Se há erros de validação, mostra modal personalizado
@@ -731,6 +736,7 @@ class TabelaJustificativas:
             print(f"⚠️ [PROCESSAMENTO] Erro ao atualizar interface: {e}")
     
     def _processar_envio_com_auditoria(self, evento, df_evento):
+        session = get_session_state(self.page)
         """Processa envio das justificativas COM auditoria integrada"""
         
         # Processa em background
@@ -738,7 +744,7 @@ class TabelaJustificativas:
         def processar():
             try:
                 # Verifica se há alterações pendentes para este evento
-                alteracoes_evento = {k: v for k, v in app_state.alteracoes_pendentes.items() 
+                alteracoes_evento = {k: v for k, v in session.alteracoes_pendentes.items() 
                                 if k.startswith(f"{evento}_")}
                 
                 if not alteracoes_evento:
@@ -749,7 +755,7 @@ class TabelaJustificativas:
                 
                 # NOVO: Usa função simplificada que SEMPRE atualiza timestamp
                 atualizacoes_lote = audit_service.processar_preenchimento_com_auditoria(
-                    evento, df_evento, app_state.alteracoes_pendentes
+                    evento, df_evento, session.alteracoes_pendentes
                 )
                 
                 # Envia todas as alterações em paralelo
@@ -759,7 +765,7 @@ class TabelaJustificativas:
                     print(f"✅ {registros_atualizados} registros atualizados no SharePoint")
                     
                     # Atualiza status de TODOS os registros do evento
-                    status_evento = EventoProcessor.calcular_status_evento(df_evento, app_state.alteracoes_pendentes)
+                    status_evento = EventoProcessor.calcular_status_evento(df_evento, session.alteracoes_pendentes)
                     
                     atualizacoes_status = []
                     for _, row in df_evento.iterrows():
@@ -773,7 +779,7 @@ class TabelaJustificativas:
                         SharePointClient.atualizar_lote(atualizacoes_status)
                     
                     # Limpa alterações pendentes deste evento
-                    app_state.limpar_alteracoes_evento(evento)
+                    session.limpar_alteracoes_evento(evento)
                     
                     if registros_atualizados > 0:
                         mostrar_mensagem(self.page, f"✅ {registros_atualizados} registro(s) atualizado(s) com sucesso!", "success")
@@ -924,8 +930,9 @@ class TabelaJustificativas:
             # Processa aprovação em background
             import threading
             def processar_aprovacao():
+                session = get_session_state(self.page)
                 try:
-                    df_evento = app_state.df_desvios[app_state.df_desvios["Titulo"] == evento]
+                    df_evento = session.df_desvios[session.df_desvios["Titulo"] == evento]
                     if df_evento.empty:
                         return
 
@@ -1057,8 +1064,9 @@ class TabelaJustificativas:
             import threading
             
             def processar_reprovacao():
+                session = get_session_state(self.page)
                 try:
-                    df_evento = app_state.df_desvios[app_state.df_desvios["Titulo"] == evento]
+                    df_evento = session.df_desvios[session.df_desvios["Titulo"] == evento]
                     
                     # NOVO: Usa função simplificada para reprovação
                     atualizacoes_reprovacao = audit_service.processar_aprovacao_com_auditoria(

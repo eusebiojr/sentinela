@@ -4,7 +4,7 @@ Serviço de Auditoria - Rastreamento de preenchimentos e aprovações - VERSÃO 
 from datetime import datetime
 import pytz
 from typing import Dict, Any, List, Tuple
-from ..core.state import app_state
+from ..core.session_state import get_session_state
 from ..config.logging_config import setup_logger
 
 logger = setup_logger("audit_service")
@@ -20,9 +20,10 @@ class AuditService:
         return agora.strftime("%Y-%m-%dT%H:%M:%S")
     
     @staticmethod
-    def obter_email_usuario_atual() -> str:
+    def obter_email_usuario_atual(page) -> str:
+        session = get_session_state(page)
         """Obtém email do usuário logado"""
-        usuario = app_state.get_usuario_atual()
+        usuario = session.get_usuario_atual()
         if not usuario:
             return "sistema@suzano.com.br"
         
@@ -39,7 +40,7 @@ class AuditService:
         return f"user{user_id}@suzano.com.br"
     
     @staticmethod
-    def adicionar_auditoria_preenchimento(dados: Dict[str, Any]) -> Dict[str, Any]:
+    def adicionar_auditoria_preenchimento(page, dados: Dict[str, Any]) -> Dict[str, Any]:
         """
         Adiciona dados de auditoria para preenchimento - SEMPRE atualiza timestamp
         
@@ -49,7 +50,7 @@ class AuditService:
         Returns:
             Dict com dados + auditoria de preenchimento
         """
-        email_usuario = AuditService.obter_email_usuario_atual()
+        email_usuario = AuditService.obter_email_usuario_atual(self.page)
         timestamp = AuditService.obter_timestamp_brasilia()
         
         # Copia dados originais
@@ -67,6 +68,7 @@ class AuditService:
     
     @staticmethod
     def adicionar_auditoria_aprovacao(
+        page,
         dados: Dict[str, Any],
         status: str, 
         justificativa: str = None
@@ -105,6 +107,7 @@ class AuditService:
     
     @staticmethod
     def processar_preenchimento_com_auditoria(
+        page,
         evento: str,
         df_evento,
         alteracoes_pendentes: Dict[str, Dict[str, Any]]
@@ -165,6 +168,7 @@ class AuditService:
     
     @staticmethod
     def processar_aprovacao_com_auditoria(
+        page,
         df_evento,
         status: str,
         justificativa: str = None

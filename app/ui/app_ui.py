@@ -3,7 +3,7 @@ Orquestrador principal da interface do usuário
 """
 import flet as ft
 import threading
-from ..core.state import app_state
+from ..core.session_state import get_session_state
 from ..services.sharepoint_client import SharePointClient
 from ..utils.data_utils import DataUtils
 from ..utils.ui_utils import mostrar_mensagem, get_screen_size
@@ -53,10 +53,11 @@ class SentinelaApp:
         def carregar():
             try:
                 logger.info("Carregando dados de usuários...")
-                app_state.df_usuarios = SharePointClient.carregar_lista("UsuariosPainelTorre")
+                session = get_session_state(self.page)
+                session.df_usuarios = SharePointClient.carregar_lista("UsuariosPainelTorre")
                 
-                if not app_state.df_usuarios.empty:
-                    logger.info(f"✅ {len(app_state.df_usuarios)} usuários carregados")
+                if not session.df_usuarios.empty:
+                    logger.info(f"✅ {len(session.df_usuarios)} usuários carregados")
                     self.login_screen.mostrar()
                 else:
                     logger.warning("⚠️ Nenhum usuário encontrado")
@@ -115,14 +116,23 @@ class SentinelaApp:
     def fazer_login(self, email: str, senha: str) -> bool:
         """Processa login do usuário"""
         try:
+            # IMPORTANTE: Obtém sessão limpa para este usuário
+            session = get_session_state(self.page)
+            
+            # Garante que não há dados de outro usuário
+            if session.usuario and session.usuario.get('Email', '').lower() != email.lower():
+                logger.warning(f"⚠️ Limpando sessão anterior de {session.usuario.get('Email')}")
+                session.reset_dados()
+            
             # Valida credenciais
             sucesso, user_data = self._validar_login(email, senha)
             
             if not sucesso:
                 return False
             
-            # Armazena usuário no estado
-            app_state.usuario = user_data
+            # Armazena usuário na sessão específica
+            session.usuario = user_data
+            logger.info(f"✅ Login bem-sucedido: {email} na sessão {session.session_id}")
             
             # Mostra tela de carregamento pós-login
             self._mostrar_carregamento_pos_login()
@@ -138,11 +148,12 @@ class SentinelaApp:
     
     def _validar_login(self, email: str, senha: str) -> tuple:
         """Valida credenciais do usuário"""
-        if app_state.df_usuarios.empty:
+        session = get_session_state(self.page)
+        if session.df_usuarios.empty:
             return False, None
         
         # Busca coluna de email
-        email_columns = [col for col in app_state.df_usuarios.columns if 'email' in col.lower()]
+        email_columns = [col for col in session.df_usuarios.columns if 'email' in col.lower()]
         if not email_columns:
             return False, None
         
@@ -150,7 +161,7 @@ class SentinelaApp:
         
         # Busca usuário
         email_normalizado = email.strip().lower()
-        df_temp = app_state.df_usuarios.copy()
+        df_temp = session.df_usuarios.copy()
         df_temp['email_normalizado'] = df_temp[email_col].astype(str).str.strip().str.lower()
         
         usuario_df = df_temp[df_temp['email_normalizado'] == email_normalizado]
@@ -172,7 +183,8 @@ class SentinelaApp:
     
     def _mostrar_carregamento_pos_login(self):
         """Mostra tela de carregamento após login"""
-        nome_usuario = app_state.get_nome_usuario()
+        session = get_session_state(self.page)
+        nome_usuario = session.get_nome_usuario()
         
         # Configurações responsivas
         screen_size = get_screen_size(self.page.window_width)
@@ -263,16 +275,17 @@ class SentinelaApp:
             try:
                 logger.info("Carregando dados completos...")
                 
+                session = get_session_state(self.page)
                 # Carrega desvios
-                app_state.df_desvios = SharePointClient.carregar_lista("Desvios")
+                session.df_desvios = SharePointClient.carregar_lista("Desvios")
                 
                 # Processa dados
-                app_state.df_desvios = DataUtils.processar_desvios(app_state.df_desvios)
+                session.df_desvios = DataUtils.processar_desvios(session.df_desvios)
                 
                 # Marca como carregado
-                app_state.dados_carregados = True
+                session.dados_carregados = True
                 
-                logger.info(f"✅ Dados carregados: {len(app_state.df_desvios)} desvios")
+                logger.info(f"✅ Dados carregados: {len(session.df_desvios)} desvios")
                 
                 # Mostra dashboard
                 self.dashboard_screen.mostrar()

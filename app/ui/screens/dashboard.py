@@ -2,7 +2,7 @@
 Tela principal do dashboard - VERSÃO FINAL LIMPA
 """
 import flet as ft
-from ...core.state import app_state
+from ...core.session_state import get_session_state
 from ...utils.ui_utils import get_screen_size
 from ..components.cards import DashboardCards
 from ..components.eventos_otimizado import EventosManagerOtimizado

@@ -1,0 +1,32 @@
+[24/07/2025 08:41:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_084140.log
+[24/07/2025 08:41:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_084140.log
+[24/07/2025 08:41:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_084140.log
+[24/07/2025 08:41:40] INFO: 🔐 SuzanoPasswordService inicializado
+[24/07/2025 08:41:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_084140.log
+[24/07/2025 08:41:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250724_084140.log
+[24/07/2025 08:41:40] INFO: ✅ Dependência Office365 OK
+[24/07/2025 08:41:40] INFO: ✅ Serviço de senha OK
+[24/07/2025 08:41:40] INFO: 🔗 Conectando ao SharePoint...
+[24/07/2025 08:41:43] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[24/07/2025 08:41:43] INFO: ✅ Teste de conexão SharePoint passou
+[24/07/2025 08:41:43] INFO: 🔍 Verificando dependências do sistema...
+[24/07/2025 08:41:43] INFO: ✅ Dependência Office365 OK
+[24/07/2025 08:41:43] INFO: ✅ Serviço de senha OK
+[24/07/2025 08:41:43] INFO: 📁 Assets path: assets
+[24/07/2025 08:41:43] INFO: 🔧 Modo desenvolvimento local
+[24/07/2025 08:41:45] INFO: 🚀 Sentinela iniciando...
+[24/07/2025 08:41:45] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[24/07/2025 08:41:45] INFO: 🔐 Serviço de senha disponível
+[24/07/2025 08:41:45] INFO: 🔗 Conectando ao SharePoint...
+[24/07/2025 08:41:47] INFO: ✅ Conectado ao SharePoint: Controle operacional
+[24/07/2025 08:41:47] INFO: ✅ Teste de conexão SharePoint passou
+[24/07/2025 08:41:47] INFO: ✅ Serviço de senha conectado e funcional
+[24/07/2025 08:41:47] INFO: 🚀 Sentinela iniciando...
+[24/07/2025 08:41:47] INFO: Carregando dados de usuários...
+[24/07/2025 08:41:50] INFO: ✅ 30 registros carregados de 'UsuariosPainelTorre'
+[24/07/2025 08:41:50] INFO: ✅ 30 usuários carregados
+[24/07/2025 08:41:58] INFO: ✅ Login bem-sucedido: eusebioagj@suzano.com.br na sessão 7c38d5cb
+[24/07/2025 08:41:58] INFO: Carregando dados completos...
+[24/07/2025 08:42:02] INFO: ✅ 683 registros carregados de 'Desvios'
+[24/07/2025 08:42:02] INFO: ✅ Dados carregados: 683 desvios
+[24/07/2025 08:43:27] INFO: 🏁 Finalizando aplicação Sentinela
