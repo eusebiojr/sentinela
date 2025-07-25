@@ -72,6 +72,43 @@ class DataUtils:
                 else:
                     df[col] = ""
 
+        # DEBUG: Configura logger e analisa POIs
+        print(f"📋 Total de registros carregados: {len(df)}")
+        print(f"📋 Colunas disponíveis: {list(df.columns)}")
+        
+        # DEBUG: Mostra POIs reais do SharePoint para mapeamento correto
+        if not df.empty and "Titulo" in df.columns:
+            print("📍 DEBUG: Analisando POIs do SharePoint para validação de acesso...")
+            
+            pois_encontrados = []
+            titulos_exemplo = []
+            
+            for i, row in df.head(10).iterrows():  # Primeiros 10 registros
+                titulo = row.get("Titulo", "")
+                if titulo and "_" in titulo:
+                    try:
+                        partes = titulo.split("_")
+                        if len(partes) >= 2:
+                            poi_raw = partes[1]  # Segunda parte é o POI
+                            pois_encontrados.append(poi_raw)
+                            titulos_exemplo.append(f"{poi_raw} (de: {titulo})")
+                    except:
+                        continue
+            
+            # Mostra POIs únicos encontrados
+            pois_unicos = list(set(pois_encontrados))
+            print(f"📍 POIs únicos encontrados ({len(pois_unicos)} diferentes):")
+            for poi in sorted(pois_unicos):
+                print(f"  • {poi}")
+            
+            # Mostra alguns exemplos de títulos completos
+            print("📋 Exemplos de títulos completos:")
+            for exemplo in titulos_exemplo[:5]:  # Máximo 5 exemplos
+                print(f"  • {exemplo}")
+        
+        else:
+            print("⚠️ Coluna 'Titulo' não encontrada ou DataFrame vazio")
+
         # NOVO: Executa verificação automática de status "Não Tratado"
         try:
             from ..services.auto_status_service import executar_verificacao_automatica

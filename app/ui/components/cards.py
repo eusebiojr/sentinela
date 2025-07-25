@@ -259,7 +259,8 @@ class DashboardCards:
     def _filtrar_dados_por_usuario(self):
         session = get_session_state(self.page)
         """Filtra dados baseado no perfil e áreas do usuário"""
-        # Filtra dados não aprovados
+        
+        # Filtra dados não aprovados E não tratados
         df_nao_aprovados = session.df_desvios[
             ~session.df_desvios["Status"].isin(["Aprovado", "Não Tratado"])
         ] if "Status" in session.df_desvios.columns else session.df_desvios
@@ -278,7 +279,7 @@ class DashboardCards:
                         evento_info = EventoProcessor.parse_titulo_completo(evento_titulo)
                         poi_amigavel = evento_info["poi_amigavel"]
                         
-                        # Verificar acesso ao POI
+                        # AQUI É FEITA A VERIFICAÇÃO DE ACESSO
                         if EventoProcessor.validar_acesso_usuario(poi_amigavel, areas):
                             df_filtrado = pd.concat([df_filtrado, row.to_frame().T], ignore_index=True)
                     except Exception:
