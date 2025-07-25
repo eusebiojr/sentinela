@@ -39,7 +39,7 @@ class DataUtils:
                 pass
 
         # Processa colunas de auditoria de datas
-        colunas_data_auditoria = ["Data_Preenchimento", "Data_Aprovacao"]
+        colunas_data_auditoria = ["Data_Preenchimento", "Data_Aprovacao", "Criado"]  # ADICIONADO "Criado"
         for coluna in colunas_data_auditoria:
             if coluna in df.columns:
                 df[coluna] = pd.to_datetime(df[coluna], errors="coerce", utc=True)
@@ -51,6 +51,7 @@ class DataUtils:
         # Renomeia colunas para padronização
         rename_map = {
             "Title": "Titulo",
+            "Created": "Criado",  # NOVO: Mapeamento da coluna de criação
             "Ponto_de_Interesse": "PontodeInteresse",
             "Data_Hora_Entrada": "Data/Hora Entrada",
             "Data Entrada": "Data/Hora Entrada"

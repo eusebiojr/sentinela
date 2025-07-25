@@ -43,7 +43,7 @@ class EventosManager:
                             color=ft.colors.GREY_700
                         ),
                         ft.Text(
-                            "Todos os eventos estão em dia!", 
+                            "Tudo em ordem! Aproveite para tomar um café.", 
                             size=16, 
                             color=ft.colors.GREY_500
                         )
