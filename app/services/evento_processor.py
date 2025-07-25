@@ -209,6 +209,12 @@ app/services/evento_processor.py (linha ~195-210)
         if not areas_usuario:
             return False
         
+        # NOVO: Usa processador de localização se disponível
+        if LOCATION_PROCESSOR_AVAILABLE:
+            from .location_processor import validar_acesso_usuario_por_localizacao
+            return validar_acesso_usuario_por_localizacao(poi_amigavel, localizacao, areas_usuario)
+        
+        # FALLBACK: Lógica original (apenas RRP)
         poi_lower = poi_amigavel.lower()
         
         for area in areas_usuario:

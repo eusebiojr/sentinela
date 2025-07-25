@@ -301,111 +301,117 @@ class LocationProcessor:
         areas_usuario: List[str]
     ) -> bool:
         """
-        Validação SIMPLES e DIRETA - Mapeamento estático área → POI
+        Validação EXATA baseada no mapeamento definido
+        Área do usuário → Ponto de Interesse específico
         """
         if not areas_usuario:
             return False
         
-        # MAPEAMENTO DIRETO: Área do usuário → POIs que ele pode ver
+        # MAPEAMENTO EXATO conforme especificado
         MAPEAMENTO_ACESSO = {
-            # P.A. específicos por unidade
+            "geral": ["*"],  # Vê todos
             "pa agua clara rrp": ["PA AGUA CLARA"],
-            "pa celulose tls": ["PACELULOSE"],
-            
-            # Carregamento/Fábrica por unidade  
-            "carregamento fábrica rrp": ["CARREGAMENTOFABRICARRP", "CARREGAMENTOFABRICA"],
-            "carregamento fabrica rrp": ["CARREGAMENTOFABRICARRP", "CARREGAMENTOFABRICA"],
-            "fábrica rrp": ["CARREGAMENTOFABRICARRP", "CARREGAMENTOFABRICA"],
-            "fabrica rrp": ["CARREGAMENTOFABRICARRP", "CARREGAMENTOFABRICA"],
-            
-            "carregamento fábrica tls": ["CARREGAMENTOFABRICATLS", "CARREGAMENTOFABRICA"],
-            "carregamento fabrica tls": ["CARREGAMENTOFABRICATLS", "CARREGAMENTOFABRICA"],
-            "fábrica tls": ["CARREGAMENTOFABRICATLS", "CARREGAMENTOFABRICA"],
-            "fabrica tls": ["CARREGAMENTOFABRICATLS", "CARREGAMENTOFABRICA"],
-            
-            # Terminal por unidade
-            "terminal rrp": ["TERMINALINOCENCIA", "DESCARGAINOCENCIA"],
-            "terminal tls": ["DESCARGATAP", "TERMINAL"],
-            
-            # Manutenção por unidade
-            "manutenção rrp": ["OFICINAJSL", "OFICINA"],
-            "manutencao rrp": ["OFICINAJSL", "OFICINA"],
-            "oficina rrp": ["OFICINAJSL", "OFICINA"],
-            
-            "manutenção tls": ["OFICINA"],
-            "manutencao tls": ["OFICINA"],
-            "oficina tls": ["OFICINA"],
-            
-            # Áreas especiais (veem tudo)
-            "geral": ["*"],  # * = todos os POIs
-            "all": ["*"],
-            "todos": ["*"],
-            "todas": ["*"]
+            "terminal rrp": ["Descarga Inocencia"],
+            "fábrica rrp": ["Carregamento Fabrica RRP"],
+            "fabrica rrp": ["Carregamento Fabrica RRP"],
+            "manutenção rrp": ["Manutencao RRP"],
+            "manutencao rrp": ["Manutencao RRP"],
+            "fábrica tls": ["Carregamento Fabrica"],
+            "fabrica tls": ["Carregamento Fabrica"],
+            "pa celulose tls": ["PA Celulose"],
+            "terminal tls": ["Descarga TAP"]
         }
         
         # Normaliza áreas do usuário
         areas_normalizadas = [area.strip().lower() for area in areas_usuario]
         
-        logger.info(f"🔍 [VALIDAÇÃO SIMPLES] POI: {poi_amigavel}, Áreas usuário: {areas_usuario}")
-        
-        # Extrai o POI original do título para comparação
-        poi_original = LocationProcessor._extrair_poi_original_do_titulo(poi_amigavel)
-        logger.info(f"📋 POI original extraído: {poi_original}")
+        # Extrai POI real do evento
+        poi_real = LocationProcessor._extrair_poi_real_do_evento(poi_amigavel)
         
         # Verifica cada área do usuário
         for area_usuario in areas_normalizadas:
             pois_permitidos = MAPEAMENTO_ACESSO.get(area_usuario, [])
             
-            # Área especial "geral" vê tudo
+            # Área "geral" vê tudo
             if "*" in pois_permitidos:
-                logger.info(f"✅ Acesso liberado - Área especial: {area_usuario}")
                 return True
             
-            # Verifica se POI está na lista permitida
-            if poi_original in pois_permitidos:
-                logger.info(f"✅ Acesso liberado - Match direto: {area_usuario} → {poi_original}")
+            # Verifica match exato
+            if poi_real in pois_permitidos:
                 return True
         
-        logger.info(f"❌ Acesso negado - Nenhuma área permite POI: {poi_original}")
         return False
 
     @staticmethod
-    def _extrair_poi_original_do_titulo(poi_amigavel: str) -> str:
+    def _extrair_poi_real_do_evento(poi_amigavel: str) -> str:
         """
-        Extrai o POI original (como aparece no SharePoint) do nome amigável
-        
-        Args:
-            poi_amigavel: "P.A. Celulose - TLS" 
-            
-        Returns:
-            "PACELULOSE" (como está na coluna Ponto_de_Interesse)
+        Extrai o POI real baseado nos dados do SharePoint - COM DEBUG
         """
         
-        # MAPEAMENTO REVERSO: Nome amigável → POI original do SharePoint
-        MAPEAMENTO_REVERSO = {
+        # MAPEAMENTO: Nome amigável → POI real da coluna PontodeInteresse
+        MAPEAMENTO_POI_REAL = {
+            # P.A.
             "p.a. água clara - rrp": "PA AGUA CLARA",
-            "p.a. agua clara - rrp": "PA AGUA CLARA", 
-            "p.a. celulose - tls": "PACELULOSE",
+            "p.a. agua clara - rrp": "PA AGUA CLARA",
+            "p.a. celulose - tls": "PA Celulose",
             
-            "carregamento fábrica - rrp": "CARREGAMENTOFABRICARRP",
-            "carregamento fabrica - rrp": "CARREGAMENTOFABRICARRP",
-            "carregamento fábrica - tls": "CARREGAMENTOFABRICATLS", 
-            "carregamento fabrica - tls": "CARREGAMENTOFABRICATLS",
+            # Carregamento/Fábrica
+            "carregamento fábrica - rrp": "Carregamento Fabrica RRP",
+            "carregamento fabrica - rrp": "Carregamento Fabrica RRP",
+            "carregamento fábrica - tls": "Carregamento Fabrica",
+            "carregamento fabrica - tls": "Carregamento Fabrica",
             
-            "terminal inocência - rrp": "TERMINALINOCENCIA",
-            "terminal inocencia - rrp": "TERMINALINOCENCIA",
-            "terminal aparecida - tls": "DESCARGATAP",
+            # Terminal
+            "terminal inocência - rrp": "Descarga Inocencia",
+            "terminal inocencia - rrp": "Descarga Inocencia",
+            "terminal aparecida - tls": "Descarga TAP",
             
-            "manutenção - rrp": "OFICINAJSL",
-            "manutencao - rrp": "OFICINAJSL", 
-            "manutenção - tls": "OFICINA",
-            "manutencao - tls": "OFICINA"
+            # Manutenção
+            "manutenção - rrp": "Oficina JSL",
+            "manutencao - rrp": "Oficina JSL",
+            "manutenção - tls": "Manutencao TLS",
+            "manutencao - tls": "Manutencao TLS"
         }
         
         poi_normalizado = poi_amigavel.strip().lower()
-        poi_original = MAPEAMENTO_REVERSO.get(poi_normalizado, poi_normalizado.upper())
+        poi_real = MAPEAMENTO_POI_REAL.get(poi_normalizado, poi_amigavel)
+                
+        return poi_real
+
+    @staticmethod
+    def _extrair_poi_real_do_evento(poi_amigavel: str) -> str:
+        """
+        Extrai o POI real baseado nos dados do SharePoint
+        """
+        # MAPEAMENTO: Nome amigável → POI real da coluna PontodeInteresse
+        MAPEAMENTO_POI_REAL = {
+            # P.A.
+            "p.a. água clara - rrp": "PA AGUA CLARA",
+            "p.a. agua clara - rrp": "PA AGUA CLARA",
+            "p.a. celulose - tls": "PA Celulose",
+            
+            # Carregamento/Fábrica
+            "carregamento fábrica - rrp": "Carregamento Fabrica RRP",
+            "carregamento fabrica - rrp": "Carregamento Fabrica RRP",
+            "carregamento fábrica - tls": "Carregamento Fabrica",
+            "carregamento fabrica - tls": "Carregamento Fabrica",
+            
+            # Terminal
+            "terminal inocência - rrp": "Descarga Inocencia",
+            "terminal inocencia - rrp": "Descarga Inocencia",
+            "terminal aparecida - tls": "Descarga TAP",
+            
+            # Manutenção
+            "manutenção - rrp": "Oficina JSL",
+            "manutencao - rrp": "Oficina JSL",
+            "manutenção - tls": "Manutencao TLS",
+            "manutencao - tls": "Manutencao TLS"
+        }
         
-        return poi_original
+        poi_normalizado = poi_amigavel.strip().lower()
+        poi_real = MAPEAMENTO_POI_REAL.get(poi_normalizado, poi_amigavel)
+        
+        return poi_real
 
     @staticmethod
     def validar_acesso_usuario_por_localizacao(
@@ -414,57 +420,45 @@ class LocationProcessor:
         areas_usuario: List[str]
     ) -> bool:
         """
-        Verifica se usuário tem acesso ao POI considerando localização
+        Validação EXATA baseada no mapeamento definido
+        Área do usuário → Ponto de Interesse específico
         """
         if not areas_usuario:
             return False
         
+        # MAPEAMENTO EXATO conforme especificado
+        MAPEAMENTO_ACESSO = {
+            "geral": ["*"],  # Vê todos
+            "pa agua clara rrp": ["PA AGUA CLARA"],
+            "terminal rrp": ["Descarga Inocencia"],
+            "fábrica rrp": ["Carregamento Fabrica RRP"],
+            "fabrica rrp": ["Carregamento Fabrica RRP"],
+            "manutenção rrp": ["Oficina JSL"],
+            "manutencao rrp": ["Oficina JSL"],
+            "fábrica tls": ["Carregamento Fabrica"],
+            "fabrica tls": ["Carregamento Fabrica"],
+            "pa celulose tls": ["PA Celulose"],
+            "terminal tls": ["Descarga TAP"]
+        }
+        
         # Normaliza áreas do usuário
         areas_normalizadas = [area.strip().lower() for area in areas_usuario]
-        poi_lower = poi_amigavel.lower()
-        localizacao_lower = localizacao.lower()
         
-        logger.debug(f"🔍 Validando acesso: POI='{poi_amigavel}', Localização='{localizacao}', Áreas={areas_usuario}")
+        # Extrai POI real do evento
+        poi_real = LocationProcessor._extrair_poi_real_do_evento(poi_amigavel)
         
-        # 1. VERIFICAÇÃO PRIMÁRIA: Match EXATO unidade + categoria
-        for area in areas_normalizadas:
-            # Verifica se a área contém a localização específica
-            if localizacao_lower in area:
-                acesso_concedido = LocationProcessor._validar_acesso_unidade_especifica(
-                    area, poi_lower, localizacao_lower
-                )
-                if acesso_concedido:
-                    logger.debug(f"✅ Acesso concedido via área específica: {area}")
-                    return True
+        # Verifica cada área do usuário
+        for area_usuario in areas_normalizadas:
+            pois_permitidos = MAPEAMENTO_ACESSO.get(area_usuario, [])
             
-            # ÁREAS ESPECIAIS (sempre têm acesso)
-            elif area in ["geral", "all", "todos", "todas"]:
-                logger.debug(f"✅ Acesso concedido via área especial: {area}")
+            # Área "geral" vê tudo
+            if "*" in pois_permitidos:
+                return True
+            
+            # Verifica match exato
+            if poi_real in pois_permitidos:
                 return True
         
-        # 2. VERIFICAÇÃO SECUNDÁRIA: Formato legado MUITO restritivo
-        for area in areas_normalizadas:
-            # Só processa se não tem localização específica na área
-            if not any(loc in area for loc in ["rrp", "tls"]):
-                acesso_concedido = LocationProcessor._validar_acesso_legado_restritivo(
-                    area, poi_lower, localizacao_lower
-                )
-                if acesso_concedido:
-                    logger.debug(f"✅ Acesso concedido via formato legado: {area}")
-                    return True
-        
-        # 2. FORMATO ANTIGO (Compatibilidade) - Match mais específico
-        for area in areas_normalizadas:
-            if not any(loc in area for loc in ["rrp", "tls"]):  # Só processa se não tem localização
-                acesso_concedido = LocationProcessor._validar_acesso_legado_rigoroso(area, poi_lower)
-                if acesso_concedido:
-                    return True
-        
-        # 3. ÁREAS ESPECIAIS
-        for area in areas_normalizadas:
-            if area in ["geral", "all", "todos", "todas"]:
-                return True
-
         return False
         
     @staticmethod

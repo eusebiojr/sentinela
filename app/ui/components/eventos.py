@@ -83,13 +83,22 @@ class EventosManager:
     def _filtrar_dados_por_usuario(self):
         session = get_session_state(self.page)
         """Filtra dados baseado no perfil e áreas do usuário"""
-        # Filtra dados não aprovados
-        df_nao_aprovados = session.df_desvios[
-            session.df_desvios["Status"].ne("Aprovado")
-        ] if "Status" in session.df_desvios.columns else session.df_desvios
         
+        # Define as variáveis do usuário
         perfil = session.get_perfil_usuario()
         areas = session.get_areas_usuario()
+        
+        # Aplica filtro baseado no perfil
+        if perfil in ("aprovador", "torre"):
+            # Aprovadores veem TODOS os status (exceto "Não Tratado" e "Aprovado")
+            df_nao_aprovados = session.df_desvios[
+                ~session.df_desvios["Status"].isin(["Aprovado", "Não Tratado"])
+            ] if "Status" in session.df_desvios.columns else session.df_desvios
+        else:
+            # Preenchedores veem apenas: "Pendente", "Preenchido", "Reprovado"
+            df_nao_aprovados = session.df_desvios[
+                session.df_desvios["Status"].isin(["Pendente", "Preenchido", "Reprovado"])
+            ] if "Status" in session.df_desvios.columns else session.df_desvios
         
         # Se não é aprovador nem torre, filtrar por área
         if perfil not in ("aprovador", "torre"):
@@ -102,14 +111,14 @@ class EventosManager:
                         evento_info = EventoProcessor.parse_titulo_completo(evento_titulo)
                         poi_amigavel = evento_info["poi_amigavel"]
                         
-                        # Verificar acesso ao POI
+                        # VERIFICAÇÃO DE ACESSO POR EVENTO
                         if EventoProcessor.validar_acesso_usuario(poi_amigavel, areas):
                             df_filtrado = pd.concat([df_filtrado, row.to_frame().T], ignore_index=True)
                     except Exception:
                         continue
             
             return df_filtrado
-        
+
         return df_nao_aprovados
     
     def _extrair_data_titulo(self, titulo):

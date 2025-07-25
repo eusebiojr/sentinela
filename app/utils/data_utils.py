@@ -38,8 +38,8 @@ class DataUtils:
             except:
                 pass
 
-        # Processa colunas de auditoria de datas
-        colunas_data_auditoria = ["Data_Preenchimento", "Data_Aprovacao", "Criado"]  # ADICIONADO "Criado"
+        # Processa colunas de auditoria de datas + Created
+        colunas_data_auditoria = ["Data_Preenchimento", "Data_Aprovacao", "Criado"]
         for coluna in colunas_data_auditoria:
             if coluna in df.columns:
                 df[coluna] = pd.to_datetime(df[coluna], errors="coerce", utc=True)
@@ -48,10 +48,10 @@ class DataUtils:
                 except:
                     pass
 
-        # Renomeia colunas para padronização
+        # Renomeia colunas para padronização - ADICIONADO Created → Criado
         rename_map = {
             "Title": "Titulo",
-            "Created": "Criado",  # NOVO: Mapeamento da coluna de criação
+            "Created": "Criado",
             "Ponto_de_Interesse": "PontodeInteresse",
             "Data_Hora_Entrada": "Data/Hora Entrada",
             "Data Entrada": "Data/Hora Entrada"
@@ -72,43 +72,8 @@ class DataUtils:
                 else:
                     df[col] = ""
 
-        # DEBUG: Configura logger e analisa POIs
-        print(f"📋 Total de registros carregados: {len(df)}")
-        print(f"📋 Colunas disponíveis: {list(df.columns)}")
+        # AQUI ERA ONDE ESTAVA O DEBUG - AGORA REMOVIDO
         
-        # DEBUG: Mostra POIs reais do SharePoint para mapeamento correto
-        if not df.empty and "Titulo" in df.columns:
-            print("📍 DEBUG: Analisando POIs do SharePoint para validação de acesso...")
-            
-            pois_encontrados = []
-            titulos_exemplo = []
-            
-            for i, row in df.head(10).iterrows():  # Primeiros 10 registros
-                titulo = row.get("Titulo", "")
-                if titulo and "_" in titulo:
-                    try:
-                        partes = titulo.split("_")
-                        if len(partes) >= 2:
-                            poi_raw = partes[1]  # Segunda parte é o POI
-                            pois_encontrados.append(poi_raw)
-                            titulos_exemplo.append(f"{poi_raw} (de: {titulo})")
-                    except:
-                        continue
-            
-            # Mostra POIs únicos encontrados
-            pois_unicos = list(set(pois_encontrados))
-            print(f"📍 POIs únicos encontrados ({len(pois_unicos)} diferentes):")
-            for poi in sorted(pois_unicos):
-                print(f"  • {poi}")
-            
-            # Mostra alguns exemplos de títulos completos
-            print("📋 Exemplos de títulos completos:")
-            for exemplo in titulos_exemplo[:5]:  # Máximo 5 exemplos
-                print(f"  • {exemplo}")
-        
-        else:
-            print("⚠️ Coluna 'Titulo' não encontrada ou DataFrame vazio")
-
         # NOVO: Executa verificação automática de status "Não Tratado"
         try:
             from ..services.auto_status_service import executar_verificacao_automatica
