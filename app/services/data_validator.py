@@ -380,10 +380,3 @@ class ValidadorAvancado:
 
 # 🚀 INSTÂNCIA GLOBAL - Para uso direto
 validador_avancado = ValidadorAvancado()
-
-# 🧹 LIMPEZA - Remove código duplicado antigo
-# (As implementações antigas foram removidas e substituídas por chamadas ao sistema centralizado)
-
-print("🚀 DataValidator migrado para sistema centralizado!")
-print("✅ Mantém 100% de compatibilidade com código existente")
-print("🔧 Agora usa validadores centralizados internamente")

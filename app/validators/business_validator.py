@@ -285,32 +285,6 @@ class BusinessValidator(BaseValidator):
         result.add_data('poi_validado', poi_amigavel)
         result.add_data('localizacao', localizacao)
     
-    def _validate_acesso_poi_rule(self, data: Dict, result: ValidationResult, **kwargs):
-        """
-        Valida se usuário tem acesso ao POI - LÓGICA MIGRADA DO EventoProcessor
-        
-        Args:
-            data: Dict com 'poi_amigavel', 'areas_usuario', 'localizacao'
-        """
-        poi_amigavel = data.get('poi_amigavel', '')
-        areas_usuario = data.get('areas_usuario', [])
-        localizacao = data.get('localizacao', 'RRP')
-        
-        if not areas_usuario:
-            result.add_error("Usuário não possui áreas definidas")
-            return
-        
-        # 🚀 LÓGICA MIGRADA - Validação rigorosa por área/POI
-        tem_acesso = self._validar_acesso_rigoroso(poi_amigavel, areas_usuario, localizacao)
-        
-        if not tem_acesso:
-            result.add_error(ValidationMessages.ACESSO_NEGADO)
-        
-        result.add_data('tem_acesso', tem_acesso)
-        result.add_data('areas_validadas', areas_usuario)
-        result.add_data('poi_validado', poi_amigavel)
-        result.add_data('localizacao', localizacao)
-    
     def _validate_integridade_auditoria_rule(self, data: Dict, result: ValidationResult, **kwargs):
         """
         Valida integridade dos dados de auditoria

@@ -379,10 +379,3 @@ def alterar_senha_usuario_completo(email: str, senha_atual: str, nova_senha: str
     
     # Se validação passou, executa a alteração
     return suzano_password_service.alterar_senha(email, senha_atual, nova_senha)
-
-# 🧹 LIMPEZA - Funções antigas removidas e substituídas por sistema centralizado
-
-print("🚀 SuzanoPasswordService migrado para sistema centralizado!")
-print("✅ Mantém 100% de compatibilidade com código existente") 
-print("🔧 Agora usa SecurityValidator internamente")
-print("🎯 Novas funcionalidades: avaliação de força e validação completa")

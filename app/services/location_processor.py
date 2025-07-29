@@ -379,41 +379,6 @@ class LocationProcessor:
         return poi_real
 
     @staticmethod
-    def _extrair_poi_real_do_evento(poi_amigavel: str) -> str:
-        """
-        Extrai o POI real baseado nos dados do SharePoint
-        """
-        # MAPEAMENTO: Nome amigável → POI real da coluna PontodeInteresse
-        MAPEAMENTO_POI_REAL = {
-            # P.A.
-            "p.a. água clara - rrp": "PA AGUA CLARA",
-            "p.a. agua clara - rrp": "PA AGUA CLARA",
-            "p.a. celulose - tls": "PA Celulose",
-            
-            # Carregamento/Fábrica
-            "carregamento fábrica - rrp": "Carregamento Fabrica RRP",
-            "carregamento fabrica - rrp": "Carregamento Fabrica RRP",
-            "carregamento fábrica - tls": "Carregamento Fabrica",
-            "carregamento fabrica - tls": "Carregamento Fabrica",
-            
-            # Terminal
-            "terminal inocência - rrp": "Descarga Inocencia",
-            "terminal inocencia - rrp": "Descarga Inocencia",
-            "terminal aparecida - tls": "Descarga TAP",
-            
-            # Manutenção
-            "manutenção - rrp": "Oficina JSL",
-            "manutencao - rrp": "Oficina JSL",
-            "manutenção - tls": "Manutencao TLS",
-            "manutencao - tls": "Manutencao TLS"
-        }
-        
-        poi_normalizado = poi_amigavel.strip().lower()
-        poi_real = MAPEAMENTO_POI_REAL.get(poi_normalizado, poi_amigavel)
-        
-        return poi_real
-
-    @staticmethod
     def validar_acesso_usuario_por_localizacao(
         poi_amigavel: str, 
         localizacao: str, 
