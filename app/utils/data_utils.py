@@ -1,5 +1,5 @@
 """
-Utilitários para processamento de dados - COM SUPORTE ÀS COLUNAS DE AUDITORIA
+Utilitários para processamento de dados - MIGRADO PARA VALIDAÇÕES CENTRALIZADAS
 """
 import pandas as pd
 import pytz
@@ -7,9 +7,12 @@ import re
 from datetime import datetime
 from ..services.data_formatter import DataFormatter
 
+# 🚀 NOVA IMPORTAÇÃO - Usa sistema centralizado para validações de auditoria
+from ..validators import business_validator
+
 
 class DataUtils:
-    """Utilitários para processamento e manipulação de dados com auditoria"""
+    """Utilitários para processamento e manipulação de dados com validações centralizadas"""
     
     @staticmethod
     def processar_desvios(df: pd.DataFrame) -> pd.DataFrame:
@@ -72,8 +75,6 @@ class DataUtils:
                 else:
                     df[col] = ""
 
-        # AQUI ERA ONDE ESTAVA O DEBUG - AGORA REMOVIDO
-        
         # NOVO: Executa verificação automática de status "Não Tratado"
         try:
             from ..services.auto_status_service import executar_verificacao_automatica
@@ -145,7 +146,7 @@ class DataUtils:
     @staticmethod
     def extrair_informacoes_auditoria(df: pd.DataFrame) -> dict:
         """
-        NOVO: Extrai informações de auditoria de um DataFrame
+        🚀 MIGRADO - Extrai informações de auditoria usando validação centralizada
         
         Args:
             df: DataFrame com os registros
@@ -157,8 +158,12 @@ class DataUtils:
             return {
                 "tem_auditoria": False,
                 "preenchimento": {},
-                "aprovacao": {}
+                "aprovacao": {},
+                "integridade_ok": False
             }
+        
+        # 🚀 USA VALIDADOR CENTRALIZADO para verificar integridade
+        validation_result = business_validator.validate_integridade_auditoria(df)
         
         # Pega primeiro registro (todos do evento têm mesmo histórico)
         primeiro_registro = df.iloc[0]
@@ -197,7 +202,9 @@ class DataUtils:
         return {
             "tem_auditoria": tem_auditoria,
             "preenchimento": preenchimento,
-            "aprovacao": aprovacao
+            "aprovacao": aprovacao,
+            "integridade_ok": validation_result.valid,  # 🚀 NOVO: Status de integridade
+            "problemas_integridade": validation_result.errors  # 🚀 NOVO: Lista de problemas
         }
     
     @staticmethod
@@ -207,18 +214,7 @@ class DataUtils:
         data_fim: datetime = None,
         tipo_auditoria: str = "ambos"
     ) -> pd.DataFrame:
-        """
-        NOVO: Filtra registros por período de auditoria
-        
-        Args:
-            df: DataFrame para filtrar
-            data_inicio: Data de início do período
-            data_fim: Data de fim do período
-            tipo_auditoria: "preenchimento", "aprovacao" ou "ambos"
-            
-        Returns:
-            DataFrame filtrado
-        """
+        """Filtra registros por período de auditoria (sem alterações)"""
         if df.empty:
             return df
         
@@ -256,7 +252,7 @@ class DataUtils:
     @staticmethod
     def obter_estatisticas_auditoria(df: pd.DataFrame) -> dict:
         """
-        NOVO: Calcula estatísticas de auditoria
+        🚀 MELHORADO - Calcula estatísticas de auditoria com validação centralizada
         
         Args:
             df: DataFrame com registros
@@ -272,8 +268,13 @@ class DataUtils:
                 "reprovados": 0,
                 "pendentes": 0,
                 "usuarios_ativos": [],
-                "periodo_atividade": {}
+                "periodo_atividade": {},
+                "integridade_ok": True,
+                "problemas_encontrados": 0
             }
+        
+        # 🚀 USA VALIDADOR CENTRALIZADO para verificar integridade
+        validation_result = business_validator.validate_integridade_auditoria(df)
         
         total_registros = len(df)
         
@@ -315,56 +316,54 @@ class DataUtils:
             "reprovados": reprovados,
             "pendentes": pendentes,
             "usuarios_ativos": usuarios_ativos,
-            "periodo_atividade": periodo_atividade
+            "periodo_atividade": periodo_atividade,
+            "integridade_ok": validation_result.valid,  # 🚀 NOVO: Status de integridade
+            "problemas_encontrados": len(validation_result.errors)  # 🚀 NOVO: Quantidade de problemas
         }
     
     @staticmethod
     def validar_integridade_auditoria(df: pd.DataFrame) -> dict:
         """
-        NOVO: Valida integridade dos dados de auditoria
+        🚀 MIGRADO - Valida integridade dos dados de auditoria usando sistema centralizado
         
         Args:
             df: DataFrame para validar
             
         Returns:
-            Dict com resultado da validação
+            Dict com resultado da validação (formato compatível com código existente)
         """
-        problemas = []
-        
-        if df.empty:
-            return {"valido": True, "problemas": []}
-        
-        # Verifica registros com preenchimento sem data
-        preenchidos_sem_data = df[
-            (df["Preenchido_por"].notnull()) & 
-            (df["Preenchido_por"] != "") & 
-            (df["Data_Preenchimento"].isna())
-        ]
-        
-        if not preenchidos_sem_data.empty:
-            problemas.append(f"Encontrados {len(preenchidos_sem_data)} registros com usuário de preenchimento mas sem data")
-        
-        # Verifica registros com aprovação sem data
-        aprovados_sem_data = df[
-            (df["Aprovado_por"].notnull()) & 
-            (df["Aprovado_por"] != "") & 
-            (df["Data_Aprovacao"].isna())
-        ]
-        
-        if not aprovados_sem_data.empty:
-            problemas.append(f"Encontrados {len(aprovados_sem_data)} registros com usuário de aprovação mas sem data")
-        
-        # Verifica registros aprovados sem auditoria
-        status_aprovado_sem_auditoria = df[
-            (df["Status"].isin(["Aprovado", "Reprovado"])) &
-            ((df["Aprovado_por"].isna()) | (df["Aprovado_por"] == ""))
-        ]
-        
-        if not status_aprovado_sem_auditoria.empty:
-            problemas.append(f"Encontrados {len(status_aprovado_sem_auditoria)} registros com status aprovado/reprovado mas sem auditoria")
+        # 🚀 USA VALIDADOR CENTRALIZADO - Substitui lógica inline antiga
+        validation_result = business_validator.validate_integridade_auditoria(df)
         
         return {
-            "valido": len(problemas) == 0,
-            "problemas": problemas,
-            "total_verificado": len(df)
+            "valido": validation_result.valid,
+            "problemas": validation_result.errors,
+            "total_verificado": validation_result.data.get("total_verificado", len(df) if not df.empty else 0)
         }
+
+
+# 🚀 FUNÇÕES DE CONVENIÊNCIA - Para uso direto com validações centralizadas
+
+def validar_integridade_auditoria_rapido(df: pd.DataFrame) -> bool:
+    """Validação rápida de integridade de auditoria"""
+    if df.empty:
+        return True
+    
+    validation_result = business_validator.validate_integridade_auditoria(df)
+    return validation_result.valid
+
+def obter_problemas_auditoria(df: pd.DataFrame) -> list:
+    """Obtém lista de problemas de auditoria encontrados"""
+    if df.empty:
+        return []
+    
+    validation_result = business_validator.validate_integridade_auditoria(df)
+    return validation_result.errors
+
+def extrair_auditoria_com_validacao(df: pd.DataFrame) -> dict:
+    """Extrai informações de auditoria com validação integrada"""
+    return DataUtils.extrair_informacoes_auditoria(df)
+
+def calcular_estatisticas_com_integridade(df: pd.DataFrame) -> dict:
+    """Calcula estatísticas incluindo validação de integridade"""
+    return DataUtils.obter_estatisticas_auditoria(df)

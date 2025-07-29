@@ -196,10 +196,72 @@ class BusinessValidator(BaseValidator):
         # Dados úteis
         result.add_data('total_registros', len(df_evento))
         result.add_data('registros_com_erro', len(erros_registros))
-    
+
+    def _validar_acesso_rigoroso(self, poi_amigavel: str, areas_usuario: List[str], localizacao: str) -> bool:
+        """
+        🚀 MIGRADO DO EventoProcessor - Validação rigorosa de acesso por área
+        
+        Args:
+            poi_amigavel: Nome amigável do POI
+            areas_usuario: Lista de áreas do usuário
+            localizacao: Código da localização
+            
+        Returns:
+            bool: True se usuário tem acesso
+        """
+        # Tenta usar LocationProcessor se disponível (mantém compatibilidade)
+        try:
+            from ..services.location_processor import validar_acesso_usuario_por_localizacao
+            return validar_acesso_usuario_por_localizacao(poi_amigavel, localizacao, areas_usuario)
+        except ImportError:
+            pass
+        
+        # FALLBACK: Lógica original migrada do EventoProcessor
+        if not areas_usuario:
+            return False
+        
+        poi_lower = poi_amigavel.lower()
+        
+        for area in areas_usuario:
+            area_normalizada = area.strip().lower()
+            
+            # VALIDAÇÃO RIGOROSA - cada categoria só acessa o que é dela
+            
+            # FÁBRICA - só acessa fábrica, não terminal
+            if "fábrica" in area_normalizada or "fabrica" in area_normalizada:
+                is_fabrica = any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+                not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+                if is_fabrica and not_terminal:
+                    return True
+            
+            # TERMINAL - só acessa terminal, não fábrica  
+            elif "terminal" in area_normalizada or "inocência" in area_normalizada or "inocencia" in area_normalizada:
+                is_terminal = any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
+                not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
+                if is_terminal and not_fabrica:
+                    return True
+            
+            # P.A. - só acessa P.A.
+            elif any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "água clara", "pa "]):
+                is_pa = any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
+                if is_pa:
+                    return True
+            
+            # OFICINA/MANUTENÇÃO - só acessa oficina
+            elif any(palavra in area_normalizada for palavra in ["oficina", "manutenção", "manutencao"]):
+                is_oficina = any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
+                if is_oficina:
+                    return True
+            
+            # ÁREAS ESPECIAIS
+            elif area_normalizada in ["geral", "all", "todos", "todas"]:
+                return True
+        
+        return False
+
     def _validate_acesso_poi_rule(self, data: Dict, result: ValidationResult, **kwargs):
         """
-        Valida se usuário tem acesso ao POI
+        Valida se usuário tem acesso ao POI - LÓGICA MIGRADA DO EventoProcessor
         
         Args:
             data: Dict com 'poi_amigavel', 'areas_usuario', 'localizacao'
@@ -212,29 +274,42 @@ class BusinessValidator(BaseValidator):
             result.add_error("Usuário não possui áreas definidas")
             return
         
-        # Importa validação de acesso existente
-        try:
-            # Tenta usar LocationProcessor se disponível
-            try:
-                from ..services.location_processor import validar_acesso_usuario_por_localizacao
-                tem_acesso = validar_acesso_usuario_por_localizacao(
-                    poi_amigavel, localizacao, areas_usuario
-                )
-            except ImportError:
-                # Fallback para EventoProcessor
-                from ..services.evento_processor import EventoProcessor
-                tem_acesso = EventoProcessor.validar_acesso_usuario(
-                    poi_amigavel, areas_usuario, localizacao
-                )
-            
-            if not tem_acesso:
-                result.add_error(ValidationMessages.ACESSO_NEGADO)
-                
-            result.add_data('tem_acesso', tem_acesso)
-            result.add_data('areas_validadas', areas_usuario)
-            
-        except Exception as e:
-            result.add_error(f"Erro ao validar acesso: {str(e)}")
+        # 🚀 LÓGICA MIGRADA - Validação rigorosa por área/POI
+        tem_acesso = self._validar_acesso_rigoroso(poi_amigavel, areas_usuario, localizacao)
+        
+        if not tem_acesso:
+            result.add_error(ValidationMessages.ACESSO_NEGADO)
+        
+        result.add_data('tem_acesso', tem_acesso)
+        result.add_data('areas_validadas', areas_usuario)
+        result.add_data('poi_validado', poi_amigavel)
+        result.add_data('localizacao', localizacao)
+    
+    def _validate_acesso_poi_rule(self, data: Dict, result: ValidationResult, **kwargs):
+        """
+        Valida se usuário tem acesso ao POI - LÓGICA MIGRADA DO EventoProcessor
+        
+        Args:
+            data: Dict com 'poi_amigavel', 'areas_usuario', 'localizacao'
+        """
+        poi_amigavel = data.get('poi_amigavel', '')
+        areas_usuario = data.get('areas_usuario', [])
+        localizacao = data.get('localizacao', 'RRP')
+        
+        if not areas_usuario:
+            result.add_error("Usuário não possui áreas definidas")
+            return
+        
+        # 🚀 LÓGICA MIGRADA - Validação rigorosa por área/POI
+        tem_acesso = self._validar_acesso_rigoroso(poi_amigavel, areas_usuario, localizacao)
+        
+        if not tem_acesso:
+            result.add_error(ValidationMessages.ACESSO_NEGADO)
+        
+        result.add_data('tem_acesso', tem_acesso)
+        result.add_data('areas_validadas', areas_usuario)
+        result.add_data('poi_validado', poi_amigavel)
+        result.add_data('localizacao', localizacao)
     
     def _validate_integridade_auditoria_rule(self, data: Dict, result: ValidationResult, **kwargs):
         """

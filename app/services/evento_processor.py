@@ -1,5 +1,5 @@
 """
-Processador de eventos - lógica de negócio para eventos - COM SUPORTE MULTI-LOCALIZAÇÃO
+Processador de eventos - lógica de negócio para eventos - MIGRADO PARA VALIDAÇÕES CENTRALIZADAS
 """
 import pandas as pd
 import pytz
@@ -13,9 +13,12 @@ try:
 except ImportError:
     LOCATION_PROCESSOR_AVAILABLE = False
 
+# 🚀 NOVA IMPORTAÇÃO - Usa sistema centralizado para validações
+from ..validators import business_validator
+
 
 class EventoProcessor:
-    """Classe especializada para processamento de eventos com suporte multi-localização"""
+    """Classe especializada para processamento de eventos com validações centralizadas"""
     
     @staticmethod
     def parse_titulo_completo(titulo: str) -> Dict[str, Any]:
@@ -195,64 +198,25 @@ class EventoProcessor:
         else:
             return ["Outros"]
     
-    """
-Correção do EventoProcessor para validação rigorosa
-Substitua o método validar_acesso_usuario no arquivo:
-app/services/evento_processor.py (linha ~195-210)
-"""
-
     @staticmethod
     def validar_acesso_usuario(poi_amigavel: str, areas_usuario: List[str], localizacao: str = "RRP") -> bool:
         """
-        Verifica se usuário tem acesso ao POI - VERSÃO RIGOROSA
+        🚀 MIGRADO - Verifica se usuário tem acesso ao POI usando sistema centralizado
+        
+        Args:
+            poi_amigavel: Nome amigável do POI
+            areas_usuario: Lista de áreas do usuário  
+            localizacao: Código da localização (RRP/TLS)
+            
+        Returns:
+            bool: True se usuário tem acesso
         """
-        if not areas_usuario:
-            return False
+        # 🚀 USA VALIDADOR CENTRALIZADO - Substitui lógica inline antiga
+        validation_result = business_validator.validate_acesso_usuario_poi(
+            poi_amigavel, areas_usuario, localizacao
+        )
         
-        # NOVO: Usa processador de localização se disponível
-        if LOCATION_PROCESSOR_AVAILABLE:
-            from .location_processor import validar_acesso_usuario_por_localizacao
-            return validar_acesso_usuario_por_localizacao(poi_amigavel, localizacao, areas_usuario)
-        
-        # FALLBACK: Lógica original (apenas RRP)
-        poi_lower = poi_amigavel.lower()
-        
-        for area in areas_usuario:
-            area_normalizada = area.strip().lower()
-            
-            # VALIDAÇÃO RIGOROSA - cada categoria só acessa o que é dela
-            
-            # FÁBRICA - só acessa fábrica, não terminal
-            if "fábrica" in area_normalizada or "fabrica" in area_normalizada:
-                is_fabrica = any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
-                not_terminal = not any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-                if is_fabrica and not_terminal:
-                    return True
-            
-            # TERMINAL - só acessa terminal, não fábrica  
-            elif "terminal" in area_normalizada or "inocência" in area_normalizada or "inocencia" in area_normalizada:
-                is_terminal = any(palavra in poi_lower for palavra in ["terminal", "inocência", "inocencia", "descarga"])
-                not_fabrica = not any(palavra in poi_lower for palavra in ["fábrica", "fabrica", "carregamento"])
-                if is_terminal and not_fabrica:
-                    return True
-            
-            # P.A. - só acessa P.A.
-            elif any(palavra in area_normalizada for palavra in ["p.a.", "agua clara", "água clara", "pa "]):
-                is_pa = any(palavra in poi_lower for palavra in ["agua clara", "p.a.", "pa "])
-                if is_pa:
-                    return True
-            
-            # OFICINA/MANUTENÇÃO - só acessa oficina
-            elif any(palavra in area_normalizada for palavra in ["oficina", "manutenção", "manutencao"]):
-                is_oficina = any(palavra in poi_lower for palavra in ["oficina", "manutenção", "manutencao"])
-                if is_oficina:
-                    return True
-            
-            # ÁREAS ESPECIAIS
-            elif area_normalizada in ["geral", "all", "todos", "todas"]:
-                return True
-        
-        return False
+        return validation_result.valid
     
     @staticmethod
     def calcular_status_evento(df_evento: pd.DataFrame, alteracoes_pendentes: Dict) -> str:
