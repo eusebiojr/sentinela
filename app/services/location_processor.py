@@ -3,6 +3,7 @@ Processador de Localização - Suporte para RRP e TLS - MAPEAMENTO COMPLETO ATUA
 """
 from typing import Dict, Any, List
 from ..config.logging_config import setup_logger
+from ..services.evento_processor import EventoProcessor
 
 logger = setup_logger("location_processor")
 
@@ -379,52 +380,9 @@ class LocationProcessor:
         return poi_real
 
     @staticmethod
-    def validar_acesso_usuario_por_localizacao(
-        poi_amigavel: str, 
-        localizacao: str, 
-        areas_usuario: List[str]
-    ) -> bool:
-        """
-        Validação EXATA baseada no mapeamento definido
-        Área do usuário → Ponto de Interesse específico
-        """
-        if not areas_usuario:
-            return False
-        
-        # MAPEAMENTO EXATO conforme especificado
-        MAPEAMENTO_ACESSO = {
-            "geral": ["*"],  # Vê todos
-            "pa agua clara rrp": ["PA AGUA CLARA"],
-            "terminal rrp": ["Descarga Inocencia"],
-            "fábrica rrp": ["Carregamento Fabrica RRP"],
-            "fabrica rrp": ["Carregamento Fabrica RRP"],
-            "manutenção rrp": ["Oficina JSL"],
-            "manutencao rrp": ["Oficina JSL"],
-            "fábrica tls": ["Carregamento Fabrica"],
-            "fabrica tls": ["Carregamento Fabrica"],
-            "pa celulose tls": ["PA Celulose"],
-            "terminal tls": ["Descarga TAP"]
-        }
-        
-        # Normaliza áreas do usuário
-        areas_normalizadas = [area.strip().lower() for area in areas_usuario]
-        
-        # Extrai POI real do evento
-        poi_real = LocationProcessor._extrair_poi_real_do_evento(poi_amigavel)
-        
-        # Verifica cada área do usuário
-        for area_usuario in areas_normalizadas:
-            pois_permitidos = MAPEAMENTO_ACESSO.get(area_usuario, [])
-            
-            # Área "geral" vê tudo
-            if "*" in pois_permitidos:
-                return True
-            
-            # Verifica match exato
-            if poi_real in pois_permitidos:
-                return True
-        
-        return False
+    def validar_acesso_usuario_por_localizacao(poi_amigavel: str, localizacao: str, areas_usuario: List[str]) -> bool:
+        # Chama o método do EventoProcessor
+        return EventoProcessor.validar_acesso_usuario(poi_amigavel, areas_usuario, localizacao)
         
     @staticmethod
     def obter_areas_disponiveis() -> Dict[str, List[str]]:

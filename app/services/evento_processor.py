@@ -51,13 +51,13 @@ class EventoProcessor:
             
             # Mapeamento de POIs ATUALIZADO COM UNIDADE
             poi_map = {
-                "PAAGUACLARA": "P.A. Água Clara - RRP",
-                "CARREGAMENTOFABRICARRP": "Carregamento Fábrica - RRP",
-                "CARREGAMENTOFABRICA": "Carregamento Fábrica - RRP",
-                "OFICINAJSL": "Manutenção - RRP",
-                "OFICINA": "Manutenção - RRP",
-                "TERMINALINOCENCIA": "Terminal Inocência - RRP",
-                "DESCARGAINOCENCIA": "Terminal Inocência - RRP"
+                "PAAGUACLARA": "PA AGUA CLARA",
+                "CARREGAMENTOFABRICARRP": "Carregamento Fabrica RRP",
+                "CARREGAMENTOFABRICA": "Carregamento Fabrica",
+                "OFICINAJSL": "Oficina JSL",
+                "OFICINA": "Oficina JSL",
+                "TERMINALINOCENCIA": "Descarga Inocencia",
+                "DESCARGAINOCENCIA": "Descarga Inocencia"
             }
             
             # Processa POI com fallback inteligente
@@ -201,23 +201,84 @@ class EventoProcessor:
     @staticmethod
     def validar_acesso_usuario(poi_amigavel: str, areas_usuario: List[str], localizacao: str = "RRP") -> bool:
         """
-        🚀 MIGRADO - Verifica se usuário tem acesso ao POI usando sistema centralizado
-        
-        Args:
-            poi_amigavel: Nome amigável do POI
-            areas_usuario: Lista de áreas do usuário  
-            localizacao: Código da localização (RRP/TLS)
-            
-        Returns:
-            bool: True se usuário tem acesso
+        ✅ VALIDAÇÃO CORRIGIDA - Baseada nos dados reais da sua tabela
         """
-        # 🚀 USA VALIDADOR CENTRALIZADO - Substitui lógica inline antiga
-        validation_result = business_validator.validate_acesso_usuario_poi(
-            poi_amigavel, areas_usuario, localizacao
-        )
+        if not areas_usuario:
+            return False
         
-        return validation_result.valid
+        # Normaliza texto (remove acentos, case insensitive)
+        import unicodedata
+        
+        def normalizar(texto):
+            if not texto:
+                return ""
+            # Remove acentos
+            nfd = unicodedata.normalize('NFD', texto)
+            without_accents = ''.join(c for c in nfd if unicodedata.category(c) != 'Mn')
+            return without_accents.lower().strip()
+        
+        poi_normalizado = normalizar(poi_amigavel)
+        
+        # MAPEAMENTO EXATO baseado na tabela que você enviou
+        MAPEAMENTO_ACESSO = {
+            # Fábrica RRP → Carregamento Fabrica RRP
+            "fabrica rrp": "carregamento fabrica rrp",
+            
+            # Fábrica TLS → Carregamento Fabrica  
+            "fabrica tls": "carregamento fabrica",
+            
+            # Terminal RRP → Descarga Inocencia
+            "terminal rrp": "descarga inocencia",
+            
+            # Manutenção RRP → Oficina JSL
+            "manutencao rrp": "oficina jsl",
+            "manutenção rrp": "oficina jsl",  # Com acento também
+            
+            # PA Agua Clara RRP → PA AGUA CLARA
+            "pa agua clara rrp": "pa agua clara",
+            
+            # PA Celulose TLS → PA Celulose
+            "pa celulose tls": "pa celulose",
+            
+            # Áreas administrativas
+            "geral": "*",
+            "torre": "*"
+        }
+        
+        # Testa cada área do usuário
+        for area in areas_usuario:
+            area_normalizada = normalizar(area)
+            
+            # Busca no mapeamento
+            poi_esperado = MAPEAMENTO_ACESSO.get(area_normalizada)
+            
+            if not poi_esperado:
+                # Busca por substring flexível
+                for key, value in MAPEAMENTO_ACESSO.items():
+                    if key in area_normalizada or area_normalizada in key:
+                        poi_esperado = value
+                        break
+            
+            # Verifica acesso
+            if poi_esperado == "*":  # Acesso total
+                return True
+            elif poi_esperado and poi_esperado in poi_normalizado:
+                return True
+        
+        return False
     
+    @staticmethod 
+    def debug_mapeamento(poi_amigavel: str, areas_usuario: List[str]):
+        """Função de debug para testar o mapeamento"""
+        print(f"\n🔍 DEBUG MAPEAMENTO:")
+        print(f"POI: '{poi_amigavel}'")
+        print(f"Áreas: {areas_usuario}")
+        
+        result = EventoProcessor.validar_acesso_usuario(poi_amigavel, areas_usuario)
+        print(f"Resultado: {result}")
+        
+        return result
+
     @staticmethod
     def calcular_status_evento(df_evento: pd.DataFrame, alteracoes_pendentes: Dict) -> str:
         """Calcula status do evento baseado no preenchimento de TODOS os registros (sem alterações)"""

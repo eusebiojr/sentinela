@@ -1,0 +1,29 @@
+[30/07/2025 11:55:00] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_115500.log
+[30/07/2025 11:55:00] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_115500.log
+[30/07/2025 11:55:00] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_115500.log
+[30/07/2025 11:55:00] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_115500.log
+[30/07/2025 11:55:00] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 11:55:00] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_115500.log
+[30/07/2025 11:55:00] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_115500.log
+[30/07/2025 11:55:00] INFO: 🔑 FLET_SECRET_KEY configurada automaticamente
+[30/07/2025 11:55:02] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 11:55:02] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 11:55:02] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 11:55:02] INFO: Carregando dados de usuários...
+[30/07/2025 11:55:02] INFO: 🔐 [NOVA SESSÃO] ID: 15cdea87, Thread: 52680
+[30/07/2025 11:55:02] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2228719014928
+[30/07/2025 11:55:04] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 11:55:04] INFO: ✅ 35 usuários carregados
+[30/07/2025 11:55:07] INFO: ✅ Login bem-sucedido: b na sessão 15cdea87
+[30/07/2025 11:55:07] INFO: Carregando dados completos...
+[30/07/2025 11:55:11] INFO: ✅ 2000 registros carregados de 'Desvios'
+[30/07/2025 11:55:11] INFO: ✅ Dados carregados: 456 desvios
+[30/07/2025 11:56:07] INFO: 🔄 [RESET SESSÃO 15cdea87] Usuário antes: Eusebio Junior
+[30/07/2025 11:56:07] INFO: ✅ [RESET COMPLETO] Sessão 15cdea87 limpa
+[30/07/2025 11:56:08] INFO: Carregando dados de usuários...
+[30/07/2025 11:56:10] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 11:56:10] INFO: ✅ 35 usuários carregados
+[30/07/2025 11:56:17] INFO: ✅ Login bem-sucedido: eusebioagj@suzano.com.br na sessão 15cdea87
+[30/07/2025 11:56:17] INFO: Carregando dados completos...
+[30/07/2025 11:56:21] INFO: ✅ 2000 registros carregados de 'Desvios'
+[30/07/2025 11:56:21] INFO: ✅ Dados carregados: 456 desvios

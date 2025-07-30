@@ -1,0 +1,17 @@
+[30/07/2025 13:03:44] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_130344.log
+[30/07/2025 13:03:44] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_130344.log
+[30/07/2025 13:03:44] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_130344.log
+[30/07/2025 13:03:44] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 13:03:44] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_130344.log
+[30/07/2025 13:03:44] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_130344.log
+[30/07/2025 13:03:44] INFO: 🔑 FLET_SECRET_KEY configurada automaticamente
+[30/07/2025 13:03:46] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 13:03:46] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 13:03:46] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 13:03:46] INFO: Carregando dados de usuários...
+[30/07/2025 13:03:48] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 13:03:48] INFO: ✅ 35 usuários carregados
+[30/07/2025 13:03:57] INFO: ✅ Login bem-sucedido: eusebioagj@suzano.com.br na sessão 1b4df64c
+[30/07/2025 13:03:57] INFO: Carregando dados completos...
+[30/07/2025 13:04:01] INFO: ✅ 2000 registros carregados de 'Desvios'
+[30/07/2025 13:04:01] INFO: ✅ Dados carregados: 456 desvios
