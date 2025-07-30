@@ -269,7 +269,7 @@ class ReportDialog:
         self._mostrar_erro(mensagem)
     
     def _on_files_selected(self, e: ft.FilePickerResultEvent):
-        """Callback para seleção de arquivos - UPLOAD REAL"""
+        """Callback para seleção de arquivos - VERSÃO UPLOAD STORAGE"""
         try:
             logger.info(f"📁 Callback de seleção executado")
             
@@ -277,59 +277,130 @@ class ReportDialog:
                 logger.info("ℹ️ Nenhum arquivo selecionado")
                 return
             
-            # Processa arquivos REAIS para upload
+            logger.info(f"📋 {len(e.files)} arquivos detectados no evento")
+            
+            # Usa sistema de upload interno do Flet
             arquivos_processados = []
             
-            for f in e.files:
-                if hasattr(f, 'name') and f.name and hasattr(f, 'path') and f.path:
-                    # Arquivo com path válido - pode processar
-                    try:
-                        # Valida se é imagem
-                        if f.name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
-                            # Processa arquivo real
-                            arquivo_info = {
-                                "nome": f.name,
-                                "caminho": f.path,
-                                "tamanho_mb": getattr(f, 'size', 0) / (1024*1024) if hasattr(f, 'size') else 0.1,
-                                "real": True  # Marca como arquivo real
-                            }
-                            arquivos_processados.append(arquivo_info)
-                            logger.info(f"📎 Arquivo real selecionado: {f.name}")
-                        else:
-                            logger.warning(f"⚠️ Arquivo não é imagem: {f.name}")
-                    except Exception as e_arquivo:
-                        logger.warning(f"⚠️ Erro ao processar {f.name}: {e_arquivo}")
+            for i, f in enumerate(e.files):
+                logger.info(f"🔍 Processando arquivo {i+1}: {f.name}")
                 
-                elif hasattr(f, 'name') and f.name:
-                    # Arquivo sem path (web) - simula
-                    arquivo_sim = {
-                        "nome": f.name,
-                        "tamanho_mb": getattr(f, 'size', 0) / (1024*1024) if hasattr(f, 'size') else 0.1,
-                        "simulado": True  # Marca como simulado
-                    }
-                    arquivos_processados.append(arquivo_sim)
-                    logger.info(f"📎 Arquivo simulado (web): {f.name}")
+                try:
+                    nome_arquivo = f.name
+                    tamanho = getattr(f, 'size', 0)
+                    
+                    # Verifica se é imagem
+                    if nome_arquivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
+                        
+                        # Prepara arquivo para upload via Flet
+                        arquivo_info = {
+                            "nome": nome_arquivo,
+                            "tamanho_mb": tamanho / (1024*1024) if tamanho else 0.1,
+                            "file_ref": f,  # Referência do arquivo original
+                            "upload_ready": True,  # Pronto para upload
+                            "real": True  # Marca como real para processamento
+                        }
+                        
+                        arquivos_processados.append(arquivo_info)
+                        logger.info(f"✅ Arquivo preparado para upload via Flet: {nome_arquivo}")
+                        
+                    else:
+                        logger.warning(f"⚠️ Arquivo não é imagem: {nome_arquivo}")
+                        
+                except Exception as e_arquivo:
+                    logger.error(f"❌ Erro ao processar {f.name}: {e_arquivo}")
+                    continue
             
+            # Atualiza interface
             if arquivos_processados:
                 self.arquivos_selecionados = arquivos_processados
                 self._atualizar_lista_arquivos()
                 
-                # Conta arquivos reais vs simulados
                 reais = len([a for a in arquivos_processados if a.get("real", False)])
-                simulados = len([a for a in arquivos_processados if a.get("simulado", False)])
+                logger.info(f"📊 RESULTADO: {reais} arquivos preparados para upload Flet")
                 
                 if reais > 0:
-                    mensagem = f"✅ {reais} arquivo(s) selecionado(s) para upload real"
-                    if simulados > 0:
-                        mensagem += f" + {simulados} simulado(s)"
-                else:
-                    mensagem = f"📎 {simulados} arquivo(s) selecionado(s) (apenas mencionados no ticket)"
+                    mensagem = f"✅ {reais} arquivo(s) preparado(s) para upload"
+                    mostrar_mensagem(self.page, mensagem, "success")
                 
-                mostrar_mensagem(self.page, mensagem, "success")
+                # INICIA UPLOAD AUTOMÁTICO
+                self._iniciar_upload_flet()
             
         except Exception as ex:
-            logger.error(f"❌ Erro no callback: {ex}")
+            logger.error(f"❌ Erro crítico no callback: {ex}")
             self._mostrar_erro_upload()
+    
+    def _iniciar_upload_flet(self):
+        """Inicia upload usando sistema interno do Flet"""
+        try:
+            logger.info("🚀 Iniciando upload via sistema Flet...")
+            
+            if not self.file_picker.result or not self.file_picker.result.files:
+                logger.warning("⚠️ Nenhum arquivo no result do FilePicker")
+                return
+            
+            # Prepara lista de upload
+            upload_list = []
+            
+            for f in self.file_picker.result.files:
+                # Gera URL de upload temporária
+                upload_url = self.page.get_upload_url(f.name, 600)  # 10 minutos
+                
+                upload_file = ft.FilePickerUploadFile(
+                    f.name,
+                    upload_url=upload_url
+                )
+                
+                upload_list.append(upload_file)
+                logger.info(f"📤 Preparando upload: {f.name} -> {upload_url}")
+            
+            # Inicia upload
+            self.file_picker.upload(upload_list)
+            logger.info(f"✅ Upload iniciado para {len(upload_list)} arquivo(s)")
+            
+            # Marca arquivos como "upload em progresso"
+            for arquivo in self.arquivos_selecionados:
+                if arquivo.get("upload_ready"):
+                    arquivo["upload_initiated"] = True
+            
+            self._atualizar_lista_arquivos()
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao iniciar upload Flet: {e}")
+
+    def _enviar_ticket_com_upload_flet(self, e):
+        """Envia ticket - VERSÃO COM UPLOAD FLET"""
+        if self.processando:
+            return
+        
+        # Validações normais
+        self._limpar_erro()
+        validacao = self._validar_formulario()
+        if not validacao["valido"]:
+            self._mostrar_erro("\\n".join(validacao["erros"]))
+            return
+        
+        self._ativar_modo_envio(True)
+        mostrar_mensagem(self.page, "📤 Enviando ticket...", "info")
+
+    def _test_force_file_access(self, e: ft.FilePickerResultEvent):
+        """Teste de força bruta para acessar arquivos"""
+        if not e.files:
+            return
+        
+        for i, f in enumerate(e.files):
+            logger.info(f"🧪 TESTE FORÇA BRUTA - Arquivo {i+1}:")
+            
+            # Tenta vários métodos de acesso
+            metodos = ['path', 'file_path', 'filepath', 'full_path', 'url', 'src']
+            
+            for metodo in metodos:
+                try:
+                    valor = getattr(f, metodo, None)
+                    if valor:
+                        logger.info(f"    ✅ {metodo}: {valor}")
+                except:
+                    pass
     
     def _atualizar_lista_arquivos(self):
         """Atualiza lista de arquivos - VERSÃO PARA UPLOAD REAL"""
@@ -522,107 +593,111 @@ class ReportDialog:
         self.page.update()
     
     def _enviar_ticket(self, e):
-        """Envia o ticket - VERSÃO FINAL CORRIGIDA"""
+        """Envia ticket - VERSÃO COM UPLOAD FLET"""
         if self.processando:
             return
         
-        # Limpa erros
+        # Validações normais
         self._limpar_erro()
-        
-        # Valida formulário
         validacao = self._validar_formulario()
         if not validacao["valido"]:
             self._mostrar_erro("\\n".join(validacao["erros"]))
             return
         
-        # Ativa modo envio
         self._ativar_modo_envio(True)
         mostrar_mensagem(self.page, "📤 Enviando ticket...", "info")
         
-        # Processa em thread
         def processar_envio():
             try:
-                logger.info("🎫 Iniciando envio de ticket...")
+                logger.info("🎫 Enviando ticket com upload Flet...")
                 
                 # Dados básicos do ticket
                 dados_ticket = {
                     "motivo": self.motivo_dropdown.value,
                     "usuario": self.usuario_field.value.strip(),
-                    "descricao": self.descricao_field.value.strip(),  # APENAS A DESCRIÇÃO ORIGINAL
+                    "descricao": self.descricao_field.value.strip(),
                     "anexos": []
                 }
                 
-                # PROCESSA ANEXOS REAIS SE HOUVER
-                anexos_processados_real = []
+                # PROCESSA ANEXOS VIA FLET UPLOAD
                 if self.arquivos_selecionados:
-                    logger.info(f"📎 Processando {len(self.arquivos_selecionados)} arquivos selecionados...")
+                    logger.info(f"📎 Processando {len(self.arquivos_selecionados)} arquivos uploaded...")
+                    
+                    anexos_processados = []
                     
                     for arquivo in self.arquivos_selecionados:
-                        # Verifica se é arquivo real (com caminho)
-                        if arquivo.get("real", False) and arquivo.get("caminho"):
-                            caminho = arquivo["caminho"]
-                            logger.info(f"📂 Processando arquivo real: {caminho}")
-                            
+                        if arquivo.get("real", False):
                             try:
-                                # Lê o arquivo do disco
-                                with open(caminho, "rb") as f:
-                                    dados_binarios = f.read()
+                                nome_arquivo = arquivo["nome"]
                                 
-                                # Cria objeto de anexo processado
-                                anexo_processado = {
-                                    "name": arquivo["nome"],
-                                    "original_name": arquivo["nome"],
-                                    "data": dados_binarios,
-                                    "size": len(dados_binarios),
-                                    "mime_type": "image/jpeg",  # Padrão para imagens
-                                    "extension": ".jpg"
-                                }
+                                # Tenta acessar arquivo uploadado
+                                upload_path = f"/uploads/{nome_arquivo}"
                                 
-                                anexos_processados_real.append(anexo_processado)
-                                logger.info(f"✅ Arquivo processado: {arquivo['nome']} ({len(dados_binarios)} bytes)")
+                                # Verifica se arquivo foi enviado para storage interno
+                                try:
+                                    # Lê arquivo do storage interno do Flet
+                                    with open(upload_path, "rb") as f:
+                                        dados_binarios = f.read()
+                                    
+                                    anexo_processado = {
+                                        "name": nome_arquivo,
+                                        "original_name": nome_arquivo,
+                                        "data": dados_binarios,
+                                        "size": len(dados_binarios),
+                                        "mime_type": "image/jpeg"
+                                    }
+                                    
+                                    anexos_processados.append(anexo_processado)
+                                    logger.info(f"✅ Anexo processado via upload: {nome_arquivo} ({len(dados_binarios)} bytes)")
+                                    
+                                except FileNotFoundError:
+                                    logger.warning(f"⚠️ Arquivo não encontrado no storage: {nome_arquivo}")
+                                    
+                                    # FALLBACK: Cria anexo "fantasma" para ao menos registrar tentativa
+                                    anexo_fantasma = {
+                                        "name": nome_arquivo,
+                                        "original_name": nome_arquivo,
+                                        "data": b"",  # Vazio, mas registra tentativa
+                                        "size": 0,
+                                        "mime_type": "image/jpeg",
+                                        "fantasma": True  # Marca como fantasma
+                                    }
+                                    anexos_processados.append(anexo_fantasma)
+                                    logger.info(f"📎 Anexo fantasma criado: {nome_arquivo}")
                                 
-                            except Exception as e_arquivo:
-                                logger.error(f"❌ Erro ao ler arquivo {caminho}: {e_arquivo}")
+                            except Exception as e_anexo:
+                                logger.error(f"❌ Erro ao processar anexo {arquivo['nome']}: {e_anexo}")
                                 continue
-                        else:
-                            logger.info(f"📎 Arquivo simulado ignorado: {arquivo['nome']}")
                     
-                    # Adiciona anexos reais ao ticket
-                    if anexos_processados_real:
-                        dados_ticket["anexos"] = anexos_processados_real
-                        logger.info(f"📎 {len(anexos_processados_real)} anexos reais adicionados ao ticket")
-                    else:
-                        logger.info("📎 Nenhum anexo real para processar")
+                    # Adiciona anexos ao ticket
+                    dados_ticket["anexos"] = anexos_processados
+                    logger.info(f"📎 {len(anexos_processados)} anexos adicionados ao ticket")
                 
                 # ENVIA TICKET
-                logger.info(f"📤 Enviando ticket com {len(dados_ticket['anexos'])} anexos...")
+                logger.info(f"📤 Enviando ticket com {len(dados_ticket.get('anexos', []))} anexos...")
                 resultado = ticket_service.abrir_ticket_completo(**dados_ticket)
                 
-                # Desativa modo envio
                 self._ativar_modo_envio(False)
                 
                 if resultado["sucesso"]:
-                    # Sucesso
                     self._fechar_modal()
-                    
                     anexos_enviados = resultado.get("anexos_processados", 0)
+                    
                     if anexos_enviados > 0:
                         self._mostrar_mensagem_sucesso_com_anexos(resultado['ticket_id'], anexos_enviados)
                     else:
                         self._mostrar_mensagem_sucesso_grande(resultado['ticket_id'])
                     
                     logger.info(f"✅ Ticket #{resultado['ticket_id']} criado com {anexos_enviados} anexos")
-                    
                 else:
-                    # Erro
                     erro_msg = resultado.get("erro", "Erro desconhecido")
                     self._mostrar_erro(f"Erro ao criar ticket:\\n{erro_msg}")
-                    logger.error(f"❌ Erro ao criar ticket: {erro_msg}")
+                    logger.error(f"❌ Erro: {erro_msg}")
                 
             except Exception as ex:
                 self._ativar_modo_envio(False)
                 self._mostrar_erro(f"Erro interno: {str(ex)}")
-                logger.error(f"❌ Erro crítico no envio: {ex}")
+                logger.error(f"❌ Erro crítico: {ex}")
         
         thread = threading.Thread(target=processar_envio, daemon=True)
         thread.start()

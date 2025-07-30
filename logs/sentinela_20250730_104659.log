@@ -1,0 +1,34 @@
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:46:59] INFO: 🎫 TicketService inicializado
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:46:59] INFO: 📁 FileUploadService inicializado - Versão robusta
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:46:59] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:46:59] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_104659.log
+[30/07/2025 10:47:00] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:47:00] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 10:47:00] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:47:00] INFO: Carregando dados de usuários...
+[30/07/2025 10:47:03] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 10:47:03] INFO: ✅ 35 usuários carregados
+[30/07/2025 10:47:05] INFO: 🎫 ReportDialog inicializado - Versão final
+[30/07/2025 10:47:05] INFO: 🎫 Modal aberto para: usuário anônimo
+[30/07/2025 10:47:15] INFO: 📁 Tentando abrir seletor de arquivos...
+[30/07/2025 10:47:18] INFO: 📁 Callback de seleção executado
+[30/07/2025 10:47:18] INFO: 📋 1 arquivos detectados no evento
+[30/07/2025 10:47:18] INFO: 🔍 Processando arquivo 1: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 10:47:18] INFO: ✅ Arquivo preparado para upload via Flet: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 10:47:18] INFO: 📊 RESULTADO: 1 arquivos preparados para upload Flet
+[30/07/2025 10:47:18] ERROR: ❌ Erro crítico no callback: 'ReportDialog' object has no attribute '_iniciar_upload_flet'
+[30/07/2025 10:47:22] INFO: 🎫 Enviando ticket com upload Flet...
+[30/07/2025 10:47:22] INFO: 📎 Processando 1 arquivos uploaded...
+[30/07/2025 10:47:22] WARNING: ⚠️ Arquivo não encontrado no storage: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 10:47:22] INFO: 📎 Anexo fantasma criado: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 10:47:22] INFO: 📎 1 anexos adicionados ao ticket
+[30/07/2025 10:47:22] INFO: 📤 Enviando ticket com 1 anexos...
+[30/07/2025 10:47:22] INFO: 📋 Validação ticket: ❌ ERRO
+[30/07/2025 10:47:22] ERROR: ❌ Erro: Dados inválidos
