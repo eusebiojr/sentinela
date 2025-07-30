@@ -5,6 +5,8 @@ Substitui o arquivo app/ui/components/modern_header.py
 import flet as ft
 from ...core.session_state import get_session_state
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
+from ...services.ticket_service import ticket_service
+from ..components.ticket_modal import criar_modal_ticket
 
 # Importa o serviço funcional de senha
 try:
@@ -203,11 +205,18 @@ class ModernHeader:
                 "action": self._ver_perfil,
                 "color": ft.colors.BLUE_600
             },
+            # ===== NOVA OPÇÃO: Abrir Chamado =====
+            {
+                "icon": ft.icons.SUPPORT_AGENT,
+                "text": "Abrir Chamado",
+                "action": self._abrir_chamado,
+                "color": ft.colors.GREEN_600
+            },
             {
                 "icon": ft.icons.LOCK_RESET,
                 "text": "Trocar Senha",
                 "action": self._trocar_senha,
-                "color": ft.colors.GREEN_600
+                "color": ft.colors.ORANGE_600  # Alterado de GREEN_600 para ORANGE_600
             },
             {
                 "icon": ft.icons.SETTINGS,
@@ -806,10 +815,55 @@ class ModernHeader:
         modal.open = True
         self.page.update()
 
+    def _abrir_chamado(self):
+        """Abre modal de chamado de suporte"""
+        try:
+            # Obtém email do usuário logado
+            session = get_session_state(self.page)
+            email_usuario = session.usuario.get('Email', '') if session.usuario else ''
+            
+            # Cria modal de ticket com usuário pré-preenchido
+            modal_ticket = criar_modal_ticket(
+                self.page, 
+                callback_sucesso=self._ticket_criado_sucesso
+            )
+            
+            # Mostra o modal com email pré-preenchido
+            modal_ticket.mostrar_modal(usuario_logado=email_usuario)
+            
+        except Exception as ex:
+            print(f"❌ Erro ao abrir chamado: {str(ex)}")
+            mostrar_mensagem(self.page, "Erro ao abrir formulário de chamado", True)
+
+    def _ticket_criado_sucesso(self, ticket_id: int, dados_ticket: dict):
+        """Callback executado quando ticket é criado com sucesso"""
+        try:
+            print(f"✅ Ticket {ticket_id} criado no sistema logado")
+            print(f"📧 Usuário: {dados_ticket.get('usuario')}")
+            print(f"🎯 Motivo: {dados_ticket.get('motivo')}")
+            
+            # Aqui você pode adicionar lógica adicional
+            # Por exemplo, atualizar contadores, enviar notificação, etc.
+            
+        except Exception as ex:
+            print(f"❌ Erro no callback de sucesso: {str(ex)}")
+
+    def _fechar_menu(self):
+        """Fecha o menu suspenso"""
+        try:
+            if self.menu_container:
+                self.menu_container.visible = False
+                self.menu_visible = False
+                self.page.update()
+        except Exception as ex:
+            print(f"❌ Erro ao fechar menu: {str(ex)}")
+
     def _fechar_modal(self, modal):
         """Fecha modal"""
         modal.open = False
         self.page.update()
+
+
 
 
 # Funções auxiliares para compatibilidade

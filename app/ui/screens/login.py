@@ -3,7 +3,7 @@ Tela de login do sistema
 """
 import flet as ft
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
-
+from ..components.ticket_modal import criar_modal_ticket
 
 class LoginScreen:
     """Tela de login"""
@@ -16,7 +16,7 @@ class LoginScreen:
         self.btn_login = None
         
     def mostrar(self):
-        """Exibe a tela de login"""
+        """Exibe a tela de login COM botão de suporte"""
         # Detecta tamanho da tela para responsividade
         screen_size = get_screen_size(self.page.window_width)
         
@@ -31,6 +31,8 @@ class LoginScreen:
             spacing_top = 20
             spacing_middle = 30
             spacing_fields = 10
+            button_height = 45
+            support_button_size = 12
         elif screen_size == "medium":
             container_width = min(450, self.page.window_width - 60)
             image_size = 160
@@ -41,6 +43,8 @@ class LoginScreen:
             spacing_top = 35
             spacing_middle = 35
             spacing_fields = 15
+            button_height = 50
+            support_button_size = 14
         else:  # large
             container_width = 500
             image_size = 200
@@ -51,57 +55,93 @@ class LoginScreen:
             spacing_top = 50
             spacing_middle = 40
             spacing_fields = 15
-        
-        # Campos de login
+            button_height = 55
+            support_button_size = 16
+
+        # Campos de login (manter os existentes)
         self.email_field = ft.TextField(
-            label="E-mail corporativo",
+            label="Email",
             width=field_width,
-            prefix_icon=ft.icons.EMAIL,
-            border_radius=10,
-            keyboard_type=ft.KeyboardType.EMAIL,
-            autofocus=True
+            border_color=ft.colors.BLUE_300,
+            focused_border_color=ft.colors.BLUE_600,
+            prefix_icon=ft.icons.EMAIL
         )
-        
+
         self.password_field = ft.TextField(
             label="Senha",
             width=field_width,
-            prefix_icon=ft.icons.LOCK,
             password=True,
             can_reveal_password=True,
-            border_radius=10,
+            border_color=ft.colors.BLUE_300,
+            focused_border_color=ft.colors.BLUE_600,
+            prefix_icon=ft.icons.LOCK,
             on_submit=self._fazer_login
         )
-        
+
+        # Botão de login principal
         self.btn_login = ft.ElevatedButton(
-            text="Entrar",
+            "Entrar",
             width=field_width,
-            height=50,
-            on_click=self._fazer_login,
+            height=button_height,
+            bgcolor=ft.colors.BLUE_600,
+            color=ft.colors.WHITE,
             style=ft.ButtonStyle(
-                bgcolor=ft.colors.BLUE_600,
-                color=ft.colors.WHITE,
-                shape=ft.RoundedRectangleBorder(radius=10)
+                shape=ft.RoundedRectangleBorder(radius=8)
+            ),
+            on_click=self._fazer_login
+        )
+
+        # ===== NOVO: Botão de suporte =====
+        btn_suporte = ft.TextButton(
+            content=ft.Row([
+                ft.Icon(ft.icons.SUPPORT_AGENT, size=support_button_size, color=ft.colors.GREY_600),
+                ft.Text("Reportar Problema", size=support_button_size, color=ft.colors.GREY_600)
+            ], alignment=ft.MainAxisAlignment.CENTER, tight=True),
+            on_click=self._abrir_ticket_suporte,
+            style=ft.ButtonStyle(
+                overlay_color=ft.colors.GREY_100,
+                shape=ft.RoundedRectangleBorder(radius=6)
             )
         )
-        
-        # Container principal do login
+
+        # Container do formulário de login ATUALIZADO
         login_container = ft.Container(
             content=ft.Column([
                 ft.Container(height=spacing_top),
+                
+                # Logo
                 ft.Image(
-                    src="images/sentinela.png",
+                    src="/images/logo.png",
                     width=image_size,
                     height=image_size,
                     fit=ft.ImageFit.CONTAIN
                 ),
-                ft.Text("Sentinela", size=title_size, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_600),
-                ft.Text("Faça seu login para continuar", size=subtitle_size, color=ft.colors.GREY_600),
+                
                 ft.Container(height=spacing_middle),
+                
+                # Título e subtítulo
+                ft.Text("Sentinela", size=title_size, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_800),
+                ft.Text("Sistema de Gestão de Desvios", size=subtitle_size, color=ft.colors.GREY_600),
+                
+                ft.Container(height=spacing_middle),
+                
+                # Campos de login
                 self.email_field,
                 ft.Container(height=spacing_fields),
                 self.password_field,
+                
                 ft.Container(height=spacing_fields + 10),
-                self.btn_login
+                
+                # Botão de login
+                self.btn_login,
+                
+                ft.Container(height=15),
+                
+                # ===== NOVO: Botão de suporte =====
+                btn_suporte,
+                
+                ft.Container(height=spacing_top)
+                
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             padding=padding_container,
             border_radius=20,
@@ -111,8 +151,8 @@ class LoginScreen:
             margin=ft.margin.all(20),
             alignment=ft.alignment.center
         )
-        
-        # Tela de login centralizada
+
+        # Tela de login centralizada (manter igual)
         login_screen = ft.Container(
             content=ft.Row([
                 ft.Container(expand=True),
@@ -127,7 +167,7 @@ class LoginScreen:
             bgcolor=ft.colors.GREY_50,
             expand=True
         )
-        
+
         self.page.clean()
         self.page.add(login_screen)
         self.page.update()
@@ -147,3 +187,32 @@ class LoginScreen:
         if not sucesso:
             mostrar_mensagem(self.page, "Login inválido", True)
             return
+        
+    def _abrir_ticket_suporte(self, e):
+        """Abre modal de ticket de suporte na tela de login"""
+        try:
+            # Cria modal de ticket sem usuário logado
+            modal_ticket = criar_modal_ticket(
+                self.page, 
+                callback_sucesso=self._ticket_criado_sucesso
+            )
+            
+            # Mostra o modal
+            modal_ticket.mostrar_modal(usuario_logado=None)
+            
+        except Exception as ex:
+            print(f"❌ Erro ao abrir ticket de suporte: {str(ex)}")
+            mostrar_mensagem(self.page, "Erro ao abrir formulário de suporte", True)
+
+    def _ticket_criado_sucesso(self, ticket_id: int, dados_ticket: dict):
+        """Callback executado quando ticket é criado com sucesso"""
+        try:
+            print(f"✅ Ticket {ticket_id} criado na tela de login")
+            print(f"📧 Usuário: {dados_ticket.get('usuario')}")
+            print(f"🎯 Motivo: {dados_ticket.get('motivo')}")
+            
+            # Aqui você pode adicionar lógica adicional se necessário
+            # Por exemplo, enviar notificação para Teams
+            
+        except Exception as ex:
+            print(f"❌ Erro no callback de sucesso: {str(ex)}")
