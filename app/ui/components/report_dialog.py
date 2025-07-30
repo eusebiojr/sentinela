@@ -1,7 +1,3 @@
-"""
-Modal de Report de Problemas - Sistema Sentinela
-Interface para abertura de tickets de suporte
-"""
 import flet as ft
 from typing import List, Optional, Dict, Any
 import threading
@@ -33,32 +29,25 @@ class ReportDialog:
         self.btn_enviar = None
         self.error_text = None
         
-        logger.info("🎫 ReportDialog inicializado")
+        logger.info("🎫 ReportDialog inicializado - Versão final corrigida")
     
     def criar_modal(self, usuario_logado: str = "") -> ft.AlertDialog:
-        """
-        Cria o modal de report
+        """Cria o modal de report - VERSÃO FINAL CORRIGIDA"""
         
-        Args:
-            usuario_logado: Email do usuário logado (pré-preenchido)
-            
-        Returns:
-            AlertDialog configurado
-        """
         # Configurações responsivas
         screen_size = get_screen_size(self.page.window_width)
         
         if screen_size == "small":
-            modal_width = min(450, self.page.window_width - 40)
-            modal_height = 600
-            field_width = modal_width - 60
-        elif screen_size == "medium":
-            modal_width = 550
+            modal_width = min(480, self.page.window_width - 30)
             modal_height = 650
+            field_width = modal_width - 50
+        elif screen_size == "medium":
+            modal_width = 600
+            modal_height = 700
             field_width = modal_width - 60
         else:  # large
-            modal_width = 650
-            modal_height = 700
+            modal_width = 700
+            modal_height = 750
             field_width = modal_width - 80
         
         # Inicializa FilePicker
@@ -73,9 +62,34 @@ class ReportDialog:
         secao_anexos = self._criar_secao_anexos()
         
         # Texto de erro
-        self.error_text = ft.Text("", color=ft.colors.RED, size=12, visible=False)
+        self.error_text = ft.Text(
+            "", 
+            color=ft.colors.RED, 
+            size=12, 
+            visible=False,
+            max_lines=5,
+            overflow=ft.TextOverflow.VISIBLE
+        )
+        
+        # CORRIGIDO: Botões com tamanho fixo
+        btn_cancelar = ft.TextButton(
+            "Cancelar", 
+            on_click=self._cancelar,
+            width=100  # Tamanho fixo
+        )
+        
+        self.btn_enviar.width = 140  # Tamanho fixo
         
         # Modal principal
+        content_column = ft.Column([
+            secao_orientacoes,
+            ft.Divider(height=20, color=ft.colors.GREY_300),
+            secao_formulario,
+            secao_anexos,
+            ft.Container(height=15),
+            self.error_text
+        ], spacing=15, scroll=ft.ScrollMode.AUTO)
+        
         self.modal = ft.AlertDialog(
             modal=True,
             title=ft.Row([
@@ -83,33 +97,27 @@ class ReportDialog:
                 ft.Text("Reportar Problema", weight=ft.FontWeight.BOLD, size=18)
             ], spacing=10),
             content=ft.Container(
-                content=ft.Column([
-                    secao_orientacoes,
-                    ft.Divider(height=20, color=ft.colors.GREY_300),
-                    secao_formulario,
-                    secao_anexos,
-                    ft.Container(height=10),
-                    self.error_text
-                ], spacing=15, scroll=ft.ScrollMode.AUTO),
+                content=content_column,
                 width=modal_width,
                 height=modal_height,
-                padding=20
+                padding=ft.padding.all(20)
             ),
-            actions=[
-                ft.TextButton("Cancelar", on_click=self._cancelar),
-                self.btn_enviar
-            ],
+            actions=[btn_cancelar, self.btn_enviar],  # Botões com tamanho fixo
+            actions_alignment=ft.MainAxisAlignment.END,  # Alinhamento
             shape=ft.RoundedRectangleBorder(radius=12)
         )
         
         return self.modal
     
     def _setup_file_picker(self):
-        """Configura o FilePicker"""
-        self.file_picker = ft.FilePicker(
-            on_result=self._on_files_selected
-        )
+        """CORRIGIDO: FilePicker mais compatível"""
+        if self.file_picker:
+            if self.file_picker in self.page.overlay:
+                self.page.overlay.remove(self.file_picker)
+        
+        self.file_picker = ft.FilePicker(on_result=self._on_files_selected)
         self.page.overlay.append(self.file_picker)
+        self.page.update()
     
     def _criar_campos_formulario(self, field_width: int, usuario_logado: str):
         """Cria os campos do formulário"""
@@ -153,7 +161,7 @@ class ReportDialog:
             bgcolor=ft.colors.GREY_50
         )
         
-        # Botão enviar
+        # CORRIGIDO: Botão enviar com tamanho fixo
         self.btn_enviar = ft.ElevatedButton(
             "Enviar Ticket",
             icon=ft.icons.SEND,
@@ -161,8 +169,8 @@ class ReportDialog:
             bgcolor=ft.colors.BLUE_600,
             color=ft.colors.WHITE,
             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-            width=150,
-            height=45
+            width=140,  # Tamanho fixo
+            height=40
         )
     
     def _criar_secao_orientacoes(self) -> ft.Container:
@@ -212,7 +220,8 @@ class ReportDialog:
             on_click=self._selecionar_arquivos,
             bgcolor=ft.colors.GREEN_100,
             color=ft.colors.GREEN_800,
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=6))
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=6)),
+            width=180  # Tamanho fixo
         )
         
         # Informações sobre limites
@@ -235,35 +244,79 @@ class ReportDialog:
         ], spacing=8)
     
     def _selecionar_arquivos(self, e):
-        """Abre seletor de arquivos"""
+        """CORRIGIDO: Seleção de arquivos mais robusta"""
         if self.processando:
             return
         
-        self.file_picker.pick_files(
-            dialog_title="Selecionar Imagens",
-            file_type=ft.FilePickerFileType.IMAGE,
-            allow_multiple=True
-        )
+        try:
+            logger.info("📁 Iniciando seleção de arquivos...")
+            
+            # CORRIGIDO: Usar pick_files simples sem especificar tipo
+            self.file_picker.pick_files(
+                dialog_title="Selecionar Imagens para Anexar",
+                allow_multiple=True
+                # Removido file_type e allowed_extensions para maior compatibilidade
+            )
+            
+        except Exception as ex:
+            logger.error(f"❌ Erro ao abrir seletor: {ex}")
+            self._mostrar_erro(f"Erro ao abrir seletor de arquivos: {str(ex)}")
     
     def _on_files_selected(self, e: ft.FilePickerResultEvent):
-        """Callback quando arquivos são selecionados"""
-        if not e.files:
-            return
-        
+        """CORRIGIDO: Callback melhorado para files selected"""
         try:
-            # Obtém caminhos dos arquivos
-            file_paths = [f.path for f in e.files if f.path]
+            logger.info(f"📁 Callback executado - Event: {e}")
+            
+            if not e.files:
+                logger.warning("⚠️ Nenhum arquivo no evento")
+                mostrar_mensagem(self.page, "ℹ️ Nenhum arquivo selecionado", "info")
+                return
+            
+            logger.info(f"📋 {len(e.files)} arquivos detectados no evento")
+            
+            # CORRIGIDO: Debug detalhado dos arquivos
+            file_paths = []
+            for i, f in enumerate(e.files):
+                logger.debug(f"📂 Arquivo {i+1}: name='{f.name}', path='{f.path}', size={getattr(f, 'size', 'N/A')}")
+                
+                # CORRIGIDO: Verifica se arquivo tem path válido
+                if hasattr(f, 'path') and f.path:
+                    file_paths.append(f.path)
+                elif hasattr(f, 'name') and f.name:
+                    # Fallback: se não tem path, usa apenas o nome (web)
+                    logger.warning(f"⚠️ Arquivo sem path, apenas nome: {f.name}")
+                    # No Flet web, não temos acesso ao path real
+                    self._mostrar_erro("Seleção de arquivos não suportada no navegador. Use a versão desktop.")
+                    return
             
             if not file_paths:
-                mostrar_mensagem(self.page, "❌ Nenhum arquivo válido selecionado", "error")
+                logger.warning("⚠️ Nenhum path válido encontrado")
+                self._mostrar_erro("Nenhum arquivo com caminho válido encontrado. Tente novamente.")
+                return
+            
+            logger.info(f"📋 {len(file_paths)} caminhos válidos para processar")
+            
+            # CORRIGIDO: Filtra apenas imagens manualmente
+            file_paths_filtrados = []
+            for path in file_paths:
+                if path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
+                    file_paths_filtrados.append(path)
+                    logger.debug(f"✅ Arquivo de imagem aceito: {path}")
+                else:
+                    logger.warning(f"⚠️ Arquivo não é imagem: {path}")
+            
+            if not file_paths_filtrados:
+                self._mostrar_erro("Nenhum arquivo de imagem válido selecionado. Use: PNG, JPG, GIF, BMP ou WebP")
                 return
             
             # Valida arquivos
-            validacao = file_upload_service.validar_lote_arquivos(file_paths)
+            logger.info(f"🔍 Validando {len(file_paths_filtrados)} arquivos de imagem...")
+            validacao = file_upload_service.validar_lote_arquivos(file_paths_filtrados)
             
             if not validacao["valido"]:
-                erros = "\n".join(validacao["erros"])
-                self._mostrar_erro(f"Erro nos arquivos:\n{erros}")
+                erros_str = "\\n".join(validacao["erros"])
+                logger.warning(f"❌ Validação falhou: {validacao['erros']}")
+                self._mostrar_erro(f"Erro nos arquivos:\\n{erros_str}")
                 return
             
             # Armazena arquivos válidos
@@ -272,15 +325,15 @@ class ReportDialog:
             # Atualiza interface
             self._atualizar_lista_arquivos()
             
-            mostrar_mensagem(
-                self.page, 
-                f"✅ {len(self.arquivos_selecionados)} arquivo(s) selecionado(s)", 
-                "success"
-            )
+            # Mensagem de sucesso
+            mensagem_sucesso = f"✅ {len(self.arquivos_selecionados)} arquivo(s) selecionado(s) com sucesso"
+            mostrar_mensagem(self.page, mensagem_sucesso, "success")
+            
+            logger.info(f"✅ {len(self.arquivos_selecionados)} arquivos processados com sucesso")
             
         except Exception as ex:
-            logger.error(f"❌ Erro ao selecionar arquivos: {ex}")
-            self._mostrar_erro(f"Erro ao processar arquivos: {str(ex)}")
+            logger.error(f"❌ Erro crítico no callback: {ex}")
+            self._mostrar_erro(f"Erro interno ao processar arquivos: {str(ex)}")
     
     def _atualizar_lista_arquivos(self):
         """Atualiza a lista de arquivos selecionados"""
@@ -372,6 +425,8 @@ class ReportDialog:
         self.error_text.value = f"⚠️ {mensagem}"
         self.error_text.visible = True
         self.page.update()
+        
+        logger.warning(f"⚠️ Erro mostrado: {mensagem}")
     
     def _limpar_erro(self):
         """Limpa mensagem de erro"""
@@ -398,6 +453,60 @@ class ReportDialog:
         
         self.page.update()
     
+    def _mostrar_mensagem_sucesso_grande(self, ticket_id: int):
+        """CORRIGIDO: Mensagem de sucesso com botão fixo"""
+        def fechar_sucesso(e):
+            modal_sucesso.open = False
+            self.page.update()
+        
+        # Mensagem completa de sucesso
+        mensagem_completa = f"""🎫 Obrigado! Seu ticket #{ticket_id} foi aberto e será tratado o quanto antes.
+
+📧 Você receberá atualizações sobre o andamento do seu ticket por email.
+
+⏱️ Tempo médio de resposta: 24-48 horas úteis.
+
+💡 Dica: Guarde o número #{ticket_id} para futuras consultas."""
+        
+        # CORRIGIDO: Botão com tamanho fixo
+        btn_entendido = ft.ElevatedButton(
+            "Entendido",
+            icon=ft.icons.THUMB_UP,
+            on_click=fechar_sucesso,
+            bgcolor=ft.colors.GREEN_600,
+            color=ft.colors.WHITE,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+            width=120,  # Tamanho fixo
+            height=40
+        )
+        
+        # Modal de sucesso
+        modal_sucesso = ft.AlertDialog(
+            modal=True,
+            title=ft.Row([
+                ft.Icon(ft.icons.CHECK_CIRCLE, color=ft.colors.GREEN_600, size=32),
+                ft.Text("Ticket Criado com Sucesso!", weight=ft.FontWeight.BOLD, size=18, color=ft.colors.GREEN_700)
+            ], spacing=10),
+            content=ft.Container(
+                content=ft.Text(
+                    mensagem_completa,
+                    size=14,
+                    color=ft.colors.GREY_800,
+                    text_align=ft.TextAlign.LEFT
+                ),
+                width=450,  # Largura maior
+                padding=ft.padding.all(20)
+            ),
+            actions=[btn_entendido],
+            actions_alignment=ft.MainAxisAlignment.CENTER,  # Centraliza botão
+            shape=ft.RoundedRectangleBorder(radius=12)
+        )
+        
+        # Mostra modal de sucesso
+        self.page.dialog = modal_sucesso
+        modal_sucesso.open = True
+        self.page.update()
+    
     def _enviar_ticket(self, e):
         """Envia o ticket"""
         if self.processando:
@@ -409,7 +518,7 @@ class ReportDialog:
         # Valida formulário
         validacao = self._validar_formulario()
         if not validacao["valido"]:
-            self._mostrar_erro("\n".join(validacao["erros"]))
+            self._mostrar_erro("\\n".join(validacao["erros"]))
             return
         
         # Ativa modo envio
@@ -419,6 +528,8 @@ class ReportDialog:
         # Processa em thread separada
         def processar_envio():
             try:
+                logger.info("🎫 Iniciando envio de ticket...")
+                
                 # Prepara dados do ticket
                 dados_ticket = {
                     "motivo": self.motivo_dropdown.value,
@@ -429,44 +540,50 @@ class ReportDialog:
                 
                 # Processa anexos se houver
                 if self.arquivos_selecionados:
+                    logger.info(f"📎 Processando {len(self.arquivos_selecionados)} anexos...")
                     file_paths = [arquivo["caminho"] for arquivo in self.arquivos_selecionados]
                     resultado_anexos = file_upload_service.processar_arquivos_para_ticket(file_paths)
                     
                     if resultado_anexos["sucesso"]:
                         dados_ticket["anexos"] = resultado_anexos["arquivos_processados"]
+                        logger.info(f"✅ {len(dados_ticket['anexos'])} anexos processados")
                     else:
-                        # Log erro mas continua sem anexos
                         logger.warning(f"⚠️ Erro nos anexos: {resultado_anexos['erros']}")
                 
                 # Envia ticket
+                logger.info("📤 Enviando dados para SharePoint...")
                 resultado = ticket_service.abrir_ticket_completo(**dados_ticket)
                 
                 # Desativa modo envio
                 self._ativar_modo_envio(False)
                 
                 if resultado["sucesso"]:
-                    # Sucesso - fecha modal e mostra confirmação
+                    # Sucesso - fecha modal atual
                     self._fechar_modal()
                     
-                    mensagem_sucesso = (
-                        f"🎫 Obrigado! Seu ticket #{resultado['ticket_id']} foi aberto "
-                        "e será tratado o quanto antes."
-                    )
-                    mostrar_mensagem(self.page, mensagem_sucesso, "success")
+                    # Mostra modal de sucesso grande
+                    self._mostrar_mensagem_sucesso_grande(resultado['ticket_id'])
                     
-                    logger.info(f"✅ Ticket criado com sucesso: #{resultado['ticket_id']}")
+                    logger.info(f"✅ Ticket #{resultado['ticket_id']} criado com sucesso")
                     
                 else:
                     # Erro no envio
                     erro_msg = resultado.get("erro", "Erro desconhecido")
-                    self._mostrar_erro(f"Erro ao criar ticket: {erro_msg}")
+                    detalhes = resultado.get("detalhes", [])
                     
+                    if detalhes:
+                        erro_completo = f"{erro_msg}\\n\\nDetalhes:\\n" + "\\n".join(detalhes)
+                    else:
+                        erro_completo = erro_msg
+                    
+                    self._mostrar_erro(f"Erro ao criar ticket:\\n{erro_completo}")
                     logger.error(f"❌ Erro ao criar ticket: {erro_msg}")
                 
             except Exception as ex:
                 # Erro geral
                 self._ativar_modo_envio(False)
-                self._mostrar_erro(f"Erro interno: {str(ex)}")
+                erro_msg = f"Erro interno: {str(ex)}"
+                self._mostrar_erro(erro_msg)
                 logger.error(f"❌ Erro crítico no envio: {ex}")
         
         # Executa em thread
@@ -488,16 +605,11 @@ class ReportDialog:
         self.processando = False
         
         # Remove file picker
-        if self.file_picker in self.page.overlay:
+        if self.file_picker and self.file_picker in self.page.overlay:
             self.page.overlay.remove(self.file_picker)
     
     def mostrar(self, usuario_logado: str = ""):
-        """
-        Mostra o modal de report
-        
-        Args:
-            usuario_logado: Email do usuário logado
-        """
+        """Mostra o modal de report"""
         try:
             # Cria e mostra modal
             modal = self.criar_modal(usuario_logado)
@@ -514,13 +626,7 @@ class ReportDialog:
 
 # Funções de conveniência
 def mostrar_dialog_report(page: ft.Page, usuario_logado: str = ""):
-    """
-    Função rápida para mostrar dialog de report
-    
-    Args:
-        page: Página do Flet
-        usuario_logado: Email do usuário logado
-    """
+    """Função rápida para mostrar dialog de report"""
     dialog = ReportDialog(page)
     dialog.mostrar(usuario_logado)
 
@@ -528,18 +634,7 @@ def mostrar_dialog_report(page: ft.Page, usuario_logado: str = ""):
 def criar_botao_report(page: ft.Page, usuario_logado: str = "", 
                       texto: str = "Reportar Problema", 
                       icone = ft.icons.BUG_REPORT) -> ft.ElevatedButton:
-    """
-    Cria botão para abrir dialog de report
-    
-    Args:
-        page: Página do Flet
-        usuario_logado: Email do usuário logado
-        texto: Texto do botão
-        icone: Ícone do botão
-        
-    Returns:
-        ElevatedButton configurado
-    """
+    """Cria botão para abrir dialog de report"""
     def abrir_report(e):
         mostrar_dialog_report(page, usuario_logado)
     

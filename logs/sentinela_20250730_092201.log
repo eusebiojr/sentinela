@@ -1,0 +1,39 @@
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 🎫 TicketService inicializado
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 📁 FileUploadService inicializado
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:01] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_092201.log
+[30/07/2025 09:22:03] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:22:03] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 09:22:03] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:22:03] INFO: Carregando dados de usuários...
+[30/07/2025 09:22:03] INFO: 🔐 [NOVA SESSÃO] ID: bcc9ced7, Thread: 7940
+[30/07/2025 09:22:03] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2424315551760
+[30/07/2025 09:22:04] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:22:04] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 09:22:04] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:22:04] INFO: Carregando dados de usuários...
+[30/07/2025 09:22:04] INFO: 🔐 [NOVA SESSÃO] ID: a3842f0e, Thread: 15832
+[30/07/2025 09:22:04] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2424315682128
+[30/07/2025 09:22:05] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 09:22:05] INFO: ✅ 35 usuários carregados
+[30/07/2025 09:22:06] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 09:22:06] INFO: ✅ 35 usuários carregados
+[30/07/2025 09:22:10] INFO: 🎫 ReportDialog inicializado
+[30/07/2025 09:22:10] INFO: 🎫 Modal de report aberto para: usuário não logado
+[30/07/2025 09:23:52] INFO: 📋 Validação ticket: ✅ OK
+[30/07/2025 09:23:52] INFO: 🎫 Criando ticket para usuário: eusebioagj@suzano.com.br
+[30/07/2025 09:23:52] INFO: 🔗 Conectando ao SharePoint para tickets...
+[30/07/2025 09:23:54] INFO: ✅ Conectado para tickets: Controle operacional
+[30/07/2025 09:23:55] INFO: ✅ Ticket criado com ID: 1
+[30/07/2025 09:23:55] INFO: 📋 AUDITORIA TICKET - ID: 1 | Usuário: eusebioagj@suzano.com.br | Motivo: Erro de login | Timestamp: 30/07/2025 09:23:55
+[30/07/2025 09:23:55] INFO: ✅ Ticket criado com sucesso: #1
+[30/07/2025 09:28:44] INFO: 🎫 ReportDialog inicializado
+[30/07/2025 09:28:44] INFO: 🎫 Modal de report aberto para: usuário não logado

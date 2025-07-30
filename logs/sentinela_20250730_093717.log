@@ -1,0 +1,61 @@
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 🎫 TicketService inicializado
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 📁 FileUploadService inicializado - Versão robusta
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:17] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_093717.log
+[30/07/2025 09:37:18] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:37:18] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 09:37:18] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:37:18] INFO: Carregando dados de usuários...
+[30/07/2025 09:37:18] INFO: 🔐 [NOVA SESSÃO] ID: 0258ca20, Thread: 23148
+[30/07/2025 09:37:18] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2672390501392
+[30/07/2025 09:37:18] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:37:18] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 09:37:18] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:37:18] INFO: Carregando dados de usuários...
+[30/07/2025 09:37:18] INFO: 🔐 [NOVA SESSÃO] ID: 77f877d5, Thread: 32844
+[30/07/2025 09:37:18] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2672429185168
+[30/07/2025 09:37:19] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:37:19] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 09:37:19] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:37:19] INFO: Carregando dados de usuários...
+[30/07/2025 09:37:19] INFO: 🔐 [NOVA SESSÃO] ID: de87c4c9, Thread: 16012
+[30/07/2025 09:37:19] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2672429391504
+[30/07/2025 09:37:20] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 09:37:20] INFO: ✅ 35 usuários carregados
+[30/07/2025 09:37:20] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 09:37:20] INFO: ✅ 35 usuários carregados
+[30/07/2025 09:37:21] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 09:37:21] INFO: ✅ 35 usuários carregados
+[30/07/2025 09:37:27] INFO: 🎫 ReportDialog inicializado - Versão final corrigida
+[30/07/2025 09:37:27] INFO: 🎫 Modal de report aberto para: usuário não logado
+[30/07/2025 09:37:39] INFO: 📁 Iniciando seleção de arquivos...
+[30/07/2025 09:37:44] INFO: 📁 Callback executado - Event: <flet_core.file_picker.FilePickerResultEvent object at 0x0000026E399EAE90>
+[30/07/2025 09:37:44] INFO: 📋 1 arquivos detectados no evento
+[30/07/2025 09:37:44] WARNING: ⚠️ Arquivo sem path, apenas nome: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 09:37:44] WARNING: ⚠️ Erro mostrado: Seleção de arquivos não suportada no navegador. Use a versão desktop.
+[30/07/2025 09:38:04] INFO: 📁 Iniciando seleção de arquivos...
+[30/07/2025 09:38:07] INFO: 📁 Callback executado - Event: <flet_core.file_picker.FilePickerResultEvent object at 0x0000026E39A1A850>
+[30/07/2025 09:38:07] INFO: 📋 1 arquivos detectados no evento
+[30/07/2025 09:38:07] WARNING: ⚠️ Arquivo sem path, apenas nome: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 09:38:07] WARNING: ⚠️ Erro mostrado: Seleção de arquivos não suportada no navegador. Use a versão desktop.
+[30/07/2025 09:38:55] INFO: 🎫 ReportDialog inicializado - Versão final corrigida
+[30/07/2025 09:38:55] INFO: 🎫 Modal de report aberto para: usuário não logado
+[30/07/2025 09:39:02] WARNING: ⚠️ Erro mostrado: Email inválido\nDescrição muito curta (mínimo 10 caracteres)
+[30/07/2025 09:39:11] WARNING: ⚠️ Erro mostrado: Descrição muito curta (mínimo 10 caracteres)
+[30/07/2025 09:39:21] INFO: 🎫 Iniciando envio de ticket...
+[30/07/2025 09:39:21] INFO: 📤 Enviando dados para SharePoint...
+[30/07/2025 09:39:22] INFO: 📋 Validação ticket: ✅ OK
+[30/07/2025 09:39:22] INFO: 🎫 Criando ticket para usuário: eusebioagj@suzano.com.br
+[30/07/2025 09:39:22] INFO: 🔗 Conectando ao SharePoint para tickets...
+[30/07/2025 09:39:23] INFO: ✅ Conectado para tickets: Controle operacional
+[30/07/2025 09:39:24] INFO: ✅ Ticket criado com ID: 3
+[30/07/2025 09:39:24] INFO: 📋 AUDITORIA TICKET - ID: 3 | Usuário: eusebioagj@suzano.com.br | Motivo: Bug tela aprovação/preenchimento | Timestamp: 30/07/2025 09:39:24
+[30/07/2025 09:39:24] INFO: ✅ Ticket #3 criado com sucesso

@@ -1,5 +1,5 @@
 """
-Tela de login do sistema
+Tela de login do sistema - CORRIGIDA
 """
 import flet as ft
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
@@ -15,6 +15,7 @@ class LoginScreen:
         self.email_field = None
         self.password_field = None
         self.btn_login = None
+        self.btn_report = None  # ADICIONADO: Declaração do botão
         
     def mostrar(self):
         """Exibe a tela de login"""
@@ -72,8 +73,8 @@ class LoginScreen:
             border_radius=10,
             on_submit=self._fazer_login
         )
-        self.btn_login = ft.ElevatedButton(            
-            # Botão de report para usuários não logados            
+        
+        self.btn_login = ft.ElevatedButton(
             text="Entrar",
             width=field_width,
             height=50,
@@ -85,24 +86,12 @@ class LoginScreen:
             )
         )
 
-        ft.Container(height=10),
-        self.btn_report,
-        ft.Container(
-            content=ft.Text(
-                "Problemas para acessar? Use o botão acima para reportar.",
-                size=12,
-                color=ft.colors.GREY_600,
-                text_align=ft.TextAlign.CENTER,
-                italic=True
-            ),
-            alignment=ft.alignment.center
-        )
-
+        # CORRIGIDO: Botão de report criado ANTES de usar
         self.btn_report = criar_botao_report(
-                self.page, 
-                texto="Reportar Problema", 
-                icone=ft.icons.HELP_OUTLINE
-            )
+            self.page, 
+            texto="Reportar Problema", 
+            icone=ft.icons.HELP_OUTLINE
+        )
         self.btn_report.bgcolor = ft.colors.GREY_600
         self.btn_report.width = field_width
         self.btn_report.height = 40
@@ -124,7 +113,20 @@ class LoginScreen:
                 ft.Container(height=spacing_fields),
                 self.password_field,
                 ft.Container(height=spacing_fields + 10),
-                self.btn_login
+                self.btn_login,
+                # CORRIGIDO: Agora o btn_report já existe
+                ft.Container(height=10),
+                self.btn_report,
+                ft.Container(
+                    content=ft.Text(
+                        "Problemas para acessar? Use o botão acima para reportar.",
+                        size=12,
+                        color=ft.colors.GREY_600,
+                        text_align=ft.TextAlign.CENTER,
+                        italic=True
+                    ),
+                    alignment=ft.alignment.center
+                )
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             padding=padding_container,
             border_radius=20,
