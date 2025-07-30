@@ -522,7 +522,7 @@ class ReportDialog:
         self.page.update()
     
     def _enviar_ticket(self, e):
-        """Envia o ticket - VERSÃO FINAL"""
+        """Envia o ticket - VERSÃO FINAL CORRIGIDA"""
         if self.processando:
             return
         
@@ -542,26 +542,60 @@ class ReportDialog:
         # Processa em thread
         def processar_envio():
             try:
-                logger.info("🎫 Enviando ticket...")
+                logger.info("🎫 Iniciando envio de ticket...")
                 
-                # Prepara descrição com anexos simulados
-                descricao_base = self.descricao_field.value.strip()
-                
-                if self.arquivos_selecionados:
-                    descricao_base += "\n\n📎 ANEXOS MENCIONADOS:\n"
-                    for arquivo in self.arquivos_selecionados:
-                        descricao_base += f"• {arquivo['nome']}\n"
-                    descricao_base += "\n(Usuário tentou anexar estes arquivos - podem ser solicitados por email se necessário)"
-                
-                # Dados do ticket
+                # Dados básicos do ticket
                 dados_ticket = {
                     "motivo": self.motivo_dropdown.value,
                     "usuario": self.usuario_field.value.strip(),
-                    "descricao": descricao_base,
-                    "anexos": []  # Sem anexos reais por enquanto
+                    "descricao": self.descricao_field.value.strip(),  # APENAS A DESCRIÇÃO ORIGINAL
+                    "anexos": []
                 }
                 
-                # Envia ticket
+                # PROCESSA ANEXOS REAIS SE HOUVER
+                anexos_processados_real = []
+                if self.arquivos_selecionados:
+                    logger.info(f"📎 Processando {len(self.arquivos_selecionados)} arquivos selecionados...")
+                    
+                    for arquivo in self.arquivos_selecionados:
+                        # Verifica se é arquivo real (com caminho)
+                        if arquivo.get("real", False) and arquivo.get("caminho"):
+                            caminho = arquivo["caminho"]
+                            logger.info(f"📂 Processando arquivo real: {caminho}")
+                            
+                            try:
+                                # Lê o arquivo do disco
+                                with open(caminho, "rb") as f:
+                                    dados_binarios = f.read()
+                                
+                                # Cria objeto de anexo processado
+                                anexo_processado = {
+                                    "name": arquivo["nome"],
+                                    "original_name": arquivo["nome"],
+                                    "data": dados_binarios,
+                                    "size": len(dados_binarios),
+                                    "mime_type": "image/jpeg",  # Padrão para imagens
+                                    "extension": ".jpg"
+                                }
+                                
+                                anexos_processados_real.append(anexo_processado)
+                                logger.info(f"✅ Arquivo processado: {arquivo['nome']} ({len(dados_binarios)} bytes)")
+                                
+                            except Exception as e_arquivo:
+                                logger.error(f"❌ Erro ao ler arquivo {caminho}: {e_arquivo}")
+                                continue
+                        else:
+                            logger.info(f"📎 Arquivo simulado ignorado: {arquivo['nome']}")
+                    
+                    # Adiciona anexos reais ao ticket
+                    if anexos_processados_real:
+                        dados_ticket["anexos"] = anexos_processados_real
+                        logger.info(f"📎 {len(anexos_processados_real)} anexos reais adicionados ao ticket")
+                    else:
+                        logger.info("📎 Nenhum anexo real para processar")
+                
+                # ENVIA TICKET
+                logger.info(f"📤 Enviando ticket com {len(dados_ticket['anexos'])} anexos...")
                 resultado = ticket_service.abrir_ticket_completo(**dados_ticket)
                 
                 # Desativa modo envio
@@ -570,22 +604,92 @@ class ReportDialog:
                 if resultado["sucesso"]:
                     # Sucesso
                     self._fechar_modal()
-                    self._mostrar_mensagem_sucesso_grande(resultado['ticket_id'])
-                    logger.info(f"✅ Ticket #{resultado['ticket_id']} criado")
+                    
+                    anexos_enviados = resultado.get("anexos_processados", 0)
+                    if anexos_enviados > 0:
+                        self._mostrar_mensagem_sucesso_com_anexos(resultado['ticket_id'], anexos_enviados)
+                    else:
+                        self._mostrar_mensagem_sucesso_grande(resultado['ticket_id'])
+                    
+                    logger.info(f"✅ Ticket #{resultado['ticket_id']} criado com {anexos_enviados} anexos")
                     
                 else:
                     # Erro
                     erro_msg = resultado.get("erro", "Erro desconhecido")
                     self._mostrar_erro(f"Erro ao criar ticket:\\n{erro_msg}")
-                    logger.error(f"❌ Erro: {erro_msg}")
+                    logger.error(f"❌ Erro ao criar ticket: {erro_msg}")
                 
             except Exception as ex:
                 self._ativar_modo_envio(False)
                 self._mostrar_erro(f"Erro interno: {str(ex)}")
-                logger.error(f"❌ Erro crítico: {ex}")
+                logger.error(f"❌ Erro crítico no envio: {ex}")
         
         thread = threading.Thread(target=processar_envio, daemon=True)
         thread.start()
+
+    def _debug_arquivos_selecionados(self):
+        """Método de debug para verificar arquivos"""
+        logger.info("🔍 DEBUG - Arquivos selecionados:")
+        for i, arquivo in enumerate(self.arquivos_selecionados):
+            logger.info(f"  Arquivo {i+1}:")
+            logger.info(f"    Nome: {arquivo.get('nome')}")
+            logger.info(f"    Real: {arquivo.get('real', False)}")
+            logger.info(f"    Simulado: {arquivo.get('simulado', False)}")
+            logger.info(f"    Caminho: {arquivo.get('caminho', 'N/A')}")
+
+    def _mostrar_mensagem_sucesso_com_anexos(self, ticket_id: int, anexos_enviados: int):
+        """Modal de sucesso com informações sobre anexos"""
+        def fechar_sucesso(e):
+            modal_sucesso.open = False
+            self.page.update()
+        
+        # Mensagem de sucesso com anexos
+        mensagem_completa = f"""🎫 Obrigado! Seu ticket #{ticket_id} foi criado com sucesso!
+
+    📎 {anexos_enviados} arquivo(s) foram enviados para o SharePoint
+    📁 Localização: Shared Documents/Tickets/Ticket_{ticket_id}/
+
+    📧 Você receberá atualizações por email.
+    ⏱️ Tempo médio de resposta: 24-48 horas úteis.
+    💡 Guarde o número #{ticket_id} para consultas."""
+        
+        # Modal de sucesso
+        modal_sucesso = ft.AlertDialog(
+            modal=True,
+            title=ft.Row([
+                ft.Icon(ft.icons.CHECK_CIRCLE, color=ft.colors.GREEN_600, size=32),
+                ft.Text("Ticket e Anexos Enviados!", weight=ft.FontWeight.BOLD, size=18, color=ft.colors.GREEN_700)
+            ], spacing=10),
+            content=ft.Container(
+                content=ft.Text(
+                    mensagem_completa,
+                    size=14,
+                    color=ft.colors.GREY_800,
+                    text_align=ft.TextAlign.LEFT
+                ),
+                width=450,
+                padding=ft.padding.all(20)
+            ),
+            actions=[
+                ft.Row([
+                    ft.Container(expand=True),
+                    ft.ElevatedButton(
+                        "Perfeito!",
+                        icon=ft.icons.THUMB_UP,
+                        on_click=fechar_sucesso,
+                        bgcolor=ft.colors.GREEN_600,
+                        color=ft.colors.WHITE,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+                    ),
+                    ft.Container(expand=True)
+                ])
+            ],
+            shape=ft.RoundedRectangleBorder(radius=12)
+        )
+        
+        self.page.dialog = modal_sucesso
+        modal_sucesso.open = True
+        self.page.update()
     
     def _cancelar(self, e):
         """Cancela e fecha modal"""

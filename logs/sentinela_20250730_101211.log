@@ -1,0 +1,44 @@
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 🎫 TicketService inicializado
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 📁 FileUploadService inicializado - Versão robusta
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:11] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_101211.log
+[30/07/2025 10:12:12] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:12:12] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 10:12:12] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:12:12] INFO: Carregando dados de usuários...
+[30/07/2025 10:12:12] INFO: 🔐 [NOVA SESSÃO] ID: 61b1b8cb, Thread: 35792
+[30/07/2025 10:12:12] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2460960643344
+[30/07/2025 10:12:13] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:12:13] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 10:12:13] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:12:13] INFO: Carregando dados de usuários...
+[30/07/2025 10:12:13] INFO: 🔐 [NOVA SESSÃO] ID: f7a89039, Thread: 44176
+[30/07/2025 10:12:13] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2460996724560
+[30/07/2025 10:12:15] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 10:12:15] INFO: ✅ 35 usuários carregados
+[30/07/2025 10:12:15] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 10:12:15] INFO: ✅ 35 usuários carregados
+[30/07/2025 10:12:18] INFO: 🎫 ReportDialog inicializado - Versão final
+[30/07/2025 10:12:18] INFO: 🎫 Modal aberto para: usuário anônimo
+[30/07/2025 10:12:28] INFO: 📁 Tentando abrir seletor de arquivos...
+[30/07/2025 10:12:31] INFO: 📁 Callback de seleção executado
+[30/07/2025 10:12:31] INFO: 📎 Arquivo simulado (web): Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 10:12:34] INFO: 🎫 Enviando ticket...
+[30/07/2025 10:12:34] INFO: 📎 Processando 1 anexos...
+[30/07/2025 10:12:34] INFO: 📊 Arquivos: 0 reais, 1 simulados
+[30/07/2025 10:12:34] INFO: 📤 Enviando ticket com 0 anexos reais...
+[30/07/2025 10:12:34] INFO: 📋 Validação ticket: ✅ OK
+[30/07/2025 10:12:34] INFO: 🎫 Criando ticket para usuário: eusebioagj@suzano.com.br
+[30/07/2025 10:12:34] INFO: 🔗 Conectando ao SharePoint para tickets...
+[30/07/2025 10:12:37] INFO: ✅ Conectado para tickets: Controle operacional
+[30/07/2025 10:12:38] INFO: ✅ Ticket criado com ID: 8
+[30/07/2025 10:12:38] INFO: 📋 AUDITORIA TICKET - ID: 8 | Usuário: eusebioagj@suzano.com.br | Motivo: Bug tela aprovação/preenchimento | Timestamp: 30/07/2025 10:12:38
+[30/07/2025 10:12:38] INFO: ✅ Ticket #8 criado com 0 anexos

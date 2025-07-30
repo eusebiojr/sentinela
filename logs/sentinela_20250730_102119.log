@@ -1,0 +1,53 @@
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 🎫 TicketService inicializado
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 📁 FileUploadService inicializado - Versão robusta
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:19] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_102119.log
+[30/07/2025 10:21:20] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:21:20] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:21:20] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 10:21:20] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 10:21:20] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:21:20] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:21:20] INFO: Carregando dados de usuários...
+[30/07/2025 10:21:20] INFO: Carregando dados de usuários...
+[30/07/2025 10:21:20] INFO: 🔐 [NOVA SESSÃO] ID: 50494008, Thread: 17140
+[30/07/2025 10:21:20] INFO: 🔐 [NOVA SESSÃO] ID: 8bd27945, Thread: 27604
+[30/07/2025 10:21:20] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2228768944848
+[30/07/2025 10:21:20] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2228769032848
+[30/07/2025 10:21:21] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:21:21] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 10:21:21] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 10:21:21] INFO: Carregando dados de usuários...
+[30/07/2025 10:21:21] INFO: 🔐 [NOVA SESSÃO] ID: 5be620cd, Thread: 11396
+[30/07/2025 10:21:21] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2228769285712
+[30/07/2025 10:21:22] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 10:21:22] INFO: ✅ 35 usuários carregados
+[30/07/2025 10:21:23] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 10:21:23] INFO: ✅ 35 usuários carregados
+[30/07/2025 10:21:23] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 10:21:23] INFO: ✅ 35 usuários carregados
+[30/07/2025 10:21:25] INFO: 🎫 ReportDialog inicializado - Versão final
+[30/07/2025 10:21:25] INFO: 🎫 Modal aberto para: usuário anônimo
+[30/07/2025 10:21:35] INFO: 📁 Tentando abrir seletor de arquivos...
+[30/07/2025 10:21:38] INFO: 📁 Callback de seleção executado
+[30/07/2025 10:21:38] INFO: 📎 Arquivo simulado (web): Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 10:21:44] INFO: 🎫 Iniciando envio de ticket...
+[30/07/2025 10:21:44] INFO: 📎 Processando 1 arquivos selecionados...
+[30/07/2025 10:21:44] INFO: 📎 Arquivo simulado ignorado: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 10:21:44] INFO: 📎 Nenhum anexo real para processar
+[30/07/2025 10:21:44] INFO: 📤 Enviando ticket com 0 anexos...
+[30/07/2025 10:21:44] INFO: 📋 Validação ticket: ✅ OK
+[30/07/2025 10:21:44] INFO: 🎫 Criando ticket para usuário: eusebioagj@suzano.com.br
+[30/07/2025 10:21:44] INFO: 🔗 Conectando ao SharePoint para tickets...
+[30/07/2025 10:21:47] INFO: ✅ Conectado para tickets: Controle operacional
+[30/07/2025 10:21:48] INFO: ✅ Ticket criado com ID: 9
+[30/07/2025 10:21:48] INFO: 📋 AUDITORIA TICKET - ID: 9 | Usuário: eusebioagj@suzano.com.br | Motivo: Bug tela aprovação/preenchimento | Timestamp: 30/07/2025 10:21:48
+[30/07/2025 10:21:48] INFO: ✅ Ticket #9 criado com 0 anexos

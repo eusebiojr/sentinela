@@ -224,102 +224,117 @@ class TicketService:
                 "erro": f"Erro ao criar ticket: {str(e)}"
             }
     
-    def _processar_anexos_ticket(self, ticket_id: int, anexos: List[Dict]) -> int:
+    def _processar_anexos_ticket_imagem(self, ticket_id: int, anexos: List[Dict]) -> int:
         """
-        Processa anexos do ticket - UPLOAD REAL PARA SHAREPOINT
-        
-        Args:
-            ticket_id: ID do ticket
-            anexos: Lista de anexos processados
-            
-        Returns:
-            Número de anexos processados com sucesso
+        Processa anexos para campo Print tipo IMAGEM
+        Substitua no ticket_service.py
         """
         anexos_processados = 0
         
         try:
-            logger.info(f"📎 Iniciando upload real de {len(anexos)} anexos para SharePoint...")
+            logger.info(f"📎 Processando {len(anexos)} anexos para campo Print (Imagem)...")
             
-            if not self.ctx:
-                logger.error("❌ Contexto SharePoint não disponível")
+            if not self.ctx or not anexos:
+                logger.warning("❌ Sem contexto SharePoint ou anexos vazios")
                 return 0
             
-            # Nome da biblioteca (ajuste conforme sua configuração)
-            biblioteca_documentos = "Shared Documents"
+            # Pega apenas o primeiro anexo para o campo Print
+            primeiro_anexo = anexos[0]
+            nome_original = primeiro_anexo.get('original_name', 'imagem.jpg')
+            dados_arquivo = primeiro_anexo.get('data', b'')
             
-            for i, anexo in enumerate(anexos):
+            if not dados_arquivo:
+                logger.warning("⚠️ Primeiro anexo sem dados")
+                return 0
+            
+            logger.info(f"📎 Processando anexo para campo Print: {nome_original} ({len(dados_arquivo)} bytes)")
+            
+            try:
+                # Obtém o item do ticket
+                lista_tickets = self.ctx.web.lists.get_by_title(self.LISTA_TICKETS)
+                item_ticket = lista_tickets.get_item_by_id(ticket_id)
+                
+                # MÉTODO 1: Upload direto para campo de imagem
                 try:
-                    logger.info(f"📎 Processando anexo {i+1}/{len(anexos)}: {anexo.get('original_name', 'Sem nome')}")
+                    logger.info("📷 Tentando upload direto para campo Print...")
                     
-                    nome_original = anexo.get('original_name', 'arquivo.jpg')
-                    nome_unico = anexo.get('name', nome_original)
-                    dados_arquivo = anexo.get('data', b'')
+                    # Para campo tipo Imagem, precisa fazer upload para biblioteca primeiro
+                    biblioteca_documentos = "Shared Documents"
+                    web = self.ctx.web
+                    doc_lib = web.lists.get_by_title(biblioteca_documentos)
+                    root_folder = doc_lib.root_folder
                     
-                    if not dados_arquivo:
-                        logger.warning(f"⚠️ Anexo sem dados: {nome_original}")
-                        continue
+                    # Nome único para o arquivo
+                    import uuid
+                    nome_unico = f"ticket_{ticket_id}_{uuid.uuid4().hex[:8]}_{nome_original}"
                     
-                    # Upload do arquivo
+                    # Upload para biblioteca
+                    arquivo_enviado = root_folder.upload_file(nome_unico, dados_arquivo)
+                    self.ctx.execute_query()
+                    
+                    # Obtém URL do arquivo
+                    self.ctx.load(arquivo_enviado)
+                    self.ctx.execute_query()
+                    url_arquivo = arquivo_enviado.serverRelativeUrl
+                    
+                    logger.info(f"✅ Arquivo enviado para biblioteca: {url_arquivo}")
+                    
+                    # Atualiza campo Print com URL da imagem
+                    item_ticket.set_property("Print", url_arquivo)
+                    item_ticket.update()
+                    self.ctx.execute_query()
+                    
+                    logger.info(f"✅ Campo Print atualizado com: {url_arquivo}")
+                    anexos_processados = 1
+                    
+                except Exception as e1:
+                    logger.warning(f"⚠️ Método 1 falhou: {e1}")
+                    
+                    # MÉTODO 2: Base64 inline
                     try:
-                        web = self.ctx.web
+                        logger.info("📷 Tentando método base64...")
                         
-                        # Obtém biblioteca de documentos
-                        doc_lib = web.lists.get_by_title(biblioteca_documentos)
-                        root_folder = doc_lib.root_folder
+                        import base64
+                        dados_base64 = base64.b64encode(dados_arquivo).decode('utf-8')
+                        data_url = f"data:image/jpeg;base64,{dados_base64}"
                         
-                        # Garante que pasta Tickets existe
-                        try:
-                            pasta_tickets = root_folder.folders.get_by_path("Tickets")
-                            self.ctx.load(pasta_tickets)
-                            self.ctx.execute_query()
-                        except:
-                            pasta_tickets = root_folder.folders.add("Tickets")
-                            self.ctx.execute_query()
-                            logger.info("📁 Pasta 'Tickets' criada")
-                        
-                        # Garante que pasta do ticket existe
-                        pasta_ticket_name = f"Ticket_{ticket_id}"
-                        try:
-                            pasta_ticket_obj = pasta_tickets.folders.get_by_path(pasta_ticket_name)
-                            self.ctx.load(pasta_ticket_obj)
-                            self.ctx.execute_query()
-                        except:
-                            pasta_ticket_obj = pasta_tickets.folders.add(pasta_ticket_name)
-                            self.ctx.execute_query()
-                            logger.info(f"📁 Pasta '{pasta_ticket_name}' criada")
-                        
-                        # Upload do arquivo
-                        arquivo_enviado = pasta_ticket_obj.upload_file(nome_unico, dados_arquivo)
+                        # Atualiza campo Print
+                        item_ticket.set_property("Print", data_url)
+                        item_ticket.update()
                         self.ctx.execute_query()
                         
-                        # Obtém URL do arquivo
-                        self.ctx.load(arquivo_enviado)
+                        logger.info("✅ Campo Print atualizado com base64")
+                        anexos_processados = 1
+                        
+                    except Exception as e2:
+                        logger.error(f"❌ Método 2 também falhou: {e2}")
+                
+                # Atualiza descrição do ticket SEM "anexos mencionados"
+                if anexos_processados > 0:
+                    try:
+                        # Carrega item atual
+                        self.ctx.load(item_ticket)
                         self.ctx.execute_query()
                         
-                        url_arquivo = arquivo_enviado.serverRelativeUrl
-                        logger.info(f"✅ Anexo {i+1} enviado: {url_arquivo}")
-                        anexos_processados += 1
+                        descricao_atual = item_ticket.properties.get("Descricao", "")
+                        descricao_atualizada = descricao_atual + f"\\n\\n📎 Imagem anexada: {nome_original}"
                         
-                        # Adiciona referência do anexo no ticket
-                        self._adicionar_referencia_anexo_no_ticket(ticket_id, nome_original, url_arquivo)
+                        item_ticket.set_property("Descricao", descricao_atualizada)
+                        item_ticket.update()
+                        self.ctx.execute_query()
                         
-                    except Exception as e_upload:
-                        logger.error(f"❌ Erro no upload de {nome_original}: {e_upload}")
-                        continue
+                        logger.info("✅ Descrição atualizada com informação do anexo")
                         
-                except Exception as e:
-                    logger.error(f"❌ Erro ao processar anexo: {e}")
-                    continue
-            
-            logger.info(f"📎 Upload concluído: {anexos_processados}/{len(anexos)} anexos enviados")
-            
-            # Atualiza ticket com resultado do upload
-            if anexos_processados > 0:
-                self._atualizar_ticket_com_anexos_enviados(ticket_id, anexos_processados, len(anexos))
-            
-        except Exception as e:
-            logger.error(f"❌ Erro geral no upload: {e}")
+                    except Exception as e_desc:
+                        logger.warning(f"⚠️ Erro ao atualizar descrição: {e_desc}")
+                
+            except Exception as e:
+                logger.error(f"❌ Erro no processamento do anexo: {e}")
         
+        except Exception as e:
+            logger.error(f"❌ Erro geral: {e}")
+        
+        logger.info(f"📎 Processamento concluído: {anexos_processados} anexo(s)")
         return anexos_processados
 
     def _adicionar_referencia_anexo_no_ticket(self, ticket_id: int, nome_arquivo: str, url_arquivo: str):
