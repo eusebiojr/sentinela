@@ -7,8 +7,6 @@ from .base import ValidationResult, BaseValidator, ValidationError
 from .field_validator import FieldValidator
 from .business_validator import BusinessValidator
 from .security_validator import SecurityValidator
-import logging
-from app.services.evento_processor import EventoProcessor
 
 # Instâncias globais para uso direto
 field_validator = FieldValidator()
@@ -59,11 +57,21 @@ def validate_security(security_type: str, value, **kwargs) -> ValidationResult:
     return security_validator.validate_by_type(security_type, value, **kwargs)
 
 # 🚀 NOVAS FUNÇÕES - Para funcionalidades migradas
-debug_logger = logging.getLogger('validacao_debug')
-debug_logger.setLevel(logging.DEBUG)
 
 def validate_user_access(poi_amigavel: str, areas_usuario: list, localizacao: str = "RRP") -> bool:
-    return EventoProcessor.validar_acesso_usuario(poi_amigavel, areas_usuario, localizacao)
+    """
+    🚀 NOVA - Validação de acesso do usuário ao POI (migrada do EventoProcessor)
+    
+    Args:
+        poi_amigavel: Nome amigável do POI
+        areas_usuario: Lista de áreas do usuário
+        localizacao: Código da localização (RRP/TLS)
+        
+    Returns:
+        bool: True se usuário tem acesso
+    """
+    result = business_validator.validate_acesso_usuario_poi(poi_amigavel, areas_usuario, localizacao)
+    return result.valid
 
 def validate_audit_integrity(df_registros) -> dict:
     """
