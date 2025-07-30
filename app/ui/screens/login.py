@@ -3,6 +3,7 @@ Tela de login do sistema
 """
 import flet as ft
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
+from ..components.report_dialog import criar_botao_report
 
 
 class LoginScreen:
@@ -71,8 +72,8 @@ class LoginScreen:
             border_radius=10,
             on_submit=self._fazer_login
         )
-        
-        self.btn_login = ft.ElevatedButton(
+        self.btn_login = ft.ElevatedButton(            
+            # Botão de report para usuários não logados            
             text="Entrar",
             width=field_width,
             height=50,
@@ -83,6 +84,28 @@ class LoginScreen:
                 shape=ft.RoundedRectangleBorder(radius=10)
             )
         )
+
+        ft.Container(height=10),
+        self.btn_report,
+        ft.Container(
+            content=ft.Text(
+                "Problemas para acessar? Use o botão acima para reportar.",
+                size=12,
+                color=ft.colors.GREY_600,
+                text_align=ft.TextAlign.CENTER,
+                italic=True
+            ),
+            alignment=ft.alignment.center
+        )
+
+        self.btn_report = criar_botao_report(
+                self.page, 
+                texto="Reportar Problema", 
+                icone=ft.icons.HELP_OUTLINE
+            )
+        self.btn_report.bgcolor = ft.colors.GREY_600
+        self.btn_report.width = field_width
+        self.btn_report.height = 40
         
         # Container principal do login
         login_container = ft.Container(
