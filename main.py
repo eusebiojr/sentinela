@@ -6,6 +6,7 @@ import flet as ft
 import os
 import sys
 from pathlib import Path
+import secrets
 
 # Adiciona o diretório raiz ao path para imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -88,4 +89,10 @@ def run_app():
 
 
 if __name__ == "__main__":
+
+    if not os.getenv("FLET_SECRET_KEY"):
+        secret_key = secrets.token_hex(32)  # Gera chave aleatória
+        os.environ["FLET_SECRET_KEY"] = secret_key
+        logger.info("🔑 FLET_SECRET_KEY configurada automaticamente")
+    
     run_app()

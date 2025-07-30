@@ -1,0 +1,40 @@
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 🎫 TicketService inicializado
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 📁 FileUploadService inicializado - Versão robusta
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_110240.log
+[30/07/2025 11:02:40] INFO: 🔑 FLET_SECRET_KEY configurada automaticamente
+[30/07/2025 11:02:42] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 11:02:42] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 11:02:42] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 11:02:42] INFO: Carregando dados de usuários...
+[30/07/2025 11:02:42] INFO: 🔐 [NOVA SESSÃO] ID: e127d325, Thread: 37932
+[30/07/2025 11:02:42] INFO: 📌 [ESTADO CRIADO] Nova sessão para página 2056190776080
+[30/07/2025 11:02:45] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 11:02:45] INFO: ✅ 35 usuários carregados
+[30/07/2025 11:02:46] INFO: 🎫 ReportDialog inicializado - Versão final
+[30/07/2025 11:02:46] INFO: 🎫 Modal aberto para: usuário anônimo
+[30/07/2025 11:02:54] INFO: 📁 Tentando abrir seletor de arquivos...
+[30/07/2025 11:02:56] INFO: 📁 Callback de seleção executado
+[30/07/2025 11:02:56] INFO: 📋 1 arquivos detectados no evento
+[30/07/2025 11:02:56] INFO: 🔍 Processando arquivo 1: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 11:02:56] INFO: ✅ Arquivo preparado para upload via Flet: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 11:02:56] INFO: 📊 RESULTADO: 1 arquivos preparados para upload Flet
+[30/07/2025 11:02:56] INFO: 🚀 Iniciando upload via sistema Flet...
+[30/07/2025 11:02:56] INFO: 📤 Preparando upload: Captura de tela 2025-07-30 092253.jpg -> /upload?f=Captura+de+tela+2025-07-30+092253.jpg&e=2025-07-30T15%3A12%3A56.892200%2B00%3A00&s=4f323404afab3be99230a3198fe6019ca94364c70962aa5635fe371e46ecf75b
+[30/07/2025 11:02:56] INFO: ✅ Upload iniciado para 1 arquivo(s)
+[30/07/2025 11:03:07] INFO: 🎫 Enviando ticket com upload Flet...
+[30/07/2025 11:03:07] INFO: 📎 Processando 1 arquivos uploaded...
+[30/07/2025 11:03:07] WARNING: ⚠️ Arquivo não encontrado no storage: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 11:03:07] INFO: 📎 Anexo fantasma criado: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 11:03:07] INFO: 📎 1 anexos adicionados ao ticket
+[30/07/2025 11:03:07] INFO: 📤 Enviando ticket com 1 anexos...
+[30/07/2025 11:03:07] INFO: 📋 Validação ticket: ❌ ERRO
+[30/07/2025 11:03:07] ERROR: ❌ Erro: Dados inválidos
