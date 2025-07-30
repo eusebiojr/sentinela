@@ -1,0 +1,30 @@
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:09] INFO: 🎫 TicketService inicializado
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:09] INFO: 📁 FileUploadService inicializado - Versão robusta
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:09] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:09] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_094509.log
+[30/07/2025 09:45:10] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:45:10] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[30/07/2025 09:45:10] INFO: 🚀 Sentinela iniciando...
+[30/07/2025 09:45:10] INFO: Carregando dados de usuários...
+[30/07/2025 09:45:13] INFO: ✅ 35 registros carregados de 'UsuariosPainelTorre'
+[30/07/2025 09:45:13] INFO: ✅ 35 usuários carregados
+[30/07/2025 09:45:15] INFO: 🎫 ReportDialog inicializado - Versão final
+[30/07/2025 09:45:15] INFO: 🎫 Modal aberto para: usuário anônimo
+[30/07/2025 09:45:47] INFO: 📁 Tentando abrir seletor de arquivos...
+[30/07/2025 09:45:50] INFO: 📁 Callback de seleção executado
+[30/07/2025 09:45:50] INFO: 📎 Arquivo simulado: Captura de tela 2025-07-30 092253.jpg
+[30/07/2025 09:46:01] INFO: 🎫 Enviando ticket...
+[30/07/2025 09:46:01] INFO: 📋 Validação ticket: ✅ OK
+[30/07/2025 09:46:01] INFO: 🎫 Criando ticket para usuário: eusebioagj@suznao.com.br
+[30/07/2025 09:46:01] INFO: 🔗 Conectando ao SharePoint para tickets...
+[30/07/2025 09:46:04] INFO: ✅ Conectado para tickets: Controle operacional
+[30/07/2025 09:46:05] INFO: ✅ Ticket criado com ID: 4
+[30/07/2025 09:46:05] INFO: 📋 AUDITORIA TICKET - ID: 4 | Usuário: eusebioagj@suznao.com.br | Motivo: Falha no preenchimento/aprovação | Timestamp: 30/07/2025 09:46:05
+[30/07/2025 09:46:05] INFO: ✅ Ticket #4 criado

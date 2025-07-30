@@ -226,11 +226,11 @@ class TicketService:
     
     def _processar_anexos_ticket(self, ticket_id: int, anexos: List[Dict]) -> int:
         """
-        Processa anexos do ticket (upload para SharePoint)
+        Processa anexos do ticket - UPLOAD REAL PARA SHAREPOINT
         
         Args:
             ticket_id: ID do ticket
-            anexos: Lista de anexos
+            anexos: Lista de anexos processados
             
         Returns:
             Número de anexos processados com sucesso
@@ -238,34 +238,147 @@ class TicketService:
         anexos_processados = 0
         
         try:
-            # Para SharePoint, vamos salvar na biblioteca de documentos
-            # com uma pasta específica para tickets
-            pasta_tickets = f"Tickets/Ticket_{ticket_id}"
+            logger.info(f"📎 Iniciando upload real de {len(anexos)} anexos para SharePoint...")
             
-            for anexo in anexos:
+            if not self.ctx:
+                logger.error("❌ Contexto SharePoint não disponível")
+                return 0
+            
+            # Nome da biblioteca (ajuste conforme sua configuração)
+            biblioteca_documentos = "Shared Documents"
+            
+            for i, anexo in enumerate(anexos):
                 try:
-                    nome_arquivo = f"{ticket_id}_{anexo['name']}"
+                    logger.info(f"📎 Processando anexo {i+1}/{len(anexos)}: {anexo.get('original_name', 'Sem nome')}")
                     
-                    # Aqui você implementaria o upload real para SharePoint
-                    # Por enquanto, simula o processamento
-                    logger.info(f"📎 Processando anexo: {nome_arquivo}")
+                    nome_original = anexo.get('original_name', 'arquivo.jpg')
+                    nome_unico = anexo.get('name', nome_original)
+                    dados_arquivo = anexo.get('data', b'')
                     
-                    # TODO: Implementar upload real para biblioteca de documentos
-                    # target_folder = self.ctx.web.get_folder_by_server_relative_url(pasta_tickets)
-                    # target_folder.upload_file(nome_arquivo, anexo["data"])
-                    # self.ctx.execute_query()
+                    if not dados_arquivo:
+                        logger.warning(f"⚠️ Anexo sem dados: {nome_original}")
+                        continue
                     
-                    anexos_processados += 1
-                    
+                    # Upload do arquivo
+                    try:
+                        web = self.ctx.web
+                        
+                        # Obtém biblioteca de documentos
+                        doc_lib = web.lists.get_by_title(biblioteca_documentos)
+                        root_folder = doc_lib.root_folder
+                        
+                        # Garante que pasta Tickets existe
+                        try:
+                            pasta_tickets = root_folder.folders.get_by_path("Tickets")
+                            self.ctx.load(pasta_tickets)
+                            self.ctx.execute_query()
+                        except:
+                            pasta_tickets = root_folder.folders.add("Tickets")
+                            self.ctx.execute_query()
+                            logger.info("📁 Pasta 'Tickets' criada")
+                        
+                        # Garante que pasta do ticket existe
+                        pasta_ticket_name = f"Ticket_{ticket_id}"
+                        try:
+                            pasta_ticket_obj = pasta_tickets.folders.get_by_path(pasta_ticket_name)
+                            self.ctx.load(pasta_ticket_obj)
+                            self.ctx.execute_query()
+                        except:
+                            pasta_ticket_obj = pasta_tickets.folders.add(pasta_ticket_name)
+                            self.ctx.execute_query()
+                            logger.info(f"📁 Pasta '{pasta_ticket_name}' criada")
+                        
+                        # Upload do arquivo
+                        arquivo_enviado = pasta_ticket_obj.upload_file(nome_unico, dados_arquivo)
+                        self.ctx.execute_query()
+                        
+                        # Obtém URL do arquivo
+                        self.ctx.load(arquivo_enviado)
+                        self.ctx.execute_query()
+                        
+                        url_arquivo = arquivo_enviado.serverRelativeUrl
+                        logger.info(f"✅ Anexo {i+1} enviado: {url_arquivo}")
+                        anexos_processados += 1
+                        
+                        # Adiciona referência do anexo no ticket
+                        self._adicionar_referencia_anexo_no_ticket(ticket_id, nome_original, url_arquivo)
+                        
+                    except Exception as e_upload:
+                        logger.error(f"❌ Erro no upload de {nome_original}: {e_upload}")
+                        continue
+                        
                 except Exception as e:
-                    logger.warning(f"⚠️ Erro ao processar anexo {anexo.get('name')}: {e}")
+                    logger.error(f"❌ Erro ao processar anexo: {e}")
                     continue
             
+            logger.info(f"📎 Upload concluído: {anexos_processados}/{len(anexos)} anexos enviados")
+            
+            # Atualiza ticket com resultado do upload
+            if anexos_processados > 0:
+                self._atualizar_ticket_com_anexos_enviados(ticket_id, anexos_processados, len(anexos))
+            
         except Exception as e:
-            logger.error(f"❌ Erro geral no processamento de anexos: {e}")
+            logger.error(f"❌ Erro geral no upload: {e}")
         
-        logger.info(f"📎 {anexos_processados}/{len(anexos)} anexos processados")
         return anexos_processados
+
+    def _adicionar_referencia_anexo_no_ticket(self, ticket_id: int, nome_arquivo: str, url_arquivo: str):
+        """
+        Adiciona referência do anexo no campo do ticket
+        
+        Args:
+            ticket_id: ID do ticket
+            nome_arquivo: Nome original do arquivo
+            url_arquivo: URL do arquivo no SharePoint
+        """
+        try:
+            # Esta função é chamada após cada upload individual
+            # Para evitar múltiplas atualizações, apenas registra o link
+            logger.debug(f"📎 Anexo registrado: {nome_arquivo} -> {url_arquivo}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao registrar anexo: {e}")
+
+    def _atualizar_ticket_com_anexos_enviados(self, ticket_id: int, anexos_enviados: int, total_anexos: int):
+        """
+        Atualiza o ticket com informações sobre anexos enviados
+        
+        Args:
+            ticket_id: ID do ticket
+            anexos_enviados: Número de anexos enviados com sucesso
+            total_anexos: Total de anexos tentados
+        """
+        try:
+            lista_tickets = self.ctx.web.lists.get_by_title(self.LISTA_TICKETS)
+            item_ticket = lista_tickets.get_item_by_id(ticket_id)
+            
+            # Carrega item atual
+            self.ctx.load(item_ticket)
+            self.ctx.execute_query()
+            
+            # Obtém descrição atual
+            descricao_atual = item_ticket.properties.get("Descricao", "")
+            
+            # Adiciona informações sobre anexos enviados
+            if anexos_enviados == total_anexos:
+                status_anexos = f"\n\n📎 ANEXOS ENVIADOS: {anexos_enviados} arquivo(s) enviado(s) com sucesso para SharePoint"
+            else:
+                status_anexos = f"\n\n📎 ANEXOS ENVIADOS: {anexos_enviados}/{total_anexos} arquivo(s) enviado(s) para SharePoint"
+            
+            # Localização dos anexos
+            status_anexos += f"\n📁 Localização: Shared Documents/Tickets/Ticket_{ticket_id}/"
+            
+            descricao_atualizada = descricao_atual + status_anexos
+            
+            # Atualiza o item
+            item_ticket.set_property("Descricao", descricao_atualizada)
+            item_ticket.update()
+            self.ctx.execute_query()
+            
+            logger.info(f"✅ Ticket #{ticket_id} atualizado com status dos anexos")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao atualizar ticket com status dos anexos: {e}")
     
     def abrir_ticket_completo(self, motivo: str, usuario: str, descricao: str, 
                              anexos: List[Dict] = None) -> Dict[str, Any]:
