@@ -18,8 +18,18 @@ class SharePointClient:
     """Cliente para integração com SharePoint"""
     
     @staticmethod
-    def carregar_lista(list_name: str, limite: int = 2000) -> pd.DataFrame:
-        """Carrega dados de uma lista SharePoint com retry automático"""
+    def carregar_lista(list_name: str, limite: int = 500, ordenar_por_recentes: bool = True) -> pd.DataFrame:
+        """
+        Carrega dados de uma lista SharePoint com estratégia otimizada
+        
+        Args:
+            list_name: Nome da lista SharePoint
+            limite: Número de registros (2000 para operacional, None para dashboard)
+            ordenar_por_recentes: True = mais recentes primeiro (CRÍTICO para tratativas)
+            
+        Returns:
+            pd.DataFrame: Registros ordenados por relevância operacional
+        """
         tentativas = 0
         max_tentativas = 3
         
@@ -29,18 +39,39 @@ class SharePointClient:
                     UserCredential(config.username_sp, config.password_sp)
                 )
                 sp_list = ctx.web.lists.get_by_title(list_name)
-                items = sp_list.items.top(limite).get().execute_query()
                 
+                # CONFIGURAÇÃO DA CONSULTA
+                items_query = sp_list.items.top(limite)
+                
+                # ===== CORREÇÃO CRÍTICA: ORDENAÇÃO POR RECENTES =====
+                if ordenar_por_recentes:
+                    # Ordena por ID decrescente = mais recentes primeiro
+                    items_query = items_query.order_by("ID desc")
+                else:
+                    # Ordenação padrão (ID crescente)
+                    items_query = items_query.order_by("ID")
+                
+                # Executa consulta
+                items = items_query.get().execute_query()
+                
+                # Converte dados
                 data = [item.properties for item in items]
                 df = pd.DataFrame(data)
                 
                 if not df.empty:
                     logger.info(f"✅ {len(df)} registros carregados de '{list_name}'")
+                    
+                    # Log de validação da correção
+                    if ordenar_por_recentes and len(df) > 0:
+                        primeiro_id = df.iloc[0].get('ID', 'N/A')
+                        ultimo_id = df.iloc[-1].get('ID', 'N/A')
+                        logger.info(f"🎯 ORDENAÇÃO CORRIGIDA: ID {primeiro_id} (mais recente) → ID {ultimo_id} (mais antigo)")
+                    
+                    return df
                 else:
                     logger.warning(f"⚠️ Lista '{list_name}' está vazia")
-                
-                return df
-                
+                    return pd.DataFrame()
+                    
             except Exception as e:
                 tentativas += 1
                 if tentativas < max_tentativas:
@@ -49,7 +80,7 @@ class SharePointClient:
                 else:
                     logger.error(f"❌ CRÍTICO: Falha ao carregar '{list_name}' após {max_tentativas} tentativas: {str(e)}")
                     return pd.DataFrame()
-        
+            
         return pd.DataFrame()
     
     @staticmethod
