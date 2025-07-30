@@ -1,9 +1,8 @@
 """
-Tela de login do sistema - CORRIGIDA
+Tela de login do sistema
 """
 import flet as ft
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
-from ..components.report_dialog import criar_botao_report
 
 
 class LoginScreen:
@@ -15,7 +14,6 @@ class LoginScreen:
         self.email_field = None
         self.password_field = None
         self.btn_login = None
-        self.btn_report = None  # ADICIONADO: Declaração do botão
         
     def mostrar(self):
         """Exibe a tela de login"""
@@ -85,16 +83,6 @@ class LoginScreen:
                 shape=ft.RoundedRectangleBorder(radius=10)
             )
         )
-
-        # CORRIGIDO: Botão de report criado ANTES de usar
-        self.btn_report = criar_botao_report(
-            self.page, 
-            texto="Reportar Problema", 
-            icone=ft.icons.HELP_OUTLINE
-        )
-        self.btn_report.bgcolor = ft.colors.GREY_600
-        self.btn_report.width = field_width
-        self.btn_report.height = 40
         
         # Container principal do login
         login_container = ft.Container(
@@ -113,20 +101,7 @@ class LoginScreen:
                 ft.Container(height=spacing_fields),
                 self.password_field,
                 ft.Container(height=spacing_fields + 10),
-                self.btn_login,
-                # CORRIGIDO: Agora o btn_report já existe
-                ft.Container(height=10),
-                self.btn_report,
-                ft.Container(
-                    content=ft.Text(
-                        "Problemas para acessar? Use o botão acima para reportar.",
-                        size=12,
-                        color=ft.colors.GREY_600,
-                        text_align=ft.TextAlign.CENTER,
-                        italic=True
-                    ),
-                    alignment=ft.alignment.center
-                )
+                self.btn_login
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             padding=padding_container,
             border_radius=20,

@@ -220,12 +220,6 @@ class ModernHeader:
                 "text": "Sair do Sistema",
                 "action": self._sair_sistema,
                 "color": ft.colors.RED_600
-            },
-            {
-                "icon": ft.icons.BUG_REPORT,
-                "text": "Reportar Problema",
-                "action": self._reportar_problema,
-                "color": ft.colors.ORANGE_600
             }
         ]
         
@@ -825,14 +819,6 @@ def get_password_service_status():
         'disponivel': PASSWORD_SERVICE_AVAILABLE,
         'funcional': PASSWORD_SERVICE_AVAILABLE and suzano_password_service is not None
     }
-
-def _reportar_problema(self):
-    """Abre modal de report de problema"""
-    session = get_session_state(self.page)
-    usuario_email = session.get_usuario_atual().get('Email', '')
-    
-    from ..components.report_dialog import mostrar_dialog_report
-    mostrar_dialog_report(self.page, usuario_email)
 
 
 def testar_servico_senha():
