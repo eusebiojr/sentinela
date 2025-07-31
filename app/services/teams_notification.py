@@ -1,12 +1,19 @@
 """
-Serviço de notificação Teams para tickets de suporte
+Serviço de notificação Teams para tickets de suporte - VERSÃO CORRIGIDA
 app/services/teams_notification.py
 """
 import json
-import requests
 from datetime import datetime
 from typing import Dict, Any, Optional
 from ..config.logging_config import setup_logger
+
+# Import condicional do requests para evitar erro
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+    requests = None
 
 logger = setup_logger("teams_notification")
 
@@ -23,6 +30,9 @@ class TeamsNotificationService:
         """
         self.webhook_url = webhook_url
         self.timeout = 10  # segundos
+        
+        if not REQUESTS_AVAILABLE:
+            logger.warning("⚠️ Biblioteca 'requests' não encontrada. Notificações Teams desabilitadas.")
         
         logger.info("📢 TeamsNotificationService inicializado")
     
@@ -48,8 +58,14 @@ class TeamsNotificationService:
             bool: True se enviado com sucesso
         """
         try:
+            if not REQUESTS_AVAILABLE:
+                logger.warning("⚠️ Requests não disponível - apenas log local")
+                self._log_ticket_local(ticket_id, dados_ticket)
+                return False
+            
             if not self.webhook_url:
                 logger.warning("⚠️ Webhook Teams não configurado")
+                self._log_ticket_local(ticket_id, dados_ticket)
                 return False
             
             # Cria o card adaptativo para Teams
@@ -67,163 +83,22 @@ class TeamsNotificationService:
                 logger.info(f"✅ Notificação Teams enviada para ticket {ticket_id}")
                 return True
             else:
-                logger.error(f"❌ Erro na integração Teams-Tickets: {str(e)}")
-
-
-# ===== INTEGRAÇÃO AUTOMÁTICA COM CALLBACK =====
-def criar_callback_teams(webhook_url: str = None):
-    """
-    Cria função de callback para integração automática com Teams
-    
-    Args:
-        webhook_url: URL do webhook Teams (opcional)
-        
-    Returns:
-        function: Callback para usar no modal de ticket
-    """
-    if webhook_url:
-        teams_service.configurar_webhook(webhook_url)
-    
-    def callback_com_teams(ticket_id: int, dados_ticket: dict):
-        """Callback que envia notificação Teams após criar ticket"""
-        try:
-            # Log local
-            print(f"✅ Ticket {ticket_id} criado")
-            print(f"📧 Usuário: {dados_ticket.get('usuario')}")
-            print(f"🎯 Motivo: {dados_ticket.get('motivo')}")
-            
-            # Envia para Teams (se configurado)
-            if teams_service.webhook_url:
-                sucesso_teams = teams_service.enviar_notificacao_ticket(ticket_id, dados_ticket)
-                if sucesso_teams:
-                    print(f"📢 Notificação Teams enviada para ticket {ticket_id}")
-                else:
-                    print(f"⚠️ Falha ao enviar Teams para ticket {ticket_id}")
-            else:
-                print("⚠️ Teams não configurado - apenas log local")
-                
-        except Exception as e:
-            print(f"❌ Erro no callback Teams: {str(e)}")
-    
-    return callback_com_teams
-
-
-# ===== CONFIGURAÇÃO SIMPLIFICADA =====
-class TicketTeamsConfig:
-    """Configuração simplificada para Teams + Tickets"""
-    
-    def __init__(self, webhook_url: str = None):
-        self.webhook_url = webhook_url
-        self.callback_teams = None
-        
-        if webhook_url:
-            self.configurar(webhook_url)
-    
-    def configurar(self, webhook_url: str):
-        """Configura Teams e cria callback"""
-        self.webhook_url = webhook_url
-        teams_service.configurar_webhook(webhook_url)
-        self.callback_teams = criar_callback_teams(webhook_url)
-        
-        # Testa conexão
-        if teams_service.testar_conexao():
-            logger.info("✅ Teams configurado com sucesso!")
-            return True
-        else:
-            logger.warning("⚠️ Falha na configuração Teams")
-            return False
-    
-    def get_callback(self):
-        """Retorna callback para usar nos modais"""
-        return self.callback_teams or criar_callback_teams()
-    
-    def testar(self):
-        """Testa configuração completa"""
-        if not self.webhook_url:
-            print("⚠️ Webhook não configurado")
-            return False
-        
-        return teams_service.testar_conexao()
-
-
-# Instância global configurável
-ticket_teams_config = TicketTeamsConfig()
-
-
-# ===== EXEMPLO DE USO COMPLETO =====
-"""
-CONFIGURAÇÃO NO INÍCIO DO SISTEMA:
-
-import os
-from app.services.teams_notification import ticket_teams_config
-
-# 1. Configure o webhook (obtenha do Teams)
-webhook_url = os.getenv('TEAMS_WEBHOOK_URL', 'https://outlook.office.com/webhook/...')
-
-# 2. Configure o sistema
-if webhook_url and webhook_url != 'https://outlook.office.com/webhook/...':
-    sucesso = ticket_teams_config.configurar(webhook_url)
-    if sucesso:
-        print("🔗 Teams integrado com sucesso!")
-    else:
-        print("⚠️ Teams não configurado - apenas logs")
-
-# 3. Use o callback nos modals
-from app.ui.components.ticket_modal import criar_modal_ticket
-
-def abrir_modal_com_teams(page, usuario_logado=None):
-    callback = ticket_teams_config.get_callback()
-    modal = criar_modal_ticket(page, callback_sucesso=callback)
-    modal.mostrar_modal(usuario_logado)
-
-"""
-
-# ===== INSTRUÇÕES DE CONFIGURAÇÃO TEAMS =====
-"""
-COMO OBTER WEBHOOK DO TEAMS:
-
-1. No Teams, vá para o canal onde quer receber notificações
-2. Clique nos "..." do canal → "Conectores"
-3. Procure "Webhook de Entrada" → "Configurar"
-4. Dê um nome (ex: "Sentinela Tickets")
-5. Opcional: envie uma imagem de ícone
-6. Clique "Criar"
-7. COPIE A URL gerada - é seu webhook!
-8. Configure no .env ou diretamente no código
-
-EXEMPLO DE WEBHOOK:
-https://outlook.office.com/webhook/a1b2c3d4-e5f6-7890-abcd-ef1234567890@12345678-90ab-cdef-1234-567890abcdef/IncomingWebhook/xyz123abc456def789/12345678-90ab-cdef-1234-567890abcdef
-
-TESTE:
-ticket_teams_config.testar()
-""" Erro na integração Teams-Tickets: {str(e)}")
-
-
-# ===== EXEMPLO DE USO =====
-"""
-1. Configure o webhook do Teams:
-   teams_service.configurar_webhook("https://outlook.office.com/webhook/YOUR_WEBHOOK_URL")
-
-2. Para integração automática, chame na inicialização:
-   integrar_teams_com_tickets()
-
-3. Para uso manual:
-   teams_service.enviar_notificacao_ticket(123, dados_ticket)
-
-4. Para teste:
-   teams_service.testar_conexao()
-""" Falha ao enviar Teams: {response.status_code} - {response.text}")
+                logger.error(f"❌ Falha ao enviar Teams: {response.status_code} - {response.text}")
+                self._log_ticket_local(ticket_id, dados_ticket)
                 return False
                 
-        except requests.exceptions.Timeout:
-            logger.error("❌ Timeout ao enviar notificação Teams")
-            return False
-        except requests.exceptions.RequestException as e:
-            logger.error(f"❌ Erro de conexão Teams: {str(e)}")
-            return False
         except Exception as e:
-            logger.error(f"❌ Erro inesperado ao enviar Teams: {str(e)}")
+            logger.error(f"❌ Erro ao enviar Teams: {str(e)}")
+            self._log_ticket_local(ticket_id, dados_ticket)
             return False
+    
+    def _log_ticket_local(self, ticket_id: int, dados_ticket: Dict[str, Any]):
+        """Log local quando Teams não está disponível"""
+        logger.info(f"📋 TICKET #{ticket_id} CRIADO")
+        logger.info(f"   📧 Usuário: {dados_ticket.get('usuario', 'N/A')}")
+        logger.info(f"   🎯 Motivo: {dados_ticket.get('motivo', 'N/A')}")
+        logger.info(f"   📝 Descrição: {dados_ticket.get('descricao', 'N/A')[:50]}...")
+        logger.info(f"   🖼️ Imagem: {'Sim' if dados_ticket.get('imagem_filename') else 'Não'}")
     
     def _criar_card_ticket(self, ticket_id: int, dados_ticket: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -333,8 +208,8 @@ ticket_teams_config.testar()
             bool: True se enviado com sucesso
         """
         try:
-            if not self.webhook_url:
-                logger.warning("⚠️ Webhook Teams não configurado")
+            if not REQUESTS_AVAILABLE or not self.webhook_url:
+                logger.warning("⚠️ Teams não configurado ou requests indisponível")
                 return False
             
             card = {
@@ -371,6 +246,10 @@ ticket_teams_config.testar()
         Returns:
             bool: True se conexão OK
         """
+        if not REQUESTS_AVAILABLE:
+            logger.warning("⚠️ Biblioteca requests não disponível")
+            return False
+            
         return self.enviar_notificacao_personalizada(
             "🧪 Teste de Conexão",
             "Sistema Sentinela conectado com sucesso ao Teams!",
@@ -378,41 +257,113 @@ ticket_teams_config.testar()
         )
 
 
-# Instância global do serviço (opcional)
+# Instância global do serviço
 teams_service = TeamsNotificationService()
 
 
-# ===== FUNÇÃO DE INTEGRAÇÃO COM TICKET SERVICE =====
-def integrar_teams_com_tickets():
+# ===== FUNÇÃO DE CALLBACK SIMPLIFICADA =====
+def criar_callback_teams(webhook_url: str = None):
     """
-    Integra notificações Teams com o serviço de tickets
-    Chame esta função na inicialização do sistema
+    Cria função de callback para integração automática com Teams
+    
+    Args:
+        webhook_url: URL do webhook Teams (opcional)
+        
+    Returns:
+        function: Callback para usar no modal de ticket
     """
-    try:
-        from .ticket_service import ticket_service
-        
-        # Modifica o método criar_ticket para incluir notificação
-        metodo_original = ticket_service.criar_ticket
-        
-        def criar_ticket_com_notificacao(dados_ticket):
-            # Cria o ticket normalmente
-            sucesso, mensagem, ticket_id = metodo_original(dados_ticket)
+    if webhook_url:
+        teams_service.configurar_webhook(webhook_url)
+    
+    def callback_com_teams(ticket_id: int, dados_ticket: dict):
+        """Callback que envia notificação Teams após criar ticket"""
+        try:
+            # Log local sempre
+            print(f"✅ Ticket {ticket_id} criado")
+            print(f"📧 Usuário: {dados_ticket.get('usuario')}")
+            print(f"🎯 Motivo: {dados_ticket.get('motivo')}")
             
-            # Se sucesso, envia notificação Teams
-            if sucesso and ticket_id:
-                try:
-                    teams_service.enviar_notificacao_ticket(ticket_id, dados_ticket)
-                except Exception as e:
-                    logger.warning(f"⚠️ Falha na notificação Teams: {str(e)}")
-            
-            return sucesso, mensagem, ticket_id
+            # Tenta enviar para Teams
+            if teams_service.webhook_url and REQUESTS_AVAILABLE:
+                sucesso_teams = teams_service.enviar_notificacao_ticket(ticket_id, dados_ticket)
+                if sucesso_teams:
+                    print(f"📢 Notificação Teams enviada para ticket {ticket_id}")
+                else:
+                    print(f"⚠️ Falha ao enviar Teams para ticket {ticket_id}")
+            else:
+                print("⚠️ Teams não configurado - apenas log local")
+                
+        except Exception as e:
+            print(f"❌ Erro no callback Teams: {str(e)}")
+    
+    return callback_com_teams
+
+
+# ===== CONFIGURAÇÃO SIMPLIFICADA =====
+class TicketTeamsConfig:
+    """Configuração simplificada para Teams + Tickets"""
+    
+    def __init__(self, webhook_url: str = None):
+        self.webhook_url = webhook_url
+        self.callback_teams = None
         
-        # Substitui o método
-        ticket_service.criar_ticket = criar_ticket_com_notificacao
+        if webhook_url:
+            self.configurar(webhook_url)
+    
+    def configurar(self, webhook_url: str):
+        """Configura Teams e cria callback"""
+        self.webhook_url = webhook_url
+        teams_service.configurar_webhook(webhook_url)
+        self.callback_teams = criar_callback_teams(webhook_url)
         
-        logger.info("🔗 Integração Teams-Tickets configurada")
+        # Testa conexão apenas se requests disponível
+        if REQUESTS_AVAILABLE:
+            if teams_service.testar_conexao():
+                logger.info("✅ Teams configurado com sucesso!")
+                return True
+            else:
+                logger.warning("⚠️ Falha na configuração Teams")
+                return False
+        else:
+            logger.info("📋 Teams configurado (modo log apenas)")
+            return True
+    
+    def get_callback(self):
+        """Retorna callback para usar nos modais"""
+        return self.callback_teams or criar_callback_teams()
+    
+    def testar(self):
+        """Testa configuração completa"""
+        if not self.webhook_url:
+            print("⚠️ Webhook não configurado")
+            return False
         
-    except ImportError:
-        logger.warning("⚠️ Ticket service não encontrado para integração")
-    except Exception as e:
-        logger.error(f"❌ Erro na integração Teams-Tickets: {str(e)}")
+        if not REQUESTS_AVAILABLE:
+            print("⚠️ Biblioteca requests não disponível")
+            return False
+        
+        return teams_service.testar_conexao()
+
+
+# Instância global configurável
+ticket_teams_config = TicketTeamsConfig()
+
+
+# ===== INSTRUÇÕES DE USO =====
+"""
+EXEMPLO DE USO:
+
+1. Instale requests se não tiver:
+   pip install requests
+
+2. Configure o webhook:
+   webhook_url = "https://outlook.office.com/webhook/SUA_URL"
+   ticket_teams_config.configurar(webhook_url)
+
+3. Use o callback nos modais:
+   callback = ticket_teams_config.get_callback()
+   modal = criar_modal_ticket(page, callback_sucesso=callback)
+
+4. Para testar:
+   ticket_teams_config.testar()
+"""

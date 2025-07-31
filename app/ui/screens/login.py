@@ -15,6 +15,7 @@ class LoginScreen:
         self.password_field = None
         self.btn_login = None
         
+        
     def mostrar(self):
         """Exibe a tela de login COM botão de suporte"""
         # Detecta tamanho da tela para responsividade

@@ -11,6 +11,9 @@ pytz>=2023.3
 # Utilitários
 python-dateutil>=2.8.2
 
+# HTTP Requests (para Teams notifications)
+requests>=2.31.0
+
 # Logging e Monitoramento (opcional para GCP)
 google-cloud-logging>=3.8.0
 

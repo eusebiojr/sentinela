@@ -8,6 +8,20 @@ from ...utils.ui_utils import get_screen_size, mostrar_mensagem
 from ...services.ticket_service import ticket_service
 from ..components.ticket_modal import criar_modal_ticket
 
+try:
+    from ...services.ticket_service import ticket_service
+    TICKET_SERVICE_AVAILABLE = True
+except ImportError:
+    TICKET_SERVICE_AVAILABLE = False
+    ticket_service = None
+
+try:
+    from ..components.ticket_modal import criar_modal_ticket
+    TICKET_MODAL_AVAILABLE = True
+except ImportError:
+    TICKET_MODAL_AVAILABLE = False
+    criar_modal_ticket = None
+
 # Importa o serviço funcional de senha
 try:
     from ...services.suzano_password_service import suzano_password_service
