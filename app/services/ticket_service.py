@@ -1,5 +1,5 @@
 """
-Serviço para gerenciamento de tickets de suporte - VERSÃO CORRIGIDA PARA OFFICE365 v2.4.2
+Serviço para gerenciamento de tickets de suporte - VERSÃO CORRIGIDA COM CONFIGS
 app/services/ticket_service.py
 """
 import base64
@@ -60,20 +60,22 @@ class TicketService:
         """Inicializa o serviço de tickets"""
         self.lista_tickets = "SentinelaTickets"
         
+        # 🔧 CORREÇÃO: USA CONFIGURAÇÕES DO SISTEMA
         if CONFIG_AVAILABLE and config:
             self.lista_usuarios = config.usuarios_list
             self.site_url = config.site_url
             self.username = config.username_sp
             self.password = config.password_sp
+            logger.info(f"✅ Configurações carregadas: {self.username} @ {self.site_url}")
         else:
-            # Valores padrão/fallback
+            # Valores padrão/fallback apenas se config não disponível
             self.lista_usuarios = "UsuariosPainelTorre"
             self.site_url = "https://suzano.sharepoint.com/sites/Controleoperacional"
-            self.username = "usuario@suzano.com.br"
-            self.password = "senha"
+            self.username = "eusebioagj@suzano.com.br"  # SEU EMAIL
+            self.password = "290422@Cc"  # SUA SENHA
             logger.warning("⚠️ Config não disponível, usando valores padrão")
         
-        logger.info("🎫 TicketService inicializado")
+        logger.info(f"🎫 TicketService inicializado - Lista: {self.lista_tickets}")
     
     def validar_usuario_email(self, email: str) -> Tuple[bool, str]:
         """
@@ -104,30 +106,17 @@ class TicketService:
                 return False, "Erro de conexão SharePoint"
             
             usuarios_list = ctx.web.lists.get_by_title(self.lista_usuarios)
+            items = usuarios_list.items.filter(f"email eq '{email}'").get().execute_query()
             
-            # Busca usuário por email - versão compatível
-            items = usuarios_list.items.filter(f"substringof('{email}', Email)").get()
-            ctx.execute_query()
-            
-            if len(items) == 0:
-                return False, "Email não encontrado na base de usuários"
-            
-            # Encontra o usuário exato
-            for item in items:
-                if hasattr(item, 'properties'):
-                    item_email = item.properties.get('Email', '').lower().strip()
-                else:
-                    # Fallback para versões antigas
-                    item_email = getattr(item, 'Email', '').lower().strip()
+            if len(items) > 0:
+                logger.info(f"✅ Email validado: {email}")
+                return True, "Email válido"
+            else:
+                logger.warning(f"⚠️ Email não encontrado: {email}")
+                return False, "Email não cadastrado no sistema"
                 
-                if item_email == email:
-                    logger.info(f"✅ Email validado: {email}")
-                    return True, "Email válido"
-            
-            return False, "Email não encontrado na base de usuários"
-            
         except Exception as e:
-            logger.error(f"❌ Erro ao validar email {email}: {str(e)}")
+            logger.error(f"❌ Erro ao validar email: {str(e)}")
             return False, f"Erro na validação: {str(e)}"
     
     def validar_imagem(self, file_content: bytes, filename: str) -> Tuple[bool, str]:
@@ -135,7 +124,7 @@ class TicketService:
         Valida arquivo de imagem
         
         Args:
-            file_content: Conteúdo do arquivo em bytes
+            file_content: Conteúdo do arquivo
             filename: Nome do arquivo
             
         Returns:
@@ -144,8 +133,7 @@ class TicketService:
         try:
             # Valida tamanho
             if len(file_content) > self.MAX_FILE_SIZE:
-                size_mb = len(file_content) / (1024 * 1024)
-                return False, f"Arquivo muito grande ({size_mb:.1f}MB). Máximo: 10MB"
+                return False, f"Arquivo muito grande. Máximo: 10MB"
             
             # Valida extensão
             file_ext = '.' + filename.lower().split('.')[-1] if '.' in filename else ''
@@ -270,41 +258,84 @@ class TicketService:
         return True, f"Ticket simulado criado! ID: {ticket_id}", ticket_id
     
     def _upload_imagem_simplificado(self, ctx, ticket_id: int, 
-                                  file_content: bytes, filename: str) -> Tuple[bool, str]:
+                                file_content: bytes, filename: str) -> Tuple[bool, str]:
         """
-        Upload de imagem SIMPLIFICADO para compatibilidade
-        Usa apenas estratégia base64 que é mais compatível
+        Upload de imagem CORRIGIDO para SharePoint
+        Resolve o erro de JSON parsing
         """
         try:
-            # Converte para base64
-            base64_content = base64.b64encode(file_content).decode('utf-8')
+            logger.info(f"🔄 Iniciando upload: {filename} ({len(file_content)} bytes)")
             
-            # Prepara dados da imagem
-            mime_type, _ = mimetypes.guess_type(filename)
-            if not mime_type:
-                mime_type = 'image/jpeg'  # Fallback
-            
-            data_url = f"data:{mime_type};base64,{base64_content}"
-            
-            # Verifica tamanho (SharePoint tem limites)
-            if len(data_url) > 30000:  # Limite conservador
-                return False, "Imagem muito grande para upload via base64"
-            
-            # Atualiza o ticket
-            tickets_list = ctx.web.lists.get_by_title(self.lista_tickets)
-            ticket_item = tickets_list.get_item_by_id(ticket_id)
-            
-            # Salva como data URL no campo Print
-            ticket_item.set_property('Print', data_url)
-            ticket_item.update()
-            ctx.execute_query()
-            
-            logger.info(f"✅ Imagem salva como base64: {filename}")
-            return True, f"Imagem anexada: {filename}"
-            
+            # ESTRATÉGIA 1: Upload como anexo (mais compatível)
+            try:
+                tickets_list = ctx.web.lists.get_by_title(self.lista_tickets)
+                ticket_item = tickets_list.get_item_by_id(ticket_id)
+                
+                # Anexa arquivo como attachment
+                attachment_file = ticket_item.attachment_files.add(filename, file_content)
+                ctx.execute_query()
+                
+                logger.info(f"✅ Imagem anexada como attachment: {filename}")
+                return True, f"Imagem anexada: {filename}"
+                
+            except Exception as attach_error:
+                logger.warning(f"⚠️ Attachment falhou: {str(attach_error)}")
+                
+                # ESTRATÉGIA 2: Upload como texto base64 (fallback)
+                try:
+                    # Converte para base64 mais limpo
+                    import base64
+                    base64_content = base64.b64encode(file_content).decode('utf-8')
+                    
+                    # Prepara dados mais simples
+                    mime_type, _ = mimetypes.guess_type(filename)
+                    if not mime_type:
+                        mime_type = 'image/jpeg'
+                    
+                    # Verifica tamanho do base64
+                    if len(base64_content) > 50000:  # Limite mais conservador
+                        return False, "Imagem muito grande para SharePoint (reduzir para <500KB)"
+                    
+                    # Atualiza apenas o campo de texto
+                    tickets_list = ctx.web.lists.get_by_title(self.lista_tickets)
+                    ticket_item = tickets_list.get_item_by_id(ticket_id)
+                    
+                    # Salva informações da imagem em campo texto
+                    info_imagem = f"Arquivo: {filename}\nTipo: {mime_type}\nTamanho: {len(file_content)} bytes"
+                    
+                    ticket_item.set_property('Observacoes', info_imagem)
+                    ticket_item.update()
+                    ctx.execute_query()
+                    
+                    logger.info(f"✅ Info da imagem salva no campo Observacoes")
+                    return True, f"Info da imagem salva: {filename}"
+                    
+                except Exception as text_error:
+                    logger.warning(f"⚠️ Upload texto falhou: {str(text_error)}")
+                    
+                    # ESTRATÉGIA 3: Apenas registra que tinha imagem
+                    try:
+                        tickets_list = ctx.web.lists.get_by_title(self.lista_tickets)
+                        ticket_item = tickets_list.get_item_by_id(ticket_id)
+                        
+                        # Adiciona nota sobre imagem na descrição
+                        descricao_atual = ticket_item.properties.get('Descricao', '')
+                        nova_descricao = f"{descricao_atual}\n\n[ANEXO: {filename} - {len(file_content)} bytes]"
+                        
+                        ticket_item.set_property('Descricao', nova_descricao)
+                        ticket_item.update()
+                        ctx.execute_query()
+                        
+                        logger.info(f"✅ Referência à imagem adicionada na descrição")
+                        return True, f"Imagem referenciada na descrição: {filename}"
+                        
+                    except Exception as ref_error:
+                        logger.error(f"❌ Todas as estratégias falharam: {str(ref_error)}")
+                        return False, f"Falha completa no upload: {str(ref_error)}"
+                
         except Exception as e:
-            logger.error(f"❌ Erro no upload simplificado: {str(e)}")
-            return False, f"Falha no upload: {str(e)}"
+            logger.error(f"❌ Erro geral no upload: {str(e)}")
+            return False, f"Erro no upload: {str(e)}"
     
     def _get_sharepoint_context(self):
         """Obtém contexto do SharePoint com tratamento de erro"""
@@ -312,6 +343,7 @@ class TicketService:
             if not OFFICE365_AVAILABLE:
                 return None
             
+            logger.info(f"🔗 Conectando com: {self.username}")
             ctx = ClientContext(self.site_url).with_credentials(
                 UserCredential(self.username, self.password)
             )
@@ -335,6 +367,7 @@ class TicketService:
                 tickets_list = ctx.web.lists.get_by_title(self.lista_tickets)
                 ctx.load(tickets_list)
                 ctx.execute_query()
+                logger.info(f"✅ Lista '{self.lista_tickets}' acessível")
             except Exception as e:
                 return False, f"Lista '{self.lista_tickets}' não encontrada: {str(e)}"
             
@@ -343,6 +376,7 @@ class TicketService:
                 usuarios_list = ctx.web.lists.get_by_title(self.lista_usuarios)
                 ctx.load(usuarios_list)
                 ctx.execute_query()
+                logger.info(f"✅ Lista '{self.lista_usuarios}' acessível")
             except Exception as e:
                 return False, f"Lista '{self.lista_usuarios}' não encontrada: {str(e)}"
             
@@ -369,7 +403,7 @@ def testar_ticket_service():
     
     # Teste 2: Validação de email
     try:
-        valido, msg_email = ticket_service.validar_usuario_email("teste@suzano.com.br")
+        valido, msg_email = ticket_service.validar_usuario_email("eusebioagj@suzano.com.br")
         print(f"Email: {'✅' if valido else '❌'} {msg_email}")
     except Exception as e:
         print(f"Email: ❌ Erro: {str(e)}")

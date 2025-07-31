@@ -1,4 +1,0 @@
-[30/07/2025 20:02:36] INFO: 📁 Logs sendo salvos em: logs\sentinela_20250730_200236.log
-[30/07/2025 20:02:36] INFO: 🎫 TicketService inicializado
-[30/07/2025 20:02:39] INFO: ✅ Conexão com SharePoint OK
-[30/07/2025 20:02:42] ERROR: ❌ Erro ao validar email teste@suzano.com.br: ('-2146232832, Microsoft.SharePoint.SPException', "A coluna 'Email' não existe. Talvez ela tenha sido excluída por outro usuário.", "500 Server Error: Internal Server Error for url: https://suzano.sharepoint.com/sites/Controleoperacional/_api/Web/lists/GetByTitle('UsuariosPainelTorre')/items?$filter=substringof('teste@suzano.com.br',%20Email)")

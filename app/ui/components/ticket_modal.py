@@ -277,75 +277,208 @@ class TicketModal:
             mostrar_mensagem(self.page, "Erro ao abrir seletor de arquivos", True)
     
     def _arquivo_selecionado(self, e: ft.FilePickerResultEvent):
-        """Processa arquivo selecionado"""
+        """Upload via Base64 para Flet Web - SOLUÇÃO DEFINITIVA"""
         try:
+            logger.info("🔍 Processando arquivo (Flet Web Base64)...")
+            
             if e.files and len(e.files) > 0:
                 file = e.files[0]
                 self.imagem_filename = file.name
                 
-                # Lê o conteúdo do arquivo
-                with open(file.path, 'rb') as f:
-                    self.imagem_content = f.read()
+                logger.info(f"📁 Arquivo: {file.name}")
+                logger.info(f"📊 Tamanho: {file.size} bytes")
                 
-                # Valida a imagem
-                if TICKET_SERVICE_AVAILABLE:
-                    valido, mensagem = ticket_service.validar_imagem(self.imagem_content, self.imagem_filename)
-                else:
-                    # Validação básica se service não disponível
-                    valido = True
-                    if len(self.imagem_content) > 10 * 1024 * 1024:  # 10MB
-                        valido, mensagem = False, "Arquivo muito grande (máximo 10MB)"
-                    elif not any(self.imagem_filename.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.bmp']):
-                        valido, mensagem = False, "Formato não suportado"
-                    else:
-                        mensagem = "Imagem válida"
+                # Valida tamanho antes de processar
+                tamanho_mb = file.size / (1024 * 1024)
+                if tamanho_mb > 10:
+                    logger.error(f"❌ Arquivo muito grande: {tamanho_mb:.1f}MB")
+                    mostrar_mensagem(self.page, "❌ Arquivo muito grande (máximo 10MB)", True)
+                    return
                 
-                if valido:
-                    # Mostra info do arquivo
-                    tamanho_mb = len(self.imagem_content) / (1024 * 1024)
-                    self.arquivo_info.content = ft.Row([
-                        ft.Icon(ft.icons.CHECK_CIRCLE, color=ft.colors.GREEN_600, size=16),
-                        ft.Text(
-                            f"{self.imagem_filename} ({tamanho_mb:.1f}MB)",
-                            size=14,
-                            color=ft.colors.GREEN_700
-                        ),
-                        ft.IconButton(
-                            ft.icons.DELETE,
-                            icon_color=ft.colors.RED_600,
-                            icon_size=16,
-                            tooltip="Remover arquivo",
-                            on_click=self._remover_arquivo
-                        )
-                    ])
-                else:
-                    # Erro na validação
-                    self.imagem_content = None
-                    self.imagem_filename = None
-                    self.arquivo_info.content = ft.Row([
-                        ft.Icon(ft.icons.ERROR, color=ft.colors.RED_600, size=16),
-                        ft.Text(mensagem, size=14, color=ft.colors.RED_700)
-                    ])
-                
-                self._verificar_formulario_valido()
+                # Mostra carregamento
+                self.arquivo_info.content = ft.Row([
+                    ft.ProgressRing(width=16, height=16),
+                    ft.Text("Convertendo para Base64...", size=14, color=ft.colors.BLUE_600)
+                ])
                 self.page.update()
                 
+                # Cria script JavaScript para ler arquivo como Base64
+                js_code = f"""
+                async function lerArquivoBase64() {{
+                    try {{
+                        // Busca o input file mais recente
+                        const inputs = document.querySelectorAll('input[type="file"]');
+                        const input = inputs[inputs.length - 1];
+                        
+                        if (!input || !input.files || input.files.length === 0) {{
+                            return 'ERRO:Nenhum arquivo encontrado';
+                        }}
+                        
+                        const arquivo = input.files[0];
+                        
+                        return new Promise((resolve, reject) => {{
+                            const reader = new FileReader();
+                            reader.onload = function(e) {{
+                                // Remove o prefixo data:...;base64,
+                                const base64 = e.target.result.split(',')[1];
+                                resolve('BASE64:' + base64);
+                            }};
+                            reader.onerror = function(e) {{
+                                resolve('ERRO:Erro ao ler arquivo');
+                            }};
+                            reader.readAsDataURL(arquivo);
+                        }});
+                    }} catch (error) {{
+                        return 'ERRO:' + error.message;
+                    }}
+                }}
+                
+                lerArquivoBase64().then(resultado => {{
+                    // Dispara evento customizado com o resultado
+                    window.dispatchEvent(new CustomEvent('arquivo_lido', {{
+                        detail: resultado
+                    }}));
+                }});
+                """
+                
+                # Função para capturar resultado do JavaScript
+                def processar_resultado_js(resultado):
+                    try:
+                        if resultado.startswith('BASE64:'):
+                            # Sucesso - converte de base64 para bytes
+                            base64_data = resultado[7:]  # Remove 'BASE64:'
+                            import base64
+                            self.imagem_content = base64.b64decode(base64_data)
+                            
+                            logger.info(f"✅ Convertido de Base64: {len(self.imagem_content)} bytes")
+                            
+                            # Valida a imagem
+                            if TICKET_SERVICE_AVAILABLE:
+                                valido, mensagem = ticket_service.validar_imagem(self.imagem_content, self.imagem_filename)
+                            else:
+                                valido, mensagem = True, "Imagem carregada"
+                            
+                            if valido:
+                                # Sucesso
+                                tamanho_mb = len(self.imagem_content) / (1024 * 1024)
+                                self.arquivo_info.content = ft.Row([
+                                    ft.Icon(ft.icons.CHECK_CIRCLE, color=ft.colors.GREEN_600, size=16),
+                                    ft.Text(
+                                        f"{self.imagem_filename} ({tamanho_mb:.1f}MB)",
+                                        size=14,
+                                        color=ft.colors.GREEN_700
+                                    ),
+                                    ft.IconButton(
+                                        ft.icons.DELETE,
+                                        icon_color=ft.colors.RED_600,
+                                        icon_size=16,
+                                        tooltip="Remover arquivo",
+                                        on_click=self._remover_arquivo
+                                    )
+                                ])
+                                mostrar_mensagem(self.page, "✅ Imagem carregada com sucesso!", False)
+                            else:
+                                # Erro na validação
+                                self.imagem_content = None
+                                self.imagem_filename = None
+                                self.arquivo_info.content = ft.Row([
+                                    ft.Icon(ft.icons.ERROR, color=ft.colors.RED_600, size=16),
+                                    ft.Text(mensagem, size=14, color=ft.colors.RED_700)
+                                ])
+                                mostrar_mensagem(self.page, f"❌ {mensagem}", True)
+                        
+                        elif resultado.startswith('ERRO:'):
+                            # Erro
+                            erro = resultado[5:]  # Remove 'ERRO:'
+                            logger.error(f"❌ Erro JavaScript: {erro}")
+                            self.arquivo_info.content = ft.Row([
+                                ft.Icon(ft.icons.ERROR, color=ft.colors.RED_600, size=16),
+                                ft.Text(f"Erro: {erro}", size=14, color=ft.colors.RED_700)
+                            ])
+                            mostrar_mensagem(self.page, f"❌ Erro: {erro}", True)
+                        
+                        self.page.update()
+                        self._validar_formulario()
+                        
+                    except Exception as proc_error:
+                        logger.error(f"❌ Erro ao processar resultado: {str(proc_error)}")
+                        mostrar_mensagem(self.page, f"❌ Erro interno: {str(proc_error)}", True)
+                
+                # Executa JavaScript e aguarda resultado
+                import threading
+                import time
+                
+                def executar_js():
+                    try:
+                        # Executa o JavaScript
+                        self.page.evaluate_js(js_code)
+                        
+                        # Aguarda o evento (simula com polling)
+                        for tentativa in range(50):  # 5 segundos máximo
+                            time.sleep(0.1)
+                            
+                            # Verifica se o resultado está disponível via JavaScript
+                            try:
+                                resultado_check = self.page.evaluate_js("""
+                                    window.ultimoResultadoArquivo || 'AGUARDANDO'
+                                """)
+                                
+                                if resultado_check != 'AGUARDANDO':
+                                    processar_resultado_js(resultado_check)
+                                    return
+                            except:
+                                continue
+                        
+                        # Timeout
+                        logger.error("❌ Timeout na conversão JavaScript")
+                        processar_resultado_js("ERRO:Timeout na conversão")
+                        
+                    except Exception as js_error:
+                        logger.error(f"❌ Erro JavaScript: {str(js_error)}")
+                        processar_resultado_js(f"ERRO:{str(js_error)}")
+                
+                # Modifica o JavaScript para armazenar resultado em variável global
+                js_code_modificado = js_code.replace(
+                    "window.dispatchEvent(new CustomEvent('arquivo_lido', {",
+                    "window.ultimoResultadoArquivo = resultado; window.dispatchEvent(new CustomEvent('arquivo_lido', {"
+                )
+                
+                # Executa em thread
+                thread = threading.Thread(target=executar_js, daemon=True)
+                thread.start()
+                    
+            else:
+                logger.warning("⚠️ Nenhum arquivo selecionado")
+                self.arquivo_info.content = ft.Text(
+                    "Nenhum arquivo selecionado", 
+                    size=12, 
+                    color=ft.colors.GREY_600
+                )
+                self.page.update()
+            
         except Exception as ex:
             logger.error(f"❌ Erro ao processar arquivo: {str(ex)}")
             mostrar_mensagem(self.page, f"Erro ao processar arquivo: {str(ex)}", True)
-    
+
+
     def _remover_arquivo(self, e):
         """Remove arquivo selecionado"""
-        self.imagem_content = None
-        self.imagem_filename = None
-        self.arquivo_info.content = ft.Text(
-            "Nenhum arquivo selecionado", 
-            size=12, 
-            color=ft.colors.GREY_600
-        )
-        self._verificar_formulario_valido()
-        self.page.update()
-    
+        try:
+            self.imagem_content = None
+            self.imagem_filename = None
+            
+            self.arquivo_info.content = ft.Text(
+                "Nenhum arquivo selecionado", 
+                size=12, 
+                color=ft.colors.GREY_600
+            )
+            
+            self.page.update()
+            logger.info("🗑️ Arquivo removido")
+            
+        except Exception as ex:
+            logger.error(f"❌ Erro ao remover arquivo: {str(ex)}")
+
     def _validar_email_tempo_real(self, e):
         """Validação de email em tempo real"""
         self._verificar_formulario_valido()
@@ -470,6 +603,36 @@ class TicketModal:
                 
         except Exception as ex:
             logger.error(f"❌ Erro ao limpar formulário: {str(ex)}")
+
+    def _validar_formulario(self):
+        """Valida se o formulário está completo"""
+        try:
+            motivo_ok = self.motivo_dropdown and self.motivo_dropdown.value
+            email_ok = self.email_field and self.email_field.value and "@" in self.email_field.value
+            descricao_ok = self.descricao_field and self.descricao_field.value and len(self.descricao_field.value.strip()) >= 10
+            
+            formulario_valido = motivo_ok and email_ok and descricao_ok
+            
+            if self.botao_enviar:
+                self.botao_enviar.disabled = not formulario_valido
+                if formulario_valido:
+                    self.botao_enviar.bgcolor = ft.colors.BLUE_600
+                else:
+                    self.botao_enviar.bgcolor = ft.colors.GREY_400
+            
+            if hasattr(self, 'page'):
+                self.page.update()
+                
+        except Exception as ex:
+            logger.error(f"❌ Erro na validação: {str(ex)}")
+
+    def _validar_email_tempo_real(self, e):
+        """Valida email em tempo real"""
+        self._validar_formulario()
+
+    def _validar_descricao_tempo_real(self, e):
+        """Valida descrição em tempo real"""
+        self._validar_formulario()
 
 
 def criar_modal_ticket(page: ft.Page, callback_sucesso: Optional[Callable] = None) -> TicketModal:
