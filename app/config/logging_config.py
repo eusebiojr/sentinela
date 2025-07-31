@@ -92,9 +92,6 @@ def setup_file_logging(logger: logging.Logger):
         )
         file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
-
-        # Log inicial informando onde encontrar os logs
-        logger.info(f"📁 Logs sendo salvos em: {log_filepath}")
         
     except Exception as e:
         logger.warning(f"⚠️ Não foi possível configurar logging em arquivo: {e}")

@@ -65,7 +65,6 @@ class SharePointClient:
                     if ordenar_por_recentes and len(df) > 0:
                         primeiro_id = df.iloc[0].get('ID', 'N/A')
                         ultimo_id = df.iloc[-1].get('ID', 'N/A')
-                        logger.info(f"🎯 ORDENAÇÃO CORRIGIDA: ID {primeiro_id} (mais recente) → ID {ultimo_id} (mais antigo)")
                     
                     return df
                 else:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Investigação da lista SentinelaTickets - Descobre campos disponíveis
-Execute: python investigar_campos_tickets.py
+Debug do campo Imagem - Verificar o que foi salvo
+Execute: python debug_campo_imagem.py
 """
 
 import sys
@@ -10,10 +10,10 @@ import os
 # Adiciona o diretório app ao path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 
-def investigar_lista_sentinela_tickets():
-    """Investiga a estrutura da lista SentinelaTickets"""
-    print("🔍 INVESTIGANDO LISTA SENTINELA TICKETS")
-    print("=" * 50)
+def debug_campo_imagem():
+    """Debug específico do campo Imagem"""
+    print("🔍 DEBUG - CAMPO IMAGEM")
+    print("=" * 40)
     
     try:
         from office365.sharepoint.client_context import ClientContext
@@ -27,131 +27,146 @@ def investigar_lista_sentinela_tickets():
         
         # Obtém a lista
         tickets_list = ctx.web.lists.get_by_title("SentinelaTickets")
-        ctx.load(tickets_list)
-        ctx.execute_query()
         
-        print(f"✅ Lista encontrada: {tickets_list.properties.get('Title', 'N/A')}")
+        # Busca os últimos 3 tickets
+        items = tickets_list.items.top(3).order_by("ID", False).get().execute_query()
         
-        # Obtém campos/colunas da lista
-        fields = tickets_list.fields
-        ctx.load(fields)
-        ctx.execute_query()
+        print(f"📋 Analisando últimos {len(items)} tickets:")
+        print("-" * 40)
         
-        print(f"\n📋 CAMPOS DISPONÍVEIS ({len(fields)}):")
-        print("-" * 50)
-        
-        campos_imagem = []
-        campos_texto = []
-        
-        for field in fields:
-            field_name = field.properties.get('Title', 'N/A')
-            field_type = field.properties.get('TypeAsString', 'N/A')
-            field_internal = field.properties.get('InternalName', 'N/A')
+        for item in items:
+            ticket_id = item.properties.get('ID', 'N/A')
+            motivo = item.properties.get('Motivo', 'N/A')
             
-            print(f"• {field_name} ({field_type}) - Internal: {field_internal}")
+            # Verifica campo Imagem
+            imagem_value = item.properties.get('Imagem', None)
             
-            # Procura por campos que podem armazenar imagem
-            if any(word.lower() in field_name.lower() for word in ['print', 'imagem', 'image', 'foto', 'anexo', 'attachment']):
-                campos_imagem.append({
-                    'display': field_name,
-                    'internal': field_internal,
-                    'type': field_type
-                })
+            print(f"\n🎫 TICKET {ticket_id} - {motivo}")
+            print(f"   Campo Imagem: {type(imagem_value)} = {imagem_value}")
             
-            # Procura campos de texto grandes
-            if field_type in ['Note', 'Text', 'Multiple lines of text']:
-                campos_texto.append({
-                    'display': field_name,
-                    'internal': field_internal,
-                    'type': field_type
-                })
+            # Se tem valor, analisa detalhes
+            if imagem_value:
+                if isinstance(imagem_value, dict):
+                    print("   📊 ESTRUTURA DO CAMPO:")
+                    for key, value in imagem_value.items():
+                        print(f"     {key}: {value}")
+                        
+                        # Se tem URL, testa se arquivo existe
+                        if key.lower() == 'url' and isinstance(value, str):
+                            print(f"   🔗 Testando URL: {value[:100]}...")
+                            
+                            # Testa se é data URL
+                            if value.startswith('data:'):
+                                print("   ✅ Data URL (base64) detectada")
+                            elif value.startswith('http') or value.startswith('/'):
+                                print("   🌐 URL de arquivo detectada")
+                                
+                                # Tenta acessar o arquivo
+                                try:
+                                    if value.startswith('/'):
+                                        # URL relativa - tenta obter arquivo
+                                        web = ctx.web
+                                        file_obj = web.get_file_by_server_relative_url(value)
+                                        ctx.load(file_obj)
+                                        ctx.execute_query()
+                                        
+                                        file_size = file_obj.properties.get('Length', 0)
+                                        print(f"   ✅ Arquivo existe: {file_size} bytes")
+                                        
+                                except Exception as file_error:
+                                    print(f"   ❌ Arquivo não acessível: {str(file_error)}")
+                else:
+                    print(f"   📝 Valor direto: {str(imagem_value)[:200]}...")
+            else:
+                print("   ❌ Campo Imagem vazio")
         
-        print(f"\n🎯 CANDIDATOS PARA IMAGEM:")
-        print("-" * 30)
-        if campos_imagem:
-            for campo in campos_imagem:
-                print(f"• {campo['display']} ({campo['type']}) - {campo['internal']}")
-        else:
-            print("❌ Nenhum campo específico para imagem encontrado!")
-        
-        print(f"\n📝 CAMPOS DE TEXTO GRANDES (para imagem como base64):")
-        print("-" * 30)
-        for campo in campos_texto[:5]:  # Primeiros 5
-            print(f"• {campo['display']} ({campo['type']}) - {campo['internal']}")
-        
-        # Tenta buscar alguns registros para ver os dados
-        print("\n📊 ESTRUTURA DE UM TICKET EXISTENTE:")
-        print("-" * 30)
-        
-        items = tickets_list.items.top(1).get().execute_query()
-        
-        if len(items) > 0:
-            item = items[0]
-            properties = item.properties
-            
-            print("Campos preenchidos no último ticket:")
-            for key, value in properties.items():
-                if value and str(value).strip() and not key.startswith('_'):
-                    print(f"  {key}: {str(value)[:100]}...")
-        else:
-            print("Nenhum ticket existente para analisar")
-        
-        return campos_imagem, campos_texto
+        return True
         
     except Exception as e:
-        print(f"❌ Erro na investigação: {str(e)}")
-        return [], []
+        print(f"❌ Erro no debug: {str(e)}")
+        return False
 
-def recomendar_solucao(campos_imagem, campos_texto):
-    """Recomenda a melhor solução baseada nos campos disponíveis"""
-    print("\n💡 RECOMENDAÇÕES:")
-    print("=" * 30)
+def testar_url_arquivo():
+    """Testa se consegue acessar o arquivo diretamente"""
+    print(f"\n🔗 TESTE DE ACESSO AO ARQUIVO:")
+    print("-" * 30)
     
-    if campos_imagem:
-        print("🎯 SOLUÇÃO 1: Usar campo específico para imagem")
-        campo = campos_imagem[0]
-        print(f"   Campo: {campo['display']}")
-        print(f"   Tipo: {campo['type']}")
-        print(f"   Usar: ticket_item.set_property('{campo['internal']}', data_url)")
+    # URL do último arquivo (baseado no log)
+    arquivo_url = "/sites/Controleoperacional/SiteAssets/ticket_30_c9868f_Captura de tela 2025-07-30 092253.jpg"
     
-    elif campos_texto:
-        print("🎯 SOLUÇÃO 2: Usar campo de texto para base64")
-        campo = campos_texto[0]
-        print(f"   Campo: {campo['display']}")
-        print(f"   Tipo: {campo['type']}")
-        print(f"   Usar: ticket_item.set_property('{campo['internal']}', base64_content)")
+    try:
+        from office365.sharepoint.client_context import ClientContext
+        from office365.runtime.auth.user_credential import UserCredential
+        from config.settings import config
+        
+        ctx = ClientContext(config.site_url).with_credentials(
+            UserCredential(config.username_sp, config.password_sp)
+        )
+        
+        # Tenta acessar arquivo
+        web = ctx.web
+        file_obj = web.get_file_by_server_relative_url(arquivo_url)
+        ctx.load(file_obj)
+        ctx.execute_query()
+        
+        file_size = file_obj.properties.get('Length', 0)
+        file_name = file_obj.properties.get('Name', 'N/A')
+        
+        print(f"✅ Arquivo encontrado:")
+        print(f"   Nome: {file_name}")
+        print(f"   Tamanho: {file_size} bytes")
+        print(f"   URL: {arquivo_url}")
+        
+        # URL completa
+        full_url = f"{config.site_url}{arquivo_url}"
+        print(f"   URL Completa: {full_url}")
+        
+        return full_url
+        
+    except Exception as e:
+        print(f"❌ Erro ao acessar arquivo: {str(e)}")
+        return None
+
+def sugerir_correcoes(arquivo_url):
+    """Sugere correções baseado nos achados"""
+    print(f"\n💡 DIAGNÓSTICO E CORREÇÕES:")
+    print("=" * 40)
     
+    if arquivo_url:
+        print("🎯 PROBLEMA IDENTIFICADO:")
+        print("   ✅ Arquivo existe no SharePoint")
+        print("   ✅ Campo Imagem foi populado")
+        print("   ❌ Imagem não renderiza visualmente")
+        
+        print(f"\n🔧 POSSÍVEIS CAUSAS:")
+        print("   1. Formato JSON incorreto para campo Hiperlink-Imagem")
+        print("   2. Campo configurado como Hiperlink em vez de Imagem")
+        print("   3. Permissões de acesso ao arquivo")
+        print("   4. Arquivo muito pequeno (PNG exemplo)")
+        
+        print(f"\n💻 CORREÇÕES SUGERIDAS:")
+        print("   A) Verificar configuração do campo no SharePoint")
+        print("   B) Testar formato JSON alternativo")
+        print("   C) Usar imagem real (não PNG exemplo)")
+        
     else:
-        print("🎯 SOLUÇÃO 3: Criar campo personalizado")
-        print("   Acesse SharePoint > Configurações da Lista > Criar Coluna")
-        print("   Nome: Print")
-        print("   Tipo: Multiple lines of text")
-    
-    print("\n🔧 CÓDIGO SUGERIDO:")
-    if campos_imagem:
-        campo = campos_imagem[0]['internal']
-    elif campos_texto:
-        campo = campos_texto[0]['internal']
-    else:
-        campo = "Title"  # Fallback
-    
-    print(f"""
-# No ticket_service.py, substitua:
-ticket_item.set_property('Print', data_url)
-# Por:
-ticket_item.set_property('{campo}', data_url)
-    """)
+        print("❌ ARQUIVO NÃO ENCONTRADO:")
+        print("   O arquivo não existe no local esperado")
+        print("   Verificar se upload foi realizado corretamente")
 
 def main():
-    """Executa investigação completa"""
-    print("🕵️ INVESTIGAÇÃO SHAREPOINT - LISTA SENTINELA TICKETS")
+    """Executa debug completo"""
+    print("🕵️ DEBUG COMPLETO - CAMPO IMAGEM")
     print("=" * 60)
     
-    # Investiga estrutura
-    campos_imagem, campos_texto = investigar_lista_sentinela_tickets()
+    # Debug campo
+    debug_campo_imagem()
     
-    # Recomenda solução
-    recomendar_solucao(campos_imagem, campos_texto)
+    # Teste arquivo
+    arquivo_url = testar_url_arquivo()
+    
+    # Sugestões
+    sugerir_correcoes(arquivo_url)
 
 if __name__ == "__main__":
     main()
