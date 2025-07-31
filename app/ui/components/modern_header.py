@@ -293,27 +293,51 @@ class ModernHeader:
         )
     
     def _toggle_menu_usuario(self, e):
-        """Alterna menu"""
-        self.menu_visible = not self.menu_visible
-        
-        if self.menu_visible:
-            self.menu_container.height = 200
-        else:
-            self.menu_container.height = 0
-        
-        self.page.update()
-    
+        """Alterna menu com correção de estado"""
+        try:
+            self.menu_visible = not self.menu_visible
+            
+            if self.menu_visible:
+                self.menu_container.height = 200
+                self.menu_container.visible = True
+            else:
+                self.menu_container.height = 0
+                self.menu_container.visible = False
+            
+            self.menu_container.update()  # Atualiza o container específico
+            self.page.update()
+        except Exception as ex:
+            print(f"❌ Erro no toggle do menu: {str(ex)}")
+            # Reset forçado em caso de erro
+            self.menu_visible = False
+            if self.menu_container:
+                self.menu_container.height = 0
+                self.menu_container.visible = False
+                self.page.update()
+
     def _executar_acao_menu(self, action):
         """Executa ação e fecha menu"""
-        self._fechar_menu()
-        action()
+        try:
+            self._fechar_menu()
+            action()
+        except Exception as ex:
+            print(f"❌ Erro ao executar ação do menu: {str(ex)}")
+            # Garante que o menu seja fechado mesmo com erro
+            self._fechar_menu()
     
     def _fechar_menu(self):
-        """Fecha menu"""
-        self.menu_visible = False
-        if self.menu_container:
-            self.menu_container.height = 0
-            self.page.update()
+        """Fecha menu com reset completo"""
+        try:
+            self.menu_visible = False
+            if self.menu_container:
+                self.menu_container.height = 0
+                self.menu_container.visible = False
+                self.menu_container.update()  # Atualiza o container
+                self.page.update()
+        except Exception as ex:
+            print(f"❌ Erro ao fechar menu: {str(ex)}")
+            # Reset forçado
+            self.menu_visible = False
     
     def _obter_iniciais(self, nome: str) -> str:
         """Obtém iniciais do usuário"""

@@ -112,7 +112,7 @@ class LoginScreen:
                 
                 # Logo
                 ft.Image(
-                    src="/images/logo.png",
+                    src="/images/sentinela.png",
                     width=image_size,
                     height=image_size,
                     fit=ft.ImageFit.CONTAIN
