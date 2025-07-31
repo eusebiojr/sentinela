@@ -86,7 +86,7 @@ class ModernHeader:
         secao_esquerda = ft.Row([
             # Logo Suzano
             ft.Image(
-                src="/images/logo.png",  # Logo da Suzano
+                src="/images/logo.png",
                 width=logo_size,
                 height=logo_size,
                 fit=ft.ImageFit.CONTAIN
@@ -211,7 +211,7 @@ class ModernHeader:
         ], spacing=0)
     
     def _criar_menu_dropdown(self):
-        """Menu dropdown estilizado"""
+        """Menu dropdown CORRIGIDO com logoff visível"""
         opcoes = [
             {
                 "icon": ft.icons.PERSON,
@@ -219,7 +219,6 @@ class ModernHeader:
                 "action": self._ver_perfil,
                 "color": ft.colors.BLUE_600
             },
-            # ===== NOVA OPÇÃO: Abrir Chamado =====
             {
                 "icon": ft.icons.SUPPORT_AGENT,
                 "text": "Abrir Chamado",
@@ -230,7 +229,7 @@ class ModernHeader:
                 "icon": ft.icons.LOCK_RESET,
                 "text": "Trocar Senha",
                 "action": self._trocar_senha,
-                "color": ft.colors.ORANGE_600  # Alterado de GREEN_600 para ORANGE_600
+                "color": ft.colors.ORANGE_600
             },
             {
                 "icon": ft.icons.SETTINGS,
@@ -238,46 +237,90 @@ class ModernHeader:
                 "action": self._configuracoes,
                 "color": ft.colors.GREY_600
             },
+            # ===== SEPARADOR VISUAL =====
+            None,  # Separador
+            # ===== LOGOFF DESTACADO =====
             {
                 "icon": ft.icons.LOGOUT,
                 "text": "Sair do Sistema",
                 "action": self._sair_sistema,
-                "color": ft.colors.RED_600
+                "color": ft.colors.RED_600,
+                "destaque": True  # Marca como destacado
             }
         ]
         
         menu_items = []
+        
         for opcao in opcoes:
-            item = ft.Container(
-                content=ft.Row([
-                    ft.Icon(opcao["icon"], color=opcao["color"], size=18),
-                    ft.Text(
-                        opcao["text"],
-                        color=ft.colors.GREY_800,
-                        weight=ft.FontWeight.W_500,
-                        size=14
-                    )
-                ], spacing=12),
-                padding=ft.padding.symmetric(horizontal=16, vertical=12),
-                on_click=lambda e, action=opcao["action"]: self._executar_acao_menu(action),
-                border_radius=6,
-                ink=True
-            )
+            # Separador visual
+            if opcao is None:
+                separador = ft.Container(
+                    height=1,
+                    bgcolor=ft.colors.GREY_300,
+                    margin=ft.margin.symmetric(horizontal=10, vertical=8)
+                )
+                menu_items.append(separador)
+                continue
             
-            def create_hover(container):
+            # Estilo especial para logoff
+            if opcao.get("destaque", False):
+                item_container = ft.Container(
+                    content=ft.Row([
+                        ft.Icon(opcao["icon"], color=ft.colors.WHITE, size=18),
+                        ft.Text(
+                            opcao["text"],
+                            color=ft.colors.WHITE,
+                            weight=ft.FontWeight.W_600,
+                            size=14
+                        )
+                    ], spacing=12),
+                    padding=ft.padding.symmetric(horizontal=16, vertical=12),
+                    on_click=lambda e, action=opcao["action"]: self._executar_acao_menu(action),
+                    border_radius=8,
+                    bgcolor=ft.colors.RED_600,
+                    margin=ft.margin.symmetric(horizontal=5, vertical=2),
+                    ink=True,
+                    border=ft.border.all(1, ft.colors.RED_700)
+                )
+            else:
+                # Estilo normal
+                item_container = ft.Container(
+                    content=ft.Row([
+                        ft.Icon(opcao["icon"], color=opcao["color"], size=18),
+                        ft.Text(
+                            opcao["text"],
+                            color=ft.colors.GREY_800,
+                            weight=ft.FontWeight.W_500,
+                            size=14
+                        )
+                    ], spacing=12),
+                    padding=ft.padding.symmetric(horizontal=16, vertical=12),
+                    on_click=lambda e, action=opcao["action"]: self._executar_acao_menu(action),
+                    border_radius=6,
+                    ink=True
+                )
+            
+            # Efeito hover
+            def create_hover(container, is_logout=False):
                 def on_hover(e):
                     if e.data == "true":
-                        container.bgcolor = ft.colors.GREY_100
+                        if is_logout:
+                            container.bgcolor = ft.colors.RED_700
+                        else:
+                            container.bgcolor = ft.colors.GREY_100
                     else:
-                        container.bgcolor = None
+                        if is_logout:
+                            container.bgcolor = ft.colors.RED_600
+                        else:
+                            container.bgcolor = None
                     container.update()
                 return on_hover
             
-            item.on_hover = create_hover(item)
-            menu_items.append(item)
+            item_container.on_hover = create_hover(item_container, opcao.get("destaque", False))
+            menu_items.append(item_container)
         
         return ft.Container(
-            content=ft.Column(menu_items, spacing=2),
+            content=ft.Column(menu_items, spacing=0),
             bgcolor=ft.colors.WHITE,
             border_radius=12,
             shadow=ft.BoxShadow(
@@ -287,28 +330,33 @@ class ModernHeader:
                 offset=ft.Offset(0, 4)
             ),
             border=ft.border.all(1, ft.colors.with_opacity(0.1, ft.colors.GREY_400)),
-            padding=ft.padding.all(10),
-            width=220,
+            padding=ft.padding.all(8),
+            width=240,
             margin=ft.margin.only(right=5)
         )
     
     def _toggle_menu_usuario(self, e):
-        """Alterna menu com correção de estado"""
+        """Toggle menu CORRIGIDO com debug"""
         try:
+            print(f"🔄 Toggle menu - Estado atual: {self.menu_visible}")
+            
             self.menu_visible = not self.menu_visible
             
             if self.menu_visible:
-                self.menu_container.height = 200
+                print("📖 Abrindo menu...")
+                self.menu_container.height = 280  # Aumentado para acomodar mais itens
                 self.menu_container.visible = True
             else:
+                print("📕 Fechando menu...")
                 self.menu_container.height = 0
                 self.menu_container.visible = False
             
-            self.menu_container.update()  # Atualiza o container específico
             self.page.update()
+            print(f"✅ Menu atualizado - Novo estado: {self.menu_visible}")
+            
         except Exception as ex:
             print(f"❌ Erro no toggle do menu: {str(ex)}")
-            # Reset forçado em caso de erro
+            # Reset forçado
             self.menu_visible = False
             if self.menu_container:
                 self.menu_container.height = 0
@@ -316,28 +364,30 @@ class ModernHeader:
                 self.page.update()
 
     def _executar_acao_menu(self, action):
-        """Executa ação e fecha menu"""
+        """Executa ação e fecha menu COM DEBUG"""
         try:
+            print(f"🎯 Executando ação do menu...")
             self._fechar_menu()
+            print(f"🚀 Chamando ação...")
             action()
+            print(f"✅ Ação executada com sucesso")
         except Exception as ex:
             print(f"❌ Erro ao executar ação do menu: {str(ex)}")
-            # Garante que o menu seja fechado mesmo com erro
+            # Garante que o menu seja fechado
             self._fechar_menu()
     
     def _fechar_menu(self):
-        """Fecha menu com reset completo"""
+        """Fecha menu com debug"""
         try:
+            print(f"🔒 Fechando menu...")
             self.menu_visible = False
             if self.menu_container:
                 self.menu_container.height = 0
                 self.menu_container.visible = False
-                self.menu_container.update()  # Atualiza o container
                 self.page.update()
+            print(f"✅ Menu fechado")
         except Exception as ex:
             print(f"❌ Erro ao fechar menu: {str(ex)}")
-            # Reset forçado
-            self.menu_visible = False
     
     def _obter_iniciais(self, nome: str) -> str:
         """Obtém iniciais do usuário"""
