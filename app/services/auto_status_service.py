@@ -1,5 +1,6 @@
 """
 Serviço de Processamento Automático de Status - Não Tratado
+MODIFICADO: Usa data/hora do desvio extraída do título ao invés da data de criação
 """
 import pandas as pd
 from datetime import datetime, timedelta
@@ -23,9 +24,118 @@ class AutoStatusService:
         return pytz.timezone("America/Campo_Grande")
     
     @staticmethod
+    def calcular_tempo_decorrido_por_titulo(titulo: str, data_criacao_fallback: str = None) -> float:
+        """
+        NOVO: Calcula tempo decorrido desde o EVENTO (extraído do título)
+        
+        Args:
+            titulo: Título do evento (ex: TLS_PACelulose_N1_31072025_020000)
+            data_criacao_fallback: Data de criação para fallback se parse falhar
+            
+        Returns:
+            float: Horas decorridas desde o evento real
+        """
+        if not titulo or str(titulo).strip() == "":
+            return AutoStatusService.calcular_tempo_decorrido_evento(data_criacao_fallback) if data_criacao_fallback else 0
+        
+        try:
+            # Importa location_processor para reutilizar lógica existente
+            try:
+                from .location_processor import location_processor
+                evento_info = location_processor.parse_titulo_com_localizacao(titulo)
+                data_evento = evento_info.get("data_evento")
+                
+                if data_evento:
+                    # Calcula diferença com agora
+                    tz_brasilia = AutoStatusService.obter_timezone_brasilia()
+                    agora = datetime.now(tz_brasilia)
+                    
+                    # Garante que data_evento tem timezone
+                    if data_evento.tzinfo is None:
+                        data_evento = tz_brasilia.localize(data_evento)
+                    else:
+                        data_evento = data_evento.astimezone(tz_brasilia)
+                    
+                    diferenca = agora - data_evento
+                    horas = diferenca.total_seconds() / 3600
+                    
+                    logger.debug(f"🕒 Evento {titulo}: {horas:.1f}h desde o desvio real")
+                    return max(0, horas)
+                    
+            except ImportError:
+                logger.warning("⚠️ location_processor não disponível, usando parse manual")
+            
+            # FALLBACK: Parse manual do título se location_processor não disponível
+            return AutoStatusService._parse_manual_titulo(titulo, data_criacao_fallback)
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao extrair data do título '{titulo}': {e}")
+            
+            # Fallback para data de criação
+            if data_criacao_fallback:
+                return AutoStatusService.calcular_tempo_decorrido_evento(data_criacao_fallback)
+            
+            return 0
+    
+    @staticmethod
+    def _parse_manual_titulo(titulo: str, data_criacao_fallback: str = None) -> float:
+        """
+        Parse manual do título no formato: LOCALIZACAO_POI_TIPO_DDMMAAAA_HHMMSS
+        
+        Args:
+            titulo: Título do evento
+            data_criacao_fallback: Fallback se parse falhar
+            
+        Returns:
+            float: Horas decorridas
+        """
+        try:
+            partes = titulo.split('_')
+            if len(partes) < 5:
+                raise ValueError("Formato de título inválido")
+            
+            data_str = partes[-2]  # DDMMAAAA
+            hora_str = partes[-1]  # HHMMSS
+            
+            # Parse da data: DDMMAAAA -> DD/MM/AAAA
+            if len(data_str) == 8 and len(hora_str) == 6:
+                dia = data_str[:2]
+                mes = data_str[2:4]
+                ano = data_str[4:8]
+                
+                hora = hora_str[:2]
+                minuto = hora_str[2:4]
+                segundo = hora_str[4:6]
+                
+                # Cria datetime do evento
+                tz_brasilia = AutoStatusService.obter_timezone_brasilia()
+                data_evento = datetime(
+                    int(ano), int(mes), int(dia),
+                    int(hora), int(minuto), int(segundo)
+                )
+                data_evento = tz_brasilia.localize(data_evento)
+                
+                # Calcula diferença
+                agora = datetime.now(tz_brasilia)
+                diferenca = agora - data_evento
+                horas = diferenca.total_seconds() / 3600
+                
+                logger.debug(f"🕒 Parse manual - Evento {titulo}: {horas:.1f}h desde {data_evento}")
+                return max(0, horas)
+                
+        except Exception as e:
+            logger.warning(f"⚠️ Erro no parse manual do título '{titulo}': {e}")
+        
+        # Fallback final para data de criação
+        if data_criacao_fallback:
+            return AutoStatusService.calcular_tempo_decorrido_evento(data_criacao_fallback)
+        
+        return 0
+    
+    @staticmethod
     def calcular_tempo_decorrido_evento(data_criacao: str) -> float:
         """
-        Calcula tempo decorrido desde a CRIAÇÃO do registro (abertura do desvio)
+        MANTIDO: Calcula tempo decorrido desde a CRIAÇÃO do registro (fallback)
         
         Args:
             data_criacao: Data/hora de criação do registro no SharePoint
@@ -70,8 +180,7 @@ class AutoStatusService:
     @staticmethod
     def identificar_eventos_para_nao_tratado(df_desvios: pd.DataFrame) -> pd.DataFrame:
         """
-        Identifica eventos que devem ser marcados como "Não Tratado"
-        CORRIGIDO: Usa coluna "Criado" como base do cálculo
+        MODIFICADO: Identifica eventos usando data/hora do DESVIO extraída do título
         
         Args:
             df_desvios: DataFrame com todos os desvios
@@ -82,10 +191,12 @@ class AutoStatusService:
         if df_desvios.empty:
             return pd.DataFrame()
         
-        # Verifica se coluna "Criado" existe
-        if "Criado" not in df_desvios.columns:
-            logger.warning("⚠️ Coluna 'Criado' não encontrada no DataFrame. Verifique estrutura dos dados.")
-            return pd.DataFrame()
+        # Verifica se colunas necessárias existem
+        colunas_necessarias = ["Titulo", "Criado"]
+        for col in colunas_necessarias:
+            if col not in df_desvios.columns:
+                logger.warning(f"⚠️ Coluna '{col}' não encontrada no DataFrame.")
+                return pd.DataFrame()
         
         # Filtra apenas eventos que não estão finalizados
         eventos_ativos = df_desvios[
@@ -95,32 +206,39 @@ class AutoStatusService:
         if eventos_ativos.empty:
             return pd.DataFrame()
         
-        # CORRIGIDO: Adiciona coluna de tempo decorrido baseado na criação
-        eventos_ativos["tempo_decorrido_horas"] = eventos_ativos["Criado"].apply(
-            AutoStatusService.calcular_tempo_decorrido_evento
-        )
+        # NOVA LÓGICA: Calcula tempo baseado no título (data do desvio)
+        def calcular_tempo_por_linha(row):
+            titulo = row.get("Titulo", "")
+            data_criacao = row.get("Criado", "")
+            return AutoStatusService.calcular_tempo_decorrido_por_titulo(titulo, data_criacao)
         
-        # Filtra eventos com mais de 2 horas desde a CRIAÇÃO
+        eventos_ativos["tempo_decorrido_horas"] = eventos_ativos.apply(calcular_tempo_por_linha, axis=1)
+        
+        # Filtra eventos com mais de 2 horas desde o DESVIO
         eventos_expirados = eventos_ativos[
             eventos_ativos["tempo_decorrido_horas"] > AutoStatusService.LIMITE_HORAS
         ]
         
         if not eventos_expirados.empty:
-            logger.info(f"🔍 Encontrados {len(eventos_expirados)} registros para marcar como 'Não Tratado' (baseado na coluna 'Criado')")
+            logger.info(f"🔍 Encontrados {len(eventos_expirados)} registros para marcar como 'Não Tratado' (baseado na data do DESVIO)")
             
-            # Log adicional para debug
-            for _, row in eventos_expirados.head(3).iterrows():  # Mostra apenas 3 primeiros
+            # Log adicional para debug (mostra diferença entre data do desvio e criação)
+            for _, row in eventos_expirados.head(3).iterrows():
+                titulo = row.get("Titulo", "N/A")
                 criado = row.get("Criado", "N/A")
-                tempo = row.get("tempo_decorrido_horas", 0)
-                placa = row.get("Placa", "N/A")
-                logger.debug(f"📋 Evento expirado - Placa: {placa}, Criado: {criado}, Tempo: {tempo:.1f}h")
+                tempo_desvio = row.get("tempo_decorrido_horas", 0)
+                tempo_criacao = AutoStatusService.calcular_tempo_decorrido_evento(criado)
+                
+                logger.debug(f"📋 Evento: {titulo}")
+                logger.debug(f"   ⏰ Tempo desde desvio: {tempo_desvio:.1f}h")
+                logger.debug(f"   📅 Tempo desde criação: {tempo_criacao:.1f}h")
         
         return eventos_expirados
     
     @staticmethod
     def processar_nao_tratado_automatico(df_eventos_expirados: pd.DataFrame) -> int:
         """
-        Processa mudança de status para "Não Tratado" automaticamente
+        MANTIDO: Processa mudança de status para "Não Tratado" automaticamente
         
         Args:
             df_eventos_expirados: DataFrame com eventos expirados
@@ -155,7 +273,7 @@ class AutoStatusService:
                 sucessos = SharePointClient.atualizar_lote(atualizacoes_lote)
                 
                 if sucessos > 0:
-                    logger.info(f"✅ {sucessos} evento(s) marcado(s) como 'Não Tratado' automaticamente")
+                    logger.info(f"✅ {sucessos} evento(s) marcado(s) como 'Não Tratado' automaticamente (baseado na data do DESVIO)")
                 else:
                     logger.warning(f"⚠️ Falha ao atualizar eventos no SharePoint")
                 
@@ -170,7 +288,7 @@ class AutoStatusService:
     @staticmethod
     def executar_verificacao_automatica(df_desvios: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
         """
-        Executa verificação completa e processamento automático
+        MANTIDO: Executa verificação completa e processamento automático
         
         Args:
             df_desvios: DataFrame com todos os desvios
@@ -178,7 +296,7 @@ class AutoStatusService:
         Returns:
             Tuple[DataFrame filtrado, int atualizações realizadas]
         """
-        logger.info("🔄 Iniciando verificação automática de status 'Não Tratado'...")
+        logger.info("🔄 Iniciando verificação automática de status 'Não Tratado' (usando data do desvio)...")
         
         # 1. Identifica eventos expirados
         eventos_expirados = AutoStatusService.identificar_eventos_para_nao_tratado(df_desvios)
@@ -201,7 +319,7 @@ class AutoStatusService:
         if registros_filtrados > 0:
             logger.info(f"🚫 {registros_filtrados} evento(s) 'Não Tratado' filtrado(s) da interface")
         
-        logger.info("✅ Verificação automática de status concluída")
+        logger.info("✅ Verificação automática de status concluída (usando data do desvio)")
         
         return df_filtrado, atualizacoes_realizadas
 
@@ -210,7 +328,7 @@ class AutoStatusService:
 auto_status_service = AutoStatusService()
 
 
-# Funções de conveniência
+# Funções de conveniência - ATUALIZADAS
 def executar_verificacao_automatica(df_desvios: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
     """Executa verificação automática de status"""
     return auto_status_service.executar_verificacao_automatica(df_desvios)
@@ -223,6 +341,12 @@ def filtrar_nao_tratados(df_desvios: pd.DataFrame) -> pd.DataFrame:
     
     return df_desvios[df_desvios["Status"] != "Não Tratado"].copy()
 
+
 def calcular_tempo_decorrido(data_criacao: str) -> float:
-    """Calcula tempo decorrido desde a criação de um evento"""
+    """MANTIDO: Calcula tempo decorrido desde a criação de um evento (para compatibilidade)"""
     return auto_status_service.calcular_tempo_decorrido_evento(data_criacao)
+
+
+def calcular_tempo_decorrido_por_titulo(titulo: str, data_criacao_fallback: str = None) -> float:
+    """NOVO: Calcula tempo decorrido desde o evento extraído do título"""
+    return auto_status_service.calcular_tempo_decorrido_por_titulo(titulo, data_criacao_fallback)
