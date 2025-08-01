@@ -12,17 +12,23 @@ from .screens.login import LoginScreen
 from .screens.dashboard import DashboardScreen
 from typing import Dict, Any, Optional
 from ..config.logging_config import setup_logger
+from .screens.admin_screen import AdminScreen
 
 logger = setup_logger()
 
 
 class SentinelaApp:
     """Classe principal que orquestra toda a aplicação"""
-    
+
+    def mostrar_admin(self):
+        """Mostra tela de visualização administrativa"""
+        self.admin_screen.mostrar()
+        
     def __init__(self, page: ft.Page):
         self.page = page
         self.login_screen = LoginScreen(page, self)
         self.dashboard_screen = DashboardScreen(page, self)
+        self.admin_screen = AdminScreen(page, self)
         
     def inicializar(self):
         """Inicializa a aplicação"""
