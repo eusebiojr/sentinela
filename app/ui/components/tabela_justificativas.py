@@ -10,6 +10,10 @@ from ...services.data_formatter import DataFormatter
 from ...services.sharepoint_client import SharePointClient
 from ...services.audit_service import audit_service
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
+from ...config.logging_config import setup_logger
+import threading
+
+logger = setup_logger("tabela_justificativas")
 
 # NOVO: Importa validadores centralizados
 from ...validators import field_validator, business_validator
@@ -214,7 +218,7 @@ class TabelaJustificativas:
         
         return campo_observacao
 
-    def _criar_campo_previsao(self, chave_alteracao, row, campo_desabilitado, previsao_width, field_height, font_size):
+    def _criar_campo_previsao(self, valor_inicial, chave_alteracao, row, previsao_width, font_size, field_height):
         """Campo de previsão COM INTEGRAÇÃO de monitoring"""
         
         session = get_session_state(self.page)
@@ -222,11 +226,11 @@ class TabelaJustificativas:
         
         # Se não há alteração pendente, usa valor original da linha
         if not valor_atual:
-            valor_atual = DataFormatter.safe_str(row.get('Previsao_Normalizacao', ''))
+            valor_atual = DataFormatter.safe_str(valor_inicial) if valor_inicial else ""
         
         # NOVO: Registra valor original no sistema de monitoring
         try:
-            valor_original = DataFormatter.safe_str(row.get('Previsao_Normalizacao', ''))
+            valor_original = DataFormatter.safe_str(valor_inicial) if valor_inicial else ""
             self.app_controller.registrar_campo_para_monitoring(
                 campo_id=f"previsao_{chave_alteracao}",
                 valor_original=valor_original
@@ -255,6 +259,8 @@ class TabelaJustificativas:
             campo_display.value = nova_previsao
             self.page.update()
         
+        campo_desabilitado = self.processando_envio
+        
         # Campo de display (readonly)
         display_value = valor_atual if valor_atual else "Clique para selecionar"
         
@@ -272,7 +278,8 @@ class TabelaJustificativas:
             if self.processando_envio:
                 mostrar_mensagem(self.page, "⏳ Aguarde finalizar o processamento atual", "warning")
                 return
-            self._mostrar_modal_data_hora(campo_display, chave_alteracao, row)
+            # AJUSTADO: Passa o callback em vez de campo_display
+            self._mostrar_modal_data_hora(on_previsao_change, chave_alteracao, row)
         
         if not campo_desabilitado:
             campo_display.on_click = abrir_modal
@@ -330,6 +337,9 @@ class TabelaJustificativas:
                     else:
                         mostrar_mensagem(self.page, "⚠️ Nenhuma alteração para processar.", "warning")
                         self._ativar_modo_processamento(False)
+                else:
+                    mostrar_mensagem(self.page, "⚠️ Nenhuma alteração para processar.", "warning")
+                    self._ativar_modo_processamento(False)
                     
             except Exception as e:
                 logger.error(f"❌ Erro no processamento: {str(e)}")
@@ -349,16 +359,16 @@ class TabelaJustificativas:
             
             # NOVO: Limpa também alterações do monitoring para este evento
             if hasattr(session, 'field_monitor_service') and session.field_monitor_service:
-                # Identifica campos deste evento e limpa
-                campos_evento = [
-                    f"motivo_{evento}_{idx}",
-                    f"observacao_{evento}_{idx}", 
-                    f"previsao_{evento}_{idx}"
-                    for idx in range(20)  # Assume máximo 20 registros por evento
-                ]
-                
-                for campo_id in campos_evento:
-                    session.field_monitor_service.limpar_campo(campo_id)
+                # CORRIGIDO: Identifica campos deste evento e limpa
+                for idx in range(20):  # Assume máximo 20 registros por evento
+                    campos_evento = [
+                        f"motivo_{evento}_{idx}",
+                        f"observacao_{evento}_{idx}", 
+                        f"previsao_{evento}_{idx}"
+                    ]
+                    
+                    for campo_id in campos_evento:
+                        session.field_monitor_service.limpar_campo(campo_id)
                     
             logger.info(f"✅ Alterações do evento {evento} limpas")
             

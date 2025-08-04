@@ -1,0 +1,15 @@
+[04/08/2025 11:07:14] INFO: ✅ TicketService LIMPO inicializado - Campo: Imagem (Hiperlink-Imagem)
+[04/08/2025 11:07:14] INFO: 🔐 SuzanoPasswordService inicializado (versão migrada)
+[04/08/2025 11:07:17] INFO: 🚀 Sentinela iniciando...
+[04/08/2025 11:07:17] INFO: 📊 Configuração: https://suzano.sharepoint.com/sites/Controleoperacional
+[04/08/2025 11:07:17] INFO: ✅ Callbacks do auto-refresh configurados
+[04/08/2025 11:07:17] INFO: 🚀 Sentinela iniciando...
+[04/08/2025 11:07:17] INFO: Carregando dados de usuários...
+[04/08/2025 11:07:19] INFO: ✅ 36 registros carregados de 'UsuariosPainelTorre'
+[04/08/2025 11:07:19] INFO: ✅ 36 usuários carregados
+[04/08/2025 11:07:28] INFO: ✅ Login bem-sucedido: eusebioagj@suzano.com.br na sessão a19ea165
+[04/08/2025 11:07:28] INFO: Carregando dados completos...
+[04/08/2025 11:07:31] INFO: ✅ 500 registros carregados de 'Desvios'
+[04/08/2025 11:07:32] INFO: ✅ Dados carregados: 79 desvios
+[04/08/2025 11:07:32] INFO: 🔄 Thread de atualização do indicador iniciada
+[04/08/2025 11:07:32] ERROR: ❌ Erro ao carregar dados: 'ModernHeader' object has no attribute '_toggle_menu'
