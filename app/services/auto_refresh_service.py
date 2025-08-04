@@ -1,7 +1,3 @@
-"""
-Auto Refresh Service - Controla atualização automática com pausa inteligente
-Localização: app/services/auto_refresh_service.py
-"""
 import threading
 import time
 from typing import Callable, Optional
@@ -11,17 +7,17 @@ logger = setup_logger("auto_refresh")
 
 
 class AutoRefreshService:
-    """Serviço de atualização automática com controle inteligente de pausa"""
+    """Serviço de atualização automática - CORRIGIDO para não perder dados do usuário"""
     
     def __init__(self, page, app_controller):
         self.page = page
         self.app_controller = app_controller
         
-        # Configuração do timer
+        # ===== CORREÇÃO CRÍTICA: DESABILITADO POR PADRÃO =====
         self.intervalo_segundos = 600  # 10 minutos
         self.timer_ativo = False
         self.timer_pausado = False
-        self.usuario_habilitou = False
+        self.usuario_habilitou = False  # ⚡ PADRÃO: FALSE (DESABILITADO)
         
         # Thread de controle
         self.thread_timer = None
@@ -35,16 +31,41 @@ class AutoRefreshService:
         self.segundos_restantes = 0
         self.ultima_atualizacao = None
         
+        # ===== Controle de campos preenchidos =====
+        self.campos_monitorados = set()  # IDs de campos sendo monitorados
+        self.usuario_digitando = False
+        
+        logger.info("🔄 AutoRefreshService inicializado - DESABILITADO por padrão")
+        
     def configurar_callbacks(self, callback_atualizacao: Callable = None, 
                            callback_status_mudou: Callable = None):
         """Configura callbacks para eventos do timer"""
         self.callback_atualizacao = callback_atualizacao
         self.callback_status_mudou = callback_status_mudou
     
+    def habilitar_usuario(self, habilitado: bool):
+        """
+        ✅ FUNÇÃO PRINCIPAL: Habilita/desabilita auto-refresh conforme configuração do usuário
+        
+        Esta é a ÚNICA forma de ativar o auto-refresh!
+        """
+        self.usuario_habilitou = habilitado
+        
+        if habilitado:
+            logger.info("🔄 Auto-refresh HABILITADO pelo usuário")
+            if not self.timer_ativo:
+                self.iniciar_timer()
+        else:
+            logger.info("🔕 Auto-refresh DESABILITADO pelo usuário")
+            if self.timer_ativo:
+                self.parar_timer()
+        
+        self._notificar_mudanca_status()
+    
     def iniciar_timer(self):
-        """Inicia o timer de auto-refresh"""
+        """Inicia o timer de auto-refresh - APENAS se habilitado pelo usuário"""
         if not self.usuario_habilitou:
-            logger.info("🔕 Auto-refresh desabilitado pelo usuário")
+            logger.info("🔕 Auto-refresh desabilitado pelo usuário - não iniciando timer")
             return
             
         if self.timer_ativo:
@@ -97,14 +118,48 @@ class AutoRefreshService:
             logger.info("▶️ Auto-refresh retomado")
             self._notificar_mudanca_status()
     
-    def habilitar_usuario(self, habilitado: bool):
-        """Habilita/desabilita auto-refresh conforme configuração do usuário"""
-        self.usuario_habilitou = habilitado
+    # ===== DETECÇÃO AUTOMÁTICA DE CAMPOS PREENCHIDOS =====
+    
+    def registrar_campo_digitacao(self, campo_id: str):
+        """
+        Registra que usuário começou a digitar em um campo
+        Pausa automaticamente o timer para evitar perda de dados
+        """
+        if not self.timer_ativo:
+            return
+            
+        self.campos_monitorados.add(campo_id)
         
-        if habilitado and not self.timer_ativo:
-            self.iniciar_timer()
-        elif not habilitado and self.timer_ativo:
-            self.parar_timer()
+        if not self.usuario_digitando:
+            self.usuario_digitando = True
+            self.pausar_timer("usuário digitando")
+            logger.info(f"⌨️ Usuário digitando no campo {campo_id} - timer pausado automaticamente")
+    
+    def desregistrar_campo_digitacao(self, campo_id: str):
+        """
+        Remove campo do monitoramento
+        Retoma timer se não há mais campos sendo preenchidos
+        """
+        self.campos_monitorados.discard(campo_id)
+        
+        if len(self.campos_monitorados) == 0 and self.usuario_digitando:
+            self.usuario_digitando = False
+            # Aguarda 30 segundos antes de retomar (tempo para usuário continuar digitando)
+            threading.Timer(30.0, self._verificar_retomar_timer).start()
+            logger.info(f"⏱️ Campo {campo_id} liberado - verificação de retomada em 30s")
+    
+    def _verificar_retomar_timer(self):
+        """Verifica se pode retomar timer após delay"""
+        if len(self.campos_monitorados) == 0 and not self.usuario_digitando:
+            self.retomar_timer()
+            logger.info("▶️ Timer retomado automaticamente após fim da digitação")
+    
+    def limpar_campos_monitorados(self):
+        """Limpa todos os campos monitorados (útil ao sair de uma tela)"""
+        self.campos_monitorados.clear()
+        self.usuario_digitando = False
+    
+    # ===== MÉTODOS EXISTENTES (INALTERADOS) =====
     
     def obter_status(self) -> dict:
         """Retorna status atual do timer"""
@@ -123,9 +178,10 @@ class AutoRefreshService:
                 "segundos_restantes": 0
             }
         elif self.timer_pausado:
+            motivo = "digitando" if self.usuario_digitando else "pausado"
             return {
                 "estado": "pausado",
-                "descricao": "Pausado (campos preenchidos)", 
+                "descricao": f"Pausado ({motivo})", 
                 "icone": "⏸️",
                 "segundos_restantes": 0
             }
@@ -201,17 +257,67 @@ class AutoRefreshService:
         return f"{minutos:02d}:{segundos:02d}"
 
 
-# Instância global (será inicializada no app_controller)
+# ===== INSTÂNCIA GLOBAL CORRIGIDA =====
 auto_refresh_service = None
 
 
 def inicializar_auto_refresh(page, app_controller):
-    """Inicializa o serviço global de auto-refresh"""
+    """
+    Inicializa o serviço global de auto-refresh
+    ⚡ IMPORTANTE: Service inicia DESABILITADO por padrão
+    """
     global auto_refresh_service
     auto_refresh_service = AutoRefreshService(page, app_controller)
+    logger.info("🔄 AutoRefreshService inicializado - DESABILITADO por padrão")
     return auto_refresh_service
 
 
 def obter_auto_refresh_service():
     """Obtém instância global do auto-refresh service"""
     return auto_refresh_service
+
+
+# ===== FUNÇÃO AUXILIAR PARA CAMPOS DE ENTRADA =====
+def criar_campo_monitorado(campo_base, campo_id: str):
+    """
+    Wrapper para campos de entrada que registra automaticamente
+    digitação para pausar o auto-refresh
+    
+    Args:
+        campo_base: Campo Flet original (TextField, etc.)
+        campo_id: ID único do campo para monitoramento
+        
+    Returns:
+        Campo com monitoramento automático integrado
+    """
+    auto_refresh = obter_auto_refresh_service()
+    
+    def on_focus_wrapper(e):
+        """Registra início da digitação"""
+        if auto_refresh:
+            auto_refresh.registrar_campo_digitacao(campo_id)
+        
+        # Chama callback original se existir
+        if hasattr(campo_base, '_original_on_focus'):
+            campo_base._original_on_focus(e)
+    
+    def on_blur_wrapper(e):
+        """Registra fim da digitação"""
+        if auto_refresh:
+            auto_refresh.desregistrar_campo_digitacao(campo_id)
+        
+        # Chama callback original se existir
+        if hasattr(campo_base, '_original_on_blur'):
+            campo_base._original_on_blur(e)
+    
+    # Preserva callbacks originais
+    if campo_base.on_focus:
+        campo_base._original_on_focus = campo_base.on_focus
+    if campo_base.on_blur:
+        campo_base._original_on_blur = campo_base.on_blur
+    
+    # Aplica novos callbacks
+    campo_base.on_focus = on_focus_wrapper
+    campo_base.on_blur = on_blur_wrapper
+    
+    return campo_base

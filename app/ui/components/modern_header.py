@@ -7,6 +7,8 @@ from ...core.session_state import get_session_state
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
 from ...services.ticket_service import ticket_service
 from ..components.ticket_modal import criar_modal_ticket
+from ...config.logging_config import setup_logger
+logger = setup_logger("tabela_justificativas")
 
 try:
     from ...services.ticket_service import ticket_service
@@ -699,8 +701,8 @@ class ModernHeader:
         self.page.update()
     
     def _configuracoes(self):
+        """Modal de configurações com auto-refresh DESABILITADO por padrão"""
         session = get_session_state(self.page)
-        """Modal de configurações com caixa ajustada"""
         
         # Carregar configurações existentes
         usuario = session.get_usuario_atual()
@@ -714,10 +716,35 @@ class ModernHeader:
             label="Notificações", 
             value=config_atual.get('notificacoes', True)
         )
+        
+        # ===== CORREÇÃO CRÍTICA: AUTO-REFRESH DESABILITADO POR PADRÃO =====
         auto_refresh = ft.Switch(
-            label="Atualização Automática", 
-            value=config_atual.get('auto_refresh', False)
+            label="Atualização Automática (10 min)", 
+            value=config_atual.get('auto_refresh', False)  # ⚡ PADRÃO: FALSE
         )
+        
+        # ===== NOVO: AVISO SOBRE AUTO-REFRESH =====
+        aviso_auto_refresh = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.icons.WARNING_ROUNDED, size=16, color=ft.colors.ORANGE_600),
+                ft.Text(
+                    "Desative se estiver preenchendo dados para evitar perda de informações",
+                    size=11,
+                    color=ft.colors.ORANGE_700,
+                    weight=ft.FontWeight.W_400,
+                    expand=True
+                )
+            ], spacing=6),
+            padding=ft.padding.only(left=32, top=5),
+            visible=auto_refresh.value  # Só mostra se auto-refresh estiver ativado
+        )
+        
+        def on_auto_refresh_change(e):
+            """Atualiza visibilidade do aviso quando auto-refresh muda"""
+            aviso_auto_refresh.visible = auto_refresh.value
+            self.page.update()
+        
+        auto_refresh.on_change = on_auto_refresh_change
         
         def salvar_config(e):
             try:
@@ -726,97 +753,108 @@ class ModernHeader:
                     "notificacoes": notificacoes.value,
                     "auto_refresh": auto_refresh.value
                 }
+                
+                # ===== NOVO: APLICA IMEDIATAMENTE A CONFIGURAÇÃO DE AUTO-REFRESH =====
+                from ...services.auto_refresh_service import obter_auto_refresh_service
+                auto_refresh_service = obter_auto_refresh_service()
+                
+                if auto_refresh_service:
+                    auto_refresh_service.habilitar_usuario(auto_refresh.value)
+                    
+                    if auto_refresh.value:
+                        logger.info("🔄 Auto-refresh HABILITADO pelo usuário via configurações")
+                    else:
+                        logger.info("🔕 Auto-refresh DESABILITADO pelo usuário via configurações")
+                
+                # Salva configurações do usuário
                 salvar_configuracoes_usuario(self.page, config)
                 
                 modal_config.open = False
                 self.page.update()
-                mostrar_mensagem(self.page, "⚙️ Configurações salvas com sucesso!", "success")
+                
+                # Mensagem de confirmação específica
+                if auto_refresh.value:
+                    mostrar_mensagem(self.page, "⚙️ Configurações salvas! Auto-refresh ativado (10 min)", "success")
+                else:
+                    mostrar_mensagem(self.page, "⚙️ Configurações salvas! Auto-refresh desabilitado", "success")
                 
             except Exception as ex:
-                mostrar_mensagem(self.page, f"❌ Erro ao salvar configurações: {str(ex)}", "error")
+                logger.error(f"❌ Erro ao salvar configurações: {ex}")
+                mostrar_mensagem(self.page, f"❌ Erro ao salvar: {str(ex)}", "error")
         
-        def resetar_config(e):
-            session = get_session_state(self.page)
-            tema_claro.value = True
-            notificacoes.value = True
-            auto_refresh.value = False
+        def cancelar(e):
+            modal_config.open = False
             self.page.update()
         
-        # Modal de configurações - CAIXA AUMENTADA
+        btn_confirmar = ft.ElevatedButton(
+            "Salvar",
+            on_click=salvar_config,
+            bgcolor=ft.colors.BLUE_600,
+            color=ft.colors.WHITE,
+            width=120
+        )
+        
+        # ===== MODAL ATUALIZADO COM AVISOS =====
         modal_config = ft.AlertDialog(
-            modal=True,
-            title=ft.Row([
-                ft.Icon(ft.icons.SETTINGS, color=ft.colors.GREY_600, size=28),
-                ft.Text("Configurações", weight=ft.FontWeight.BOLD, size=18)
-            ], spacing=10),
+            title=ft.Text("⚙️ Configurações", weight=ft.FontWeight.BOLD),
             content=ft.Container(
                 content=ft.Column([
-                    ft.Container(
-                        content=ft.Text(
-                            "⚙️ Personalize sua experiência no sistema:",
-                            size=14,
-                            color=ft.colors.GREY_700
-                        ),
-                        padding=ft.padding.only(bottom=15)
-                    ),
+                    # Configurações existentes
+                    tema_claro,
+                    ft.Container(height=10),
+                    notificacoes,
+                    ft.Container(height=10),
                     
-                    # Seção Interface
-                    ft.Container(
-                        content=ft.Column([
-                            ft.Text("🎨 Interface", size=14, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE_600),
-                            tema_claro,
-                        ], spacing=8),
-                        padding=ft.padding.all(12),
-                        bgcolor=ft.colors.BLUE_50,
-                        border_radius=8,
-                        border=ft.border.all(1, ft.colors.BLUE_200)
-                    ),
-                    
-                    ft.Container(height=12),
-                    
-                    # Seção Sistema
-                    ft.Container(
-                        content=ft.Column([
-                            ft.Text("🔔 Sistema", size=14, weight=ft.FontWeight.BOLD, color=ft.colors.ORANGE_600),
-                            notificacoes,
-                            auto_refresh,
-                        ], spacing=8),
-                        padding=ft.padding.all(12),
-                        bgcolor=ft.colors.ORANGE_50,
-                        border_radius=8,
-                        border=ft.border.all(1, ft.colors.ORANGE_200)
-                    ),
+                    # Auto-refresh com aviso
+                    auto_refresh,
+                    aviso_auto_refresh,
                     
                     ft.Container(height=15),
                     
-                    # Informações do sistema - DENTRO DO CONTEÚDO
+                    # ===== NOVO: INFORMAÇÕES SOBRE AUTO-REFRESH =====
                     ft.Container(
                         content=ft.Column([
-                            ft.Text("ℹ️ Informações do Sistema", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_600),
-                            ft.Text(f"• Usuário: {session.get_nome_usuario()}", size=10, color=ft.colors.GREY_500),
-                            ft.Text(f"• Perfil: {session.get_perfil_usuario().title()}", size=10, color=ft.colors.GREY_500),
-                            ft.Text("• Versão: 2.0.0", size=10, color=ft.colors.GREY_500),
-                        ], spacing=2),
+                            ft.Text(
+                                "ℹ️ Sobre a Atualização Automática:",
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.colors.BLUE_700
+                            ),
+                            ft.Text(
+                                "• Atualiza dados do sistema a cada 10 minutos",
+                                size=11,
+                                color=ft.colors.GREY_700
+                            ),
+                            ft.Text(
+                                "• PAUSA automaticamente ao digitar em campos",
+                                size=11,
+                                color=ft.colors.GREEN_700,
+                                weight=ft.FontWeight.W_500
+                            ),
+                            ft.Text(
+                                "• Você pode atualizar manualmente pelo botão ↻",
+                                size=11,
+                                color=ft.colors.GREY_700
+                            ),
+                            ft.Text(
+                                "• Recomendado: manter DESABILITADO durante preenchimento",
+                                size=11,
+                                color=ft.colors.ORANGE_700,
+                                weight=ft.FontWeight.W_500
+                            ),
+                        ], spacing=3),
                         padding=ft.padding.all(10),
-                        bgcolor=ft.colors.GREY_50,
                         border_radius=6,
-                        border=ft.border.all(1, ft.colors.GREY_200)
+                        bgcolor=ft.colors.with_opacity(0.05, ft.colors.BLUE_600),
+                        border=ft.border.all(1, ft.colors.with_opacity(0.2, ft.colors.BLUE_600))
                     )
-                ], tight=True),
-                width=420,  # AUMENTADO de 380 para 420
-                height=480, # AUMENTADO de 400 para 480
-                padding=20
+                ], spacing=5),
+                width=420,  # Aumentado para acomodar texto
+                height=450  # Aumentado para acomodar avisos
             ),
             actions=[
-                ft.TextButton("Resetar", on_click=resetar_config),
-                ft.TextButton("Cancelar", on_click=lambda e: self._fechar_modal(modal_config)),
-                ft.ElevatedButton(
-                    "Salvar",
-                    on_click=salvar_config,
-                    bgcolor=ft.colors.BLUE_600,
-                    color=ft.colors.WHITE,
-                    icon=ft.icons.SAVE
-                )
+                ft.TextButton("Cancelar", on_click=cancelar),
+                btn_confirmar
             ],
             shape=ft.RoundedRectangleBorder(radius=12)
         )

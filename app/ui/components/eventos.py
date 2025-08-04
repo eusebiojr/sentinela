@@ -8,11 +8,104 @@ from datetime import datetime
 from ...core.session_state import get_session_state
 from ...services.evento_processor import EventoProcessor
 from ...utils.ui_utils import get_screen_size
-
+from ...services.auto_refresh_service import criar_campo_monitorado
+from ...config.logging_config import setup_logger
+logger = setup_logger("tabela_justificativas")
 
 class EventosManager:
     """Gerenciador de eventos da aplicação"""
     
+    def criar_formulario_evento(self):
+        """Exemplo: formulário com campos monitorados"""
+        
+        # ===== CAMPOS CRÍTICOS (APLICAR MONITORAMENTO) =====
+        
+        # Campo Motivo (crítico - usuário não pode perder seleção)
+        campo_motivo = ft.Dropdown(
+            label="Motivo do Desvio",
+            options=[
+                ft.dropdown.Option("problema_operacional", "Problema Operacional"),
+                ft.dropdown.Option("manutencao", "Manutenção Programada"),
+                ft.dropdown.Option("outros", "Outros")
+            ],
+            on_change=self._on_motivo_change
+        )
+        
+        # ⚡ APLICAR MONITORAMENTO
+        campo_motivo = criar_campo_monitorado(campo_motivo, "evento_motivo")
+        
+        # Campo Observação (crítico - usuário pode digitar muito texto)
+        campo_observacao = ft.TextField(
+            label="Observação Detalhada",
+            multiline=True,
+            min_lines=3,
+            max_lines=8,
+            on_change=self._on_observacao_change
+        )
+        
+        # ⚡ APLICAR MONITORAMENTO
+        campo_observacao = criar_campo_monitorado(campo_observacao, "evento_observacao")
+        
+        # Campo Data Previsão (crítico - data específica)
+        campo_previsao = ft.TextField(
+            label="Data Previsão (DD/MM/AAAA)",
+            hint_text="Ex: 15/03/2024",
+            on_change=self._validar_data_previsao
+        )
+        
+        # ⚡ APLICAR MONITORAMENTO  
+        campo_previsao = criar_campo_monitorado(campo_previsao, "evento_previsao")
+        
+        # ===== CAMPOS NÃO-CRÍTICOS (SEM MONITORAMENTO) =====
+        
+        # Campos somente leitura ou de seleção rápida não precisam de monitoramento
+        campo_status = ft.Dropdown(
+            label="Status",
+            options=[
+                ft.dropdown.Option("pendente", "Pendente"),
+                ft.dropdown.Option("aprovado", "Aprovado")
+            ],
+            disabled=True  # Somente leitura
+        )
+        
+        # Botões não precisam de monitoramento
+        btn_salvar = ft.ElevatedButton(
+            "Salvar Alterações",
+            on_click=self._salvar_evento,
+            bgcolor=ft.colors.GREEN_600,
+            color=ft.colors.WHITE
+        )
+        
+        return ft.Column([
+            ft.Text("📝 Formulário de Evento", size=18, weight=ft.FontWeight.BOLD),
+            ft.Container(height=10),
+            
+            # Campos monitorados (pausam auto-refresh automaticamente)
+            campo_motivo,
+            campo_observacao, 
+            campo_previsao,
+            
+            ft.Container(height=10),
+            
+            # Campos não-monitorados
+            campo_status,
+            
+            ft.Container(height=20),
+            btn_salvar
+        ])
+    
+    def _limpar_monitoramento_ao_sair(self):
+        """
+        Chame este método ao sair da tela/componente
+        para limpar campos monitorados
+        """
+        from ...services.auto_refresh_service import obter_auto_refresh_service
+        
+        auto_refresh = obter_auto_refresh_service()
+        if auto_refresh:
+            auto_refresh.limpar_campos_monitorados()
+            logger.info("🧹 Campos monitorados limpos ao sair da tela")
+
     def __init__(self, page: ft.Page, app_controller):
         self.page = page
         self.app_controller = app_controller
