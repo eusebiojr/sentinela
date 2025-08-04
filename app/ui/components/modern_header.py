@@ -209,43 +209,16 @@ class ModernHeader:
             header_principal,
             self.menu_container
         ], spacing=0)
-
-    def _abrir_admin(self):
-        """Abre a visualização administrativa"""
-        try:
-            print("🔧 Abrindo visualização admin...")
-            self.app_controller.mostrar_admin()
-            mostrar_mensagem(self.page, "📊 Carregando visualização administrativa...", "info")
-        except Exception as ex:
-            print(f"❌ Erro ao abrir admin: {str(ex)}")
-            mostrar_mensagem(self.page, "❌ Erro ao carregar visualização admin", "error")    
     
     def _criar_menu_dropdown(self):
-        """Menu dropdown MODIFICADO com opção Admin para perfis autorizados"""
-        session = get_session_state(self.page)
-        perfil = session.get_perfil_usuario()
-        
+        """Menu dropdown CORRIGIDO com logoff visível"""
         opcoes = [
             {
                 "icon": ft.icons.PERSON,
                 "text": "Meu Perfil",
                 "action": self._ver_perfil,
                 "color": ft.colors.BLUE_600
-            }
-        ]
-        
-        # 🆕 ADICIONA OPÇÃO ADMIN PARA PERFIS AUTORIZADOS
-        if perfil in ("admin", "torre"):
-            opcoes.append({
-                "icon": ft.icons.ADMIN_PANEL_SETTINGS,
-                "text": "Visualização Admin",
-                "action": self._abrir_admin,
-                "color": ft.colors.PURPLE_600,
-                "destaque_admin": True
-            })
-        
-        # Continua com as outras opções...
-        opcoes.extend([
+            },
             {
                 "icon": ft.icons.SUPPORT_AGENT,
                 "text": "Abrir Chamado",
@@ -274,7 +247,7 @@ class ModernHeader:
                 "color": ft.colors.RED_600,
                 "destaque": True  # Marca como destacado
             }
-        ])
+        ]
         
         menu_items = []
         
@@ -289,28 +262,8 @@ class ModernHeader:
                 menu_items.append(separador)
                 continue
             
-            # Estilo especial para Admin
-            if opcao.get("destaque_admin", False):
-                item_container = ft.Container(
-                    content=ft.Row([
-                        ft.Icon(opcao["icon"], color=ft.colors.WHITE, size=18),
-                        ft.Text(
-                            opcao["text"],
-                            color=ft.colors.WHITE,
-                            weight=ft.FontWeight.W_600,
-                            size=14
-                        )
-                    ], spacing=12),
-                    padding=ft.padding.symmetric(horizontal=16, vertical=12),
-                    on_click=lambda e, action=opcao["action"]: self._executar_acao_menu(action),
-                    border_radius=8,
-                    bgcolor=ft.colors.PURPLE_600,
-                    margin=ft.margin.symmetric(horizontal=5, vertical=2),
-                    ink=True,
-                    border=ft.border.all(1, ft.colors.PURPLE_700)
-                )
             # Estilo especial para logoff
-            elif opcao.get("destaque", False):
+            if opcao.get("destaque", False):
                 item_container = ft.Container(
                     content=ft.Row([
                         ft.Icon(opcao["icon"], color=ft.colors.WHITE, size=18),
@@ -348,30 +301,22 @@ class ModernHeader:
                 )
             
             # Efeito hover
-            def create_hover(container, is_logout=False, is_admin=False):
+            def create_hover(container, is_logout=False):
                 def on_hover(e):
                     if e.data == "true":
                         if is_logout:
                             container.bgcolor = ft.colors.RED_700
-                        elif is_admin:
-                            container.bgcolor = ft.colors.PURPLE_700
                         else:
                             container.bgcolor = ft.colors.GREY_100
                     else:
                         if is_logout:
                             container.bgcolor = ft.colors.RED_600
-                        elif is_admin:
-                            container.bgcolor = ft.colors.PURPLE_600
                         else:
                             container.bgcolor = None
                     container.update()
                 return on_hover
             
-            item_container.on_hover = create_hover(
-                item_container, 
-                opcao.get("destaque", False),
-                opcao.get("destaque_admin", False)
-            )
+            item_container.on_hover = create_hover(item_container, opcao.get("destaque", False))
             menu_items.append(item_container)
         
         return ft.Container(
@@ -389,7 +334,7 @@ class ModernHeader:
             width=240,
             margin=ft.margin.only(right=5)
         )
-
+    
     def _toggle_menu_usuario(self, e):
         """Toggle menu CORRIGIDO com debug"""
         try:
@@ -959,15 +904,6 @@ class ModernHeader:
         self.page.update()
 
     def _abrir_chamado(self):
-        """Abre a visualização administrativa"""
-        try:
-            print("🔧 Abrindo visualização admin...")
-            self.app_controller.mostrar_admin()
-            mostrar_mensagem(self.page, "📊 Carregando visualização administrativa...", "info")
-        except Exception as ex:
-            print(f"❌ Erro ao abrir admin: {str(ex)}")
-            mostrar_mensagem(self.page, "❌ Erro ao carregar visualização admin", "error")
-
         """Abre modal de chamado de suporte"""
         try:
             # Obtém email do usuário logado
