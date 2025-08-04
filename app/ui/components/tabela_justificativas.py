@@ -10,10 +10,6 @@ from ...services.data_formatter import DataFormatter
 from ...services.sharepoint_client import SharePointClient
 from ...services.audit_service import audit_service
 from ...utils.ui_utils import get_screen_size, mostrar_mensagem
-from ...config.logging_config import setup_logger
-import threading
-
-logger = setup_logger("tabela_justificativas")
 
 # NOVO: Importa validadores centralizados
 from ...validators import field_validator, business_validator
@@ -130,251 +126,6 @@ class TabelaJustificativas:
         
         return df_exibir
     
-    def _criar_campo_motivo(self, motivos, chave_alteracao, valor_atual, campo_desabilitado, motivo_width, field_height, font_size):
-        """Campo de motivo COM INTEGRAÇÃO de monitoring"""
-        
-        # NOVO: Registra valor original no sistema de monitoring
-        try:
-            self.app_controller.registrar_campo_para_monitoring(
-                campo_id=f"motivo_{chave_alteracao}",
-                valor_original=valor_atual
-            )
-        except Exception as e:
-            logger.debug(f"Monitoring não disponível: {e}")
-        
-        def on_change(e):
-            """Callback quando motivo muda - INTEGRADO COM MONITORING"""
-            if self.processando_envio:
-                return
-                
-            novo_valor = e.control.value
-            session = get_session_state(self.page)
-            
-            # Atualização existente do estado
-            session.atualizar_alteracao(chave_alteracao, "Motivo", novo_valor)
-            
-            # NOVO: Notifica sistema de monitoring
-            try:
-                self.app_controller.notificar_alteracao_campo(
-                    campo_id=f"motivo_{chave_alteracao}",
-                    novo_valor=novo_valor
-                )
-            except Exception as e:
-                logger.debug(f"Monitoring não disponível: {e}")
-        
-        dropdown_motivo = ft.Dropdown(
-            options=[ft.dropdown.Option(motivo, motivo) for motivo in motivos],
-            value=valor_atual,
-            on_change=on_change,
-            width=motivo_width, height=field_height, text_size=font_size,
-            dense=True, filled=True, border_radius=8,
-            disabled=campo_desabilitado,
-            bgcolor=ft.colors.GREY_100 if not campo_desabilitado else ft.colors.GREY_200
-        )
-        
-        return dropdown_motivo
-
-    def _criar_campo_observacao(self, chave_alteracao, valor_atual, campo_desabilitado, obs_width, field_height, font_size):
-        """Campo de observação COM INTEGRAÇÃO de monitoring"""
-        
-        # NOVO: Registra valor original no sistema de monitoring
-        try:
-            self.app_controller.registrar_campo_para_monitoring(
-                campo_id=f"observacao_{chave_alteracao}",
-                valor_original=valor_atual
-            )
-        except Exception as e:
-            logger.debug(f"Monitoring não disponível: {e}")
-        
-        def on_change(e):
-            """Callback quando observação muda - INTEGRADO COM MONITORING"""
-            if self.processando_envio:
-                return
-                
-            novo_valor = e.control.value
-            session = get_session_state(self.page)
-            
-            # Atualização existente do estado
-            session.atualizar_alteracao(chave_alteracao, "Observacao", novo_valor)
-            
-            # NOVO: Notifica sistema de monitoring
-            try:
-                self.app_controller.notificar_alteracao_campo(
-                    campo_id=f"observacao_{chave_alteracao}",
-                    novo_valor=novo_valor
-                )
-            except Exception as e:
-                logger.debug(f"Monitoring não disponível: {e}")
-        
-        campo_observacao = ft.TextField(
-            value=valor_atual,
-            hint_text="Digite a observação...",
-            on_change=on_change,
-            width=obs_width, height=field_height, text_size=font_size,
-            multiline=False, dense=True, filled=True, border_radius=8,
-            disabled=campo_desabilitado,
-            bgcolor=ft.colors.GREY_100 if not campo_desabilitado else ft.colors.GREY_200
-        )
-        
-        return campo_observacao
-
-    def _criar_campo_previsao(self, valor_inicial, chave_alteracao, row, previsao_width, font_size, field_height):
-        """Campo de previsão COM INTEGRAÇÃO de monitoring"""
-        
-        session = get_session_state(self.page)
-        valor_atual = session.alteracoes_pendentes.get(chave_alteracao, {}).get("Previsao_Normalizacao", "")
-        
-        # Se não há alteração pendente, usa valor original da linha
-        if not valor_atual:
-            valor_atual = DataFormatter.safe_str(valor_inicial) if valor_inicial else ""
-        
-        # NOVO: Registra valor original no sistema de monitoring
-        try:
-            valor_original = DataFormatter.safe_str(valor_inicial) if valor_inicial else ""
-            self.app_controller.registrar_campo_para_monitoring(
-                campo_id=f"previsao_{chave_alteracao}",
-                valor_original=valor_original
-            )
-        except Exception as e:
-            logger.debug(f"Monitoring não disponível: {e}")
-        
-        def on_previsao_change(nova_previsao):
-            """Callback quando previsão muda - INTEGRADO COM MONITORING"""
-            if self.processando_envio:
-                return
-                
-            # Atualização existente do estado
-            session.atualizar_alteracao(chave_alteracao, "Previsao_Normalizacao", nova_previsao)
-            
-            # NOVO: Notifica sistema de monitoring
-            try:
-                self.app_controller.notificar_alteracao_campo(
-                    campo_id=f"previsao_{chave_alteracao}",
-                    novo_valor=nova_previsao
-                )
-            except Exception as e:
-                logger.debug(f"Monitoring não disponível: {e}")
-            
-            # Atualiza display
-            campo_display.value = nova_previsao
-            self.page.update()
-        
-        campo_desabilitado = self.processando_envio
-        
-        # Campo de display (readonly)
-        display_value = valor_atual if valor_atual else "Clique para selecionar"
-        
-        campo_display = ft.TextField(
-            value=display_value,
-            hint_text="Clique para selecionar" if not campo_desabilitado else "Processando...",
-            width=previsao_width, height=field_height, text_size=font_size,
-            dense=True, filled=True,
-            bgcolor=ft.colors.GREY_100 if not campo_desabilitado else ft.colors.GREY_200,
-            read_only=True, prefix_icon=ft.icons.SCHEDULE, border_radius=8,
-            disabled=campo_desabilitado
-        )
-        
-        def abrir_modal(e):
-            if self.processando_envio:
-                mostrar_mensagem(self.page, "⏳ Aguarde finalizar o processamento atual", "warning")
-                return
-            # AJUSTADO: Passa o callback em vez de campo_display
-            self._mostrar_modal_data_hora(on_previsao_change, chave_alteracao, row)
-        
-        if not campo_desabilitado:
-            campo_display.on_click = abrir_modal
-        
-        btn_edicao = ft.IconButton(
-            icon=ft.icons.EDIT_CALENDAR,
-            tooltip="Editar data/hora" if not campo_desabilitado else "Aguarde processamento...",
-            on_click=abrir_modal if not campo_desabilitado else None,
-            icon_size=16,
-            icon_color=ft.colors.BLUE_600 if not campo_desabilitado else ft.colors.GREY_400,
-            disabled=campo_desabilitado
-        )
-        
-        return ft.Row([campo_display, btn_edicao], spacing=2)
-
-    def _processar_justificativas(self, evento):
-        """Processa justificativas COM LIMPEZA do monitoring"""
-        
-        def processar():
-            try:
-                session = get_session_state(self.page)
-                alteracoes = session.alteracoes_pendentes
-                
-                if alteracoes:
-                    # Processamento existente...
-                    atualizacoes_lote = audit_service.processar_alteracoes_com_auditoria(
-                        self.page, alteracoes
-                    )
-                    
-                    if atualizacoes_lote:
-                        sucessos = SharePointClient.atualizar_lote(atualizacoes_lote)
-                        
-                        if sucessos > 0:
-                            # Limpeza existente
-                            session.alteracoes_pendentes.clear()
-                            
-                            # NOVO: Limpa também o monitoring de campos
-                            try:
-                                self.app_controller.limpar_alteracoes_campos()
-                            except Exception as e:
-                                logger.debug(f"Limpeza monitoring não disponível: {e}")
-                            
-                            mostrar_mensagem(self.page, f"✅ {sucessos} registro(s) atualizado(s) com sucesso!", "success")
-                            
-                            # Desativa modo processamento
-                            self._ativar_modo_processamento(False)
-                            
-                            # Aguarda e atualiza dados
-                            import time
-                            time.sleep(0.5)
-                            self.app_controller.atualizar_dados()
-                        else:
-                            mostrar_mensagem(self.page, "❌ Nenhum registro foi atualizado no SharePoint", "error")
-                            self._ativar_modo_processamento(False)
-                    else:
-                        mostrar_mensagem(self.page, "⚠️ Nenhuma alteração para processar.", "warning")
-                        self._ativar_modo_processamento(False)
-                else:
-                    mostrar_mensagem(self.page, "⚠️ Nenhuma alteração para processar.", "warning")
-                    self._ativar_modo_processamento(False)
-                    
-            except Exception as e:
-                logger.error(f"❌ Erro no processamento: {str(e)}")
-                mostrar_mensagem(self.page, f"❌ Erro ao enviar justificativas: {str(e)}", "error")
-                self._ativar_modo_processamento(False)
-        
-        thread = threading.Thread(target=processar, daemon=True)
-        thread.start()
-
-    def limpar_alteracoes_evento(self, evento: str):
-        """Limpa alterações de um evento específico"""
-        try:
-            session = get_session_state(self.page)
-            
-            # Limpa alterações do estado da sessão
-            session.limpar_alteracoes_evento(evento)
-            
-            # NOVO: Limpa também alterações do monitoring para este evento
-            if hasattr(session, 'field_monitor_service') and session.field_monitor_service:
-                # CORRIGIDO: Identifica campos deste evento e limpa
-                for idx in range(20):  # Assume máximo 20 registros por evento
-                    campos_evento = [
-                        f"motivo_{evento}_{idx}",
-                        f"observacao_{evento}_{idx}", 
-                        f"previsao_{evento}_{idx}"
-                    ]
-                    
-                    for campo_id in campos_evento:
-                        session.field_monitor_service.limpar_campo(campo_id)
-                    
-            logger.info(f"✅ Alterações do evento {evento} limpas")
-            
-        except Exception as e:
-            logger.error(f"❌ Erro ao limpar alterações do evento: {e}")
-
     def _criar_linha_tabela(self, evento, row, motivos, pode_editar, 
                           placa_width, motivo_width, previsao_width, obs_width, 
                           font_size, field_height):
@@ -976,8 +727,7 @@ class TabelaJustificativas:
         thread.start()
     
     def _aprovar_evento(self, evento):
-        """Aprova evento COM LIMPEZA do monitoring"""
-        
+        """Aprova evento"""
         def confirmar_aprovacao(e):
             self.page.dialog.open = False
             self.page.update()
@@ -985,32 +735,26 @@ class TabelaJustificativas:
 
             import threading
             def processar_aprovacao():
+                session = get_session_state(self.page)
                 try:
-                    session = get_session_state(self.page)
                     df_evento = session.df_desvios[session.df_desvios["Titulo"] == evento]
-                    
-                    if not df_evento.empty:
-                        atualizacoes_aprovacao = audit_service.processar_aprovacao_com_auditoria(
-                            self.page, df_evento, "Aprovado"
-                        )
-                        
-                        if atualizacoes_aprovacao:
-                            sucessos = SharePointClient.atualizar_lote(atualizacoes_aprovacao)
-                            
-                            if sucessos > 0:
-                                # NOVO: Limpa alterações de monitoring deste evento
-                                self.limpar_alteracoes_evento(evento)
-                                
-                                mostrar_mensagem(self.page, "✅ Evento aprovado com sucesso!", "success")
-                                self.app_controller.atualizar_dados()
-                            else:
-                                mostrar_mensagem(self.page, "❌ Erro ao aprovar evento", "error")
+                    if df_evento.empty:
+                        return
+
+                    atualizacoes_aprovacao = audit_service.processar_aprovacao_com_auditoria(
+                        self.page, df_evento, "Aprovado"
+                    )
+
+                    if atualizacoes_aprovacao:
+                        sucessos = SharePointClient.atualizar_lote(atualizacoes_aprovacao)
+                        if sucessos > 0:
+                            mostrar_mensagem(self.page, "✅ Evento aprovado com sucesso!", "success")
+                            self.app_controller.atualizar_dados()
                         else:
-                            mostrar_mensagem(self.page, "❌ Erro ao preparar aprovação", "error")
-                            
+                            mostrar_mensagem(self.page, "❌ Erro ao aprovar evento", "error")
                 except Exception as ex:
                     mostrar_mensagem(self.page, f"❌ Erro ao aprovar evento: {str(ex)}", "error")
-            
+
             thread_aprovacao = threading.Thread(target=processar_aprovacao, daemon=True)
             thread_aprovacao.start()
 
@@ -1018,7 +762,6 @@ class TabelaJustificativas:
             self.page.dialog.open = False
             self.page.update()
 
-        # O resto do método permanece igual (dialog de confirmação)
         evento_info = EventoProcessor.parse_titulo_completo(evento)
         
         confirmation_dialog = ft.AlertDialog(
@@ -1043,68 +786,70 @@ class TabelaJustificativas:
                     ),
                     ft.Container(height=8),
                     ft.Text("⚠️ Esta ação não pode ser desfeita.", size=12, color=ft.colors.ORANGE_600, italic=True)
-                ], spacing=5),
-                width=400, height=120
+                ], tight=True),
+                width=420, padding=10
             ),
             actions=[
-                ft.TextButton("Cancelar", on_click=cancelar_aprovacao),
-                ft.ElevatedButton(
-                    "✅ Aprovar",
-                    on_click=confirmar_aprovacao,
-                    bgcolor=ft.colors.GREEN_600,
-                    color=ft.colors.WHITE
-                )
-            ]
+                ft.Row([
+                    ft.TextButton("Não", on_click=cancelar_aprovacao, style=ft.ButtonStyle(color=ft.colors.GREY_600)),
+                    ft.Container(width=80),
+                    ft.ElevatedButton("Sim, Aprovar", on_click=confirmar_aprovacao, bgcolor=ft.colors.GREEN_600, 
+                                    color=ft.colors.WHITE, icon=ft.icons.CHECK,
+                                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=6)))
+                ], alignment=ft.MainAxisAlignment.END)
+            ],
+            shape=ft.RoundedRectangleBorder(radius=8)
         )
-        
+
         self.page.dialog = confirmation_dialog
         confirmation_dialog.open = True
         self.page.update()
     
     def _reprovar_evento(self, evento):
-        """Reprova evento COM LIMPEZA do monitoring"""
-        
-        def processar_reprovacao():
-            try:
+        """Reprova evento"""
+        justificativa_field = ft.TextField(
+            label="Motivo da reprovação", multiline=True, width=800, height=120
+        )
+
+        def confirmar(e):
+            if not justificativa_field.value or not justificativa_field.value.strip():
+                mostrar_mensagem(self.page, "Insira uma justificativa", "warning")
+                return
+
+            modal.open = False
+            self.page.update()
+            mostrar_mensagem(self.page, "⏳ Reprovando evento...", "info")
+            
+            import threading
+            
+            def processar_reprovacao():
                 session = get_session_state(self.page)
-                df_evento = session.df_desvios[session.df_desvios["Titulo"] == evento]
-                
-                if not df_evento.empty:
+                try:
+                    df_evento = session.df_desvios[session.df_desvios["Titulo"] == evento]
+                    
                     atualizacoes_reprovacao = audit_service.processar_aprovacao_com_auditoria(
-                        self.page, df_evento, "Não Tratado"
+                        self.page, df_evento, "Reprovado", justificativa_field.value
                     )
                     
                     if atualizacoes_reprovacao:
                         sucessos = SharePointClient.atualizar_lote(atualizacoes_reprovacao)
-                        
                         if sucessos > 0:
-                            # NOVO: Limpa alterações de monitoring deste evento
-                            self.limpar_alteracoes_evento(evento)
-                            
                             mostrar_mensagem(self.page, "✅ Evento reprovado com sucesso!", "success")
                             self.app_controller.atualizar_dados()
                         else:
                             mostrar_mensagem(self.page, "❌ Erro ao reprovar evento", "error")
-                    else:
-                        mostrar_mensagem(self.page, "❌ Erro ao preparar reprovação", "error")
                     
-            except Exception as ex:
-                mostrar_mensagem(self.page, f"❌ Erro ao reprovar evento: {str(ex)}", "error")
-        
-        # Dialog de confirmação (código existente adaptado)
-        evento_info = EventoProcessor.parse_titulo_completo(evento)
+                except Exception as ex:
+                    mostrar_mensagem(self.page, f"❌ Erro ao reprovar evento: {str(ex)}", "error")
+            
+            thread_reprovacao = threading.Thread(target=processar_reprovacao, daemon=True)
+            thread_reprovacao.start()
 
         def fechar(e):
             modal.open = False
             self.page.update()
 
-        def confirmar_reprovacao(e):
-            modal.open = False
-            self.page.update()
-            mostrar_mensagem(self.page, "⏳ Reprovando evento...", "info")
-            
-            thread_reprovacao = threading.Thread(target=processar_reprovacao, daemon=True)
-            thread_reprovacao.start()
+        evento_info = EventoProcessor.parse_titulo_completo(evento)
 
         modal = ft.AlertDialog(
             modal=True,
@@ -1122,27 +867,23 @@ class TabelaJustificativas:
                                     size=14, color=ft.colors.BLUE_700, weight=ft.FontWeight.W_500)
                         ], spacing=0),
                         padding=ft.padding.all(12), bgcolor=ft.colors.BLUE_50, border_radius=6,
-                        border=ft.border.all(1, ft.colors.BLUE_200)
+                        border=ft.border.all(1, ft.colors.BLUE_200), margin=ft.margin.only(bottom=15)
                     ),
-                    ft.Container(height=12),
-                    ft.Text("Tem certeza de que deseja reprovar este evento?", size=14, color=ft.colors.GREY_800),
-                    ft.Container(height=8),
-                    ft.Text("⚠️ O evento será marcado como 'Não Tratado' e esta ação não pode ser desfeita.", 
-                            size=12, color=ft.colors.RED_600, italic=True)
-                ], spacing=8),
-                width=400, height=140
+                    ft.Text("Motivo da reprovação:", size=14, weight=ft.FontWeight.W_500),
+                    ft.Container(height=10),
+                    justificativa_field,
+                    ft.Container(height=15)
+                ]),
+                width=800, height=220, padding=10, border_radius=4
             ),
             actions=[
                 ft.TextButton("Cancelar", on_click=fechar),
-                ft.ElevatedButton(
-                    "❌ Reprovar",
-                    on_click=confirmar_reprovacao,
-                    bgcolor=ft.colors.RED_600,
-                    color=ft.colors.WHITE
-                )
-            ]
+                ft.ElevatedButton("Confirmar Reprovação", on_click=confirmar, bgcolor=ft.colors.RED_600, 
+                                color=ft.colors.WHITE, icon=ft.icons.CANCEL)
+            ],
+            shape=ft.RoundedRectangleBorder(radius=4)
         )
-        
+
         self.page.dialog = modal
         modal.open = True
         self.page.update()

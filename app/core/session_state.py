@@ -1,6 +1,6 @@
 """
-Estado por sessão - VERSÃO ATUALIZADA COM AUTO-REFRESH
-Localização: app/core/session_state.py
+Estado por sessão - CORREÇÃO DO BUG DE TROCA DE USUÁRIO
+Cada usuário terá seu próprio estado isolado
 """
 import pandas as pd
 from dataclasses import dataclass, field
@@ -37,103 +37,13 @@ class SessionState:
     dados_carregados: bool = False
     carregamento_em_progresso: bool = False
     
-    # NOVO: Services de auto-refresh e monitoring
-    field_monitor_service: Any = None
-    auto_refresh_habilitado: bool = False
-    
     def __post_init__(self):
-        """Inicialização da sessão"""
+        """Log de criação da sessão"""
         logger.info(f"🔐 [NOVA SESSÃO] ID: {self.session_id}, Thread: {self.thread_id}")
-        
-        # Inicializa field monitor service
-        self._inicializar_field_monitor()
-    
-    def _inicializar_field_monitor(self):
-        """Inicializa o serviço de monitoramento de campos"""
-        try:
-            from ..services.field_monitor_service import criar_field_monitor_service
-            self.field_monitor_service = criar_field_monitor_service()
-            
-            # Configura callback para integração com auto-refresh
-            self.field_monitor_service.configurar_callback(self._on_alteracoes_mudaram)
-            
-            logger.info(f"✅ Field Monitor inicializado para sessão {self.session_id}")
-        except Exception as e:
-            logger.error(f"❌ Erro ao inicializar Field Monitor: {e}")
-    
-    def _on_alteracoes_mudaram(self, tem_alteracoes: bool):
-        """Callback quando estado de alterações muda"""
-        try:
-            from ..services.auto_refresh_service import obter_auto_refresh_service
-            
-            auto_refresh = obter_auto_refresh_service()
-            if auto_refresh and self.auto_refresh_habilitado:
-                if tem_alteracoes:
-                    auto_refresh.pausar_timer("campos preenchidos")
-                else:
-                    auto_refresh.retomar_timer()
-                    
-        except Exception as e:
-            logger.error(f"❌ Erro ao controlar auto-refresh: {e}")
-    
-    def configurar_auto_refresh(self, habilitado: bool):
-        """
-        Configura auto-refresh para esta sessão
-        
-        Args:
-            habilitado: True para habilitar, False para desabilitar
-        """
-        self.auto_refresh_habilitado = habilitado
-        self.salvar_configuracao_usuario('auto_refresh', habilitado)
-        
-        try:
-            from ..services.auto_refresh_service import obter_auto_refresh_service
-            
-            auto_refresh = obter_auto_refresh_service()
-            if auto_refresh:
-                auto_refresh.habilitar_usuario(habilitado)
-                logger.info(f"🔄 Auto-refresh {'habilitado' if habilitado else 'desabilitado'} para sessão {self.session_id}")
-                
-        except Exception as e:
-            logger.error(f"❌ Erro ao configurar auto-refresh: {e}")
-    
-    def registrar_campo_original(self, campo_id: str, valor: Any):
-        """Registra valor original de um campo"""
-        if self.field_monitor_service:
-            self.field_monitor_service.registrar_campo_original(campo_id, valor)
-    
-    def registrar_alteracao_campo(self, campo_id: str, novo_valor: Any):
-        """Registra alteração em um campo"""
-        if self.field_monitor_service:
-            self.field_monitor_service.registrar_alteracao(campo_id, novo_valor)
-    
-    def limpar_alteracoes_campos(self):
-        """Limpa todas as alterações de campos"""
-        if self.field_monitor_service:
-            self.field_monitor_service.limpar_alteracoes()
-    
-    def has_campos_alterados(self) -> bool:
-        """Verifica se há campos alterados"""
-        if self.field_monitor_service:
-            return self.field_monitor_service.has_alteracoes_pendentes()
-        return False
-    
-    def obter_resumo_alteracoes_campos(self) -> Dict[str, Any]:
-        """Obtém resumo de alterações nos campos"""
-        if self.field_monitor_service:
-            return self.field_monitor_service.obter_resumo_alteracoes()
-        return {"total_campos_alterados": 0, "tem_alteracoes": False}
     
     def reset_dados(self):
         """Limpa todos os dados (útil para logout)"""
         logger.info(f"🔄 [RESET SESSÃO {self.session_id}] Usuário antes: {self.get_nome_usuario()}")
-        
-        # Para auto-refresh se estiver ativo
-        self.configurar_auto_refresh(False)
-        
-        # Limpa alterações de campos
-        if self.field_monitor_service:
-            self.field_monitor_service.limpar_alteracoes()
         
         self.usuario = None
         self.df_usuarios = pd.DataFrame()
@@ -201,10 +111,6 @@ class SessionState:
         
         self.usuario['configuracoes'][chave] = valor
         logger.info(f"📝 [CONFIG] Sessão {self.session_id}: {chave} = {valor}")
-        
-        # NOVO: Trata configuração específica de auto-refresh
-        if chave == 'auto_refresh':
-            self.configurar_auto_refresh(valor)
     
     def obter_configuracao_usuario(self, chave: str, padrao=None):
         """Obtém uma configuração específica do usuário"""
@@ -226,9 +132,8 @@ class SessionState:
             del self.alteracoes_pendentes[chave]
     
     def has_alteracoes_pendentes(self) -> bool:
-        """Verifica se há alterações não salvas (campos OU eventos)"""
-        return (len(self.alteracoes_pendentes) > 0 or 
-                self.has_campos_alterados())
+        """Verifica se há alterações não salvas"""
+        return len(self.alteracoes_pendentes) > 0
 
 
 def get_session_state(page) -> SessionState:

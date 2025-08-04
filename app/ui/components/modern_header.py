@@ -53,8 +53,8 @@ class ModernHeader:
         self.menu_container = None
         
     def criar_header(self):
-        """Cria header com layout organizado e logo Suzano - VERSÃO COM AUTO-REFRESH"""
         session = get_session_state(self.page)
+        """Cria header com layout organizado e logo Suzano"""
         
         # Configurações responsivas
         screen_size = get_screen_size(self.page.window_width)
@@ -77,116 +77,138 @@ class ModernHeader:
             subtitle_size = 16
             avatar_size = 40
             padding_horizontal = 25
-        
-        # Título e subtítulo
-        titulo = ft.Text("Sentinela", size=title_size, weight=ft.FontWeight.BOLD, color=ft.colors.WHITE)
-        subtitulo = ft.Text("Sistema de Controle", size=subtitle_size, color=ft.colors.WHITE70)
-        
-        # NOVO: Componente do indicador de auto-refresh
-        try:
-            indicador_auto_refresh = self.app_controller.obter_componente_auto_refresh_indicator()
-        except:
-            # Fallback se controller não tem o método ainda
-            indicador_auto_refresh = ft.Container()
-        
-        # ==============================
-        # SEÇÃO ESQUERDA (Logo + Título)
-        # ==============================
+
+        nome_usuario = session.get_nome_usuario()
+        perfil_usuario = session.get_perfil_usuario().title()
+        iniciais = self._obter_iniciais(nome_usuario)
+
+        # SEÇÃO ESQUERDA: Logo Suzano + Título
         secao_esquerda = ft.Row([
-            ft.Container(
-                content=ft.Image(
-                    src="/static/images/logo_suzano.png",
-                    width=logo_size, height=logo_size,
-                    fit=ft.ImageFit.CONTAIN
-                ),
-                padding=ft.padding.only(right=12)
+            # Logo Suzano
+            ft.Image(
+                src="/images/logo.png",
+                width=logo_size,
+                height=logo_size,
+                fit=ft.ImageFit.CONTAIN
             ),
-            ft.Column([titulo, subtitulo], spacing=0)
-        ], alignment=ft.MainAxisAlignment.START, spacing=8)
-        
-        # ==============================
-        # SEÇÃO CENTRAL (Indicador Auto-Refresh)
-        # ==============================
-        secao_central = ft.Container(
-            content=indicador_auto_refresh,
-            alignment=ft.alignment.center
-        )
-        
-        # ==============================
-        # SEÇÃO DIREITA (Usuário + Menu)
-        # ==============================
-        if session.is_usuario_logado():
-            nome_usuario = session.get_nome_usuario()
-            perfil_usuario = session.get_perfil_usuario().title()
-            
-            # Avatar e info do usuário
-            avatar = ft.CircleAvatar(
-                content=ft.Text(nome_usuario[0].upper(), color=ft.colors.WHITE, weight=ft.FontWeight.BOLD),
-                bgcolor=ft.colors.BLUE_700, radius=avatar_size//2
-            )
-            
-            info_usuario = ft.Column([
-                ft.Text(nome_usuario, size=14, color=ft.colors.WHITE, weight=ft.FontWeight.W_500),
-                ft.Text(perfil_usuario, size=11, color=ft.colors.WHITE70)
-            ], spacing=2)
-            
-            # Botão de menu
-            menu_button = ft.IconButton(
-                icon=ft.icons.MORE_VERT,
-                icon_color=ft.colors.WHITE,
-                tooltip="Menu",
-                on_click=self._toggle_menu
-            )
-            
-            secao_direita = ft.Row([
-                avatar,
-                info_usuario,
-                menu_button
-            ], alignment=ft.MainAxisAlignment.END, spacing=12)
-        else:
-            secao_direita = ft.Container()
-        
-        # ==============================
-        # CONTAINER PRINCIPAL DO HEADER
-        # ==============================
-        header_principal = ft.Container(
-            content=ft.Row([
-                # Seção esquerda - 30% do espaço
-                ft.Container(
-                    content=secao_esquerda,
-                    expand=3
+            ft.Column([
+                ft.Text(
+                    "Sentinela",
+                    size=title_size,
+                    weight=ft.FontWeight.BOLD,
+                    color=ft.colors.WHITE
                 ),
-                
-                # Seção central - 40% do espaço (para o indicador)
-                ft.Container(
-                    content=secao_central,
-                    expand=4,
-                    alignment=ft.alignment.center
-                ),
-                
-                # Seção direita - 30% do espaço  
-                ft.Container(
-                    content=secao_direita,
-                    expand=3
+                ft.Text(
+                    "Gestão de Desvios Logísticos",
+                    size=subtitle_size,
+                    color=ft.colors.with_opacity(0.9, ft.colors.WHITE),
+                    italic=True
                 )
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ], spacing=2)
+        ], spacing=12)
+        
+        # SEÇÃO DIREITA: Botões + Usuário
+        secao_direita = ft.Row([
+            ft.ElevatedButton(
+                content=ft.Row([
+                    ft.Icon(ft.icons.REFRESH, size=16, color=ft.colors.BLUE_600),
+                    ft.Text("Atualizar", size=13, color=ft.colors.BLUE_600, weight=ft.FontWeight.W_500)
+                ], spacing=6, alignment=ft.MainAxisAlignment.CENTER),
+                on_click=lambda e: self.app_controller.atualizar_dados(),
+                bgcolor=ft.colors.WHITE,
+                height=36,
+                style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=8),
+                    padding=ft.padding.symmetric(horizontal=12, vertical=8)
+                ),
+                tooltip="Atualizar dados do sistema"
+            ),
             
-            # Estilo do header
-            bgcolor=ft.colors.BLUE_800,
+            ft.Container(
+                content=ft.Row([
+                    ft.Container(
+                        content=ft.Text(
+                            iniciais,
+                            size=avatar_size * 0.4,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.colors.WHITE
+                        ),
+                        width=avatar_size,
+                        height=avatar_size,
+                        bgcolor=ft.colors.BLUE_800,
+                        border_radius=avatar_size / 2,
+                        alignment=ft.alignment.center,
+                        border=ft.border.all(2, ft.colors.WHITE)
+                    ),
+                    ft.Column([
+                        ft.Text(
+                            nome_usuario,
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                            color=ft.colors.WHITE,
+                            max_lines=1,
+                            overflow=ft.TextOverflow.ELLIPSIS
+                        ),
+                        ft.Text(
+                            perfil_usuario,
+                            size=11,
+                            color=ft.colors.with_opacity(0.8, ft.colors.WHITE)
+                        )
+                    ], spacing=0, alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Icon(
+                        ft.icons.KEYBOARD_ARROW_DOWN,
+                        color=ft.colors.WHITE,
+                        size=18
+                    )
+                ], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
+                
+                padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                border_radius=8,
+                bgcolor=ft.colors.with_opacity(0.15, ft.colors.WHITE),
+                border=ft.border.all(1, ft.colors.with_opacity(0.3, ft.colors.WHITE)),
+                on_click=self._toggle_menu_usuario,
+                ink=True,
+                tooltip=f"Menu de {nome_usuario} - Clique para ver opções"
+            )
+        ], spacing=15)
+        
+        # HEADER PRINCIPAL
+        header_content = ft.Row([
+            secao_esquerda,
+            secao_direita
+        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        
+        header_principal = ft.Container(
+            content=header_content,
             padding=ft.padding.symmetric(horizontal=padding_horizontal, vertical=12),
-            border_radius=ft.border_radius.only(bottom_left=8, bottom_right=8)
+            bgcolor=ft.colors.BLUE_600,
+            height=70,
+            shadow=ft.BoxShadow(
+                spread_radius=0,
+                blur_radius=12,
+                color=ft.colors.with_opacity(0.15, ft.colors.BLACK),
+                offset=ft.Offset(0, 3)
+            )
         )
         
-        # Menu lateral
-        if session.is_usuario_logado():
-            self.menu_container = self._criar_menu_lateral()
-            
-            return ft.Stack([
-                header_principal,
-                self.menu_container
-            ])
-        else:
-            return header_principal
+        # MENU DROPDOWN
+        self.menu_container = ft.Container(
+            content=ft.Row([
+                ft.Container(expand=True),
+                self._criar_menu_dropdown(),
+                ft.Container(width=padding_horizontal + 10)
+            ]),
+            height=0,
+            animate_size=ft.animation.Animation(300, ft.AnimationCurve.EASE_OUT),
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+            bgcolor=ft.colors.TRANSPARENT,
+            padding=ft.padding.only(top=5)
+        )
+        
+        return ft.Column([
+            header_principal,
+            self.menu_container
+        ], spacing=0)
     
     def _criar_menu_dropdown(self):
         """Menu dropdown CORRIGIDO com logoff visível"""
@@ -677,14 +699,13 @@ class ModernHeader:
         self.page.update()
     
     def _configuracoes(self):
-        """Modal de configurações - VERSÃO ATUALIZADA COM INTEGRAÇÃO"""
         session = get_session_state(self.page)
+        """Modal de configurações com caixa ajustada"""
         
         # Carregar configurações existentes
         usuario = session.get_usuario_atual()
         config_atual = usuario.get('configuracoes', {}) if usuario else {}
         
-        # Switches
         tema_claro = ft.Switch(
             label="Tema Claro", 
             value=config_atual.get('tema_claro', True)
@@ -693,10 +714,8 @@ class ModernHeader:
             label="Notificações", 
             value=config_atual.get('notificacoes', True)
         )
-        
-        # MODIFICADO: Switch de auto-refresh com integração
         auto_refresh = ft.Switch(
-            label="Atualização Automática (10min)", 
+            label="Atualização Automática", 
             value=config_atual.get('auto_refresh', False)
         )
         
@@ -707,12 +726,7 @@ class ModernHeader:
                     "notificacoes": notificacoes.value,
                     "auto_refresh": auto_refresh.value
                 }
-                
-                # NOVO: Integração com auto-refresh service
                 salvar_configuracoes_usuario(self.page, config)
-                
-                # NOVO: Notifica mudança de auto-refresh imediatamente
-                session.configurar_auto_refresh(auto_refresh.value)
                 
                 modal_config.open = False
                 self.page.update()
@@ -722,12 +736,13 @@ class ModernHeader:
                 mostrar_mensagem(self.page, f"❌ Erro ao salvar configurações: {str(ex)}", "error")
         
         def resetar_config(e):
+            session = get_session_state(self.page)
             tema_claro.value = True
             notificacoes.value = True
             auto_refresh.value = False
             self.page.update()
         
-        # Modal de configurações - ATUALIZADO
+        # Modal de configurações - CAIXA AUMENTADA
         modal_config = ft.AlertDialog(
             modal=True,
             title=ft.Row([
@@ -759,22 +774,12 @@ class ModernHeader:
                     
                     ft.Container(height=12),
                     
-                    # Seção Sistema - ATUALIZADA
+                    # Seção Sistema
                     ft.Container(
                         content=ft.Column([
                             ft.Text("🔔 Sistema", size=14, weight=ft.FontWeight.BOLD, color=ft.colors.ORANGE_600),
                             notificacoes,
                             auto_refresh,
-                            # NOVO: Texto explicativo para auto-refresh
-                            ft.Container(
-                                content=ft.Text(
-                                    "💡 Atualização automática recarrega dados a cada 10 minutos.\nQuando pausado, você pode continuar editando sem perdas.",
-                                    size=10,
-                                    color=ft.colors.ORANGE_600,
-                                    italic=True
-                                ),
-                                padding=ft.padding.only(top=4)
-                            )
                         ], spacing=8),
                         padding=ft.padding.all(12),
                         bgcolor=ft.colors.ORANGE_50,
@@ -784,32 +789,33 @@ class ModernHeader:
                     
                     ft.Container(height=15),
                     
-                    # Informações do sistema - ATUALIZADA
+                    # Informações do sistema - DENTRO DO CONTEÚDO
                     ft.Container(
                         content=ft.Column([
                             ft.Text("ℹ️ Informações do Sistema", size=12, weight=ft.FontWeight.BOLD, color=ft.colors.GREY_600),
                             ft.Text(f"• Usuário: {session.get_nome_usuario()}", size=10, color=ft.colors.GREY_500),
                             ft.Text(f"• Perfil: {session.get_perfil_usuario().title()}", size=10, color=ft.colors.GREY_500),
-                            ft.Text(f"• Sessão: {session.session_id}", size=10, color=ft.colors.GREY_500)
-                        ], spacing=3),
+                            ft.Text("• Versão: 2.0.0", size=10, color=ft.colors.GREY_500),
+                        ], spacing=2),
                         padding=ft.padding.all(10),
                         bgcolor=ft.colors.GREY_50,
-                        border_radius=6
+                        border_radius=6,
+                        border=ft.border.all(1, ft.colors.GREY_200)
                     )
-                    
-                ], scroll=ft.ScrollMode.AUTO),
-                width=400,
-                height=500,
+                ], tight=True),
+                width=420,  # AUMENTADO de 380 para 420
+                height=480, # AUMENTADO de 400 para 480
                 padding=20
             ),
             actions=[
                 ft.TextButton("Resetar", on_click=resetar_config),
-                ft.TextButton("Cancelar", on_click=lambda e: setattr(modal_config, 'open', False) or self.page.update()),
+                ft.TextButton("Cancelar", on_click=lambda e: self._fechar_modal(modal_config)),
                 ft.ElevatedButton(
                     "Salvar",
                     on_click=salvar_config,
                     bgcolor=ft.colors.BLUE_600,
-                    color=ft.colors.WHITE
+                    color=ft.colors.WHITE,
+                    icon=ft.icons.SAVE
                 )
             ],
             shape=ft.RoundedRectangleBorder(radius=12)
@@ -818,41 +824,6 @@ class ModernHeader:
         self.page.dialog = modal_config
         modal_config.open = True
         self.page.update()
-
-    def _criar_campo_monitorado(self, campo_id: str, valor_inicial: any, label: str):
-        """
-        Exemplo de como criar um campo que integra com o monitoring
-        
-        Args:
-            campo_id: ID único do campo
-            valor_inicial: Valor inicial do campo
-            label: Label do campo
-        
-        Returns:
-            ft.TextField: Campo integrado com monitoring
-        """
-        # Registra valor inicial no sistema de monitoring
-        try:
-            self.app_controller.registrar_campo_para_monitoring(campo_id, valor_inicial)
-        except:
-            pass  # Fallback se controller não tem método ainda
-        
-        def on_change(e):
-            """Callback quando campo muda"""
-            try:
-                novo_valor = e.control.value
-                self.app_controller.notificar_alteracao_campo(campo_id, novo_valor)
-            except:
-                pass  # Fallback se controller não tem método ainda
-        
-        campo = ft.TextField(
-            label=label,
-            value=str(valor_inicial) if valor_inicial is not None else "",
-            on_change=on_change,
-            border_radius=8
-        )
-        
-        return campo
     
     def _sair_sistema(self):
         session = get_session_state(self.page)
