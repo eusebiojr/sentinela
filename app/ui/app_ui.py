@@ -340,10 +340,74 @@ class SentinelaApp:
         self.page.add(erro_container)
         self.page.update()
     
+    """
+MÉTODO atualizar_dados CORRIGIDO
+SUBSTITUA o método anterior no app/ui/app_ui.py
+"""
+
     def atualizar_dados(self):
-        """Atualiza dados da aplicação"""
-        mostrar_mensagem(self.page, "🔄 Atualizando dados...", False)
-        self._carregar_dados_completos()
+        """
+        Atualiza dados do sistema manualmente
+        Usado pelos botões de atualizar nas telas
+        """
+        def carregar():
+            try:
+                mostrar_mensagem(self.page, "🔄 Atualizando dados...", "info")
+                logger.info("🔄 Iniciando atualização manual de dados...")
+                
+                session = get_session_state(self.page)
+                
+                # CORRIGIDO: Usa os métodos corretos do SharePointClient
+                df_usuarios_novo = SharePointClient.carregar_lista("UsuariosPainelTorre")
+                df_desvios_novo = SharePointClient.carregar_lista("Desvios")
+                
+                if not df_usuarios_novo.empty and not df_desvios_novo.empty:
+                    # Processa dados
+                    df_desvios_processado = DataUtils.processar_desvios(df_desvios_novo)
+                    
+                    # Atualiza sessão
+                    session.df_usuarios = df_usuarios_novo
+                    session.df_desvios = df_desvios_processado
+                    session.dados_carregados = True
+                    
+                    logger.info(f"✅ Dados atualizados: {len(session.df_desvios)} desvios")
+                    
+                    # Reconstrói a tela atual
+                    self._reconstruir_tela_atual()
+                    
+                    mostrar_mensagem(self.page, "✅ Dados atualizados com sucesso!", "success")
+                    
+                else:
+                    logger.warning("⚠️ Falha ao carregar dados do SharePoint")
+                    mostrar_mensagem(self.page, "⚠️ Erro ao carregar dados atualizados", "warning")
+                    
+            except Exception as e:
+                logger.error(f"❌ Erro na atualização de dados: {e}")
+                mostrar_mensagem(self.page, f"❌ Erro: {str(e)}", "error")
+        
+        # Executa em thread para não travar a interface
+        thread = threading.Thread(target=carregar, daemon=True)
+        thread.start()
+
+    def _reconstruir_tela_atual(self):
+        """Reconstrói a tela atual após atualização"""
+        try:
+            session = get_session_state(self.page)
+            
+            if session.is_usuario_logado():
+                # Reconstrói dashboard (tela principal)
+                self.dashboard_screen.mostrar()
+                logger.info("🔄 Dashboard reconstruído após atualização")
+            else:
+                # Se não há usuário logado, volta para login
+                self.login_screen.mostrar()
+                
+        except Exception as e:
+            logger.error(f"❌ Erro ao reconstruir tela: {e}")
+
+    def mostrar_dashboard(self):
+        """Mostra a tela do dashboard"""
+        self.dashboard_screen.mostrar()
 
 try:
     from ..services.suzano_password_service import suzano_password_service
