@@ -17,6 +17,8 @@ except ImportError:
 
 from ..config.settings import config
 from ..config.logging_config import setup_logger
+from ..config.secrets_manager import secrets_manager
+from ..config.security_utils import password_security, input_sanitizer
 
 # 🚀 NOVA IMPORTAÇÃO - Usa sistema centralizado
 from ..validators import security_validator
@@ -31,22 +33,24 @@ class SuzanoPasswordService:
         """Inicializa o serviço com configurações do sistema"""
         self.site_url = config.site_url
         self.lista_usuarios = config.usuarios_list
-        self.username = config.username_sp
-        self.password = config.password_sp
         self.ctx = None
+        self._credentials_validated = False
         
-        logger.info("🔐 SuzanoPasswordService inicializado (versão migrada)")
+        logger.info("🔐 SuzanoPasswordService inicializado (versão migrada com secrets seguros)")
         
     def conectar_sharepoint(self) -> bool:
-        """Estabelece conexão com SharePoint (mantido igual)"""
+        """Estabelece conexão segura com SharePoint usando secrets manager"""
         try:
             if not UserCredential or not ClientContext:
                 raise Exception("Biblioteca Office365 não instalada")
                 
-            logger.info("🔗 Conectando ao SharePoint...")
+            logger.info("🔗 Conectando ao SharePoint com credenciais seguras...")
+            
+            # Obtém credenciais do gerenciador de secrets
+            credentials = secrets_manager.get_connection_string()
             
             self.ctx = ClientContext(self.site_url).with_credentials(
-                UserCredential(self.username, self.password)
+                UserCredential(credentials["username"], credentials["password"])
             )
             
             web = self.ctx.web
@@ -118,9 +122,12 @@ class SuzanoPasswordService:
             raise e
     
     def validar_senha_atual(self, email: str, senha_atual: str) -> bool:
-        """Valida se a senha atual está correta (mantido igual)"""
+        """Valida senha atual com suporte a senhas legado e seguras"""
         try:
             logger.info(f"🔐 Validando senha atual para: {email}")
+            
+            # Sanitiza email
+            email = input_sanitizer.sanitize_email(email)
             
             usuario = self.buscar_usuario_por_email(email)
             
@@ -128,10 +135,33 @@ class SuzanoPasswordService:
                 logger.warning(f"⚠️ Usuário não encontrado para validação: {email}")
                 return False
             
-            senha_armazenada = str(usuario.get('Senha', '')).strip()
-            senha_informada = str(senha_atual).strip()
+            senha_armazenada = usuario.get('Senha', '')
             
-            is_valid = senha_informada == senha_armazenada
+            # Verifica se é senha em formato legado (texto plano)
+            if password_security.is_legacy_password(senha_armazenada):
+                logger.info(f"🔄 Senha legado detectada para: {email}")
+                is_valid = str(senha_atual).strip() == str(senha_armazenada).strip()
+                
+                # Se válida, agenda migração automática
+                if is_valid:
+                    logger.info(f"📋 Agendando migração de senha para: {email}")
+                    # Não migra automaticamente aqui para não quebrar o fluxo
+                
+            else:
+                # Senha em formato seguro
+                logger.info(f"🔐 Verificando senha segura para: {email}")
+                try:
+                    import json
+                    senha_data = json.loads(senha_armazenada) if isinstance(senha_armazenada, str) else senha_armazenada
+                    is_valid = password_security.verify_password(
+                        senha_atual, 
+                        senha_data['hash'], 
+                        senha_data['salt']
+                    )
+                except (json.JSONDecodeError, KeyError, TypeError):
+                    # Fallback para comparação legado
+                    logger.warning(f"⚠️ Formato de senha inválido, usando fallback legado para: {email}")
+                    is_valid = str(senha_atual).strip() == str(senha_armazenada).strip()
             
             if is_valid:
                 logger.info(f"✅ Senha atual validada para: {email}")
@@ -189,14 +219,22 @@ class SuzanoPasswordService:
                 }
             
             try:
+                # 🚀 NOVO: Gera hash seguro da nova senha
+                senha_segura = password_security.create_password_record(nova_senha)
+                import json
+                senha_json = json.dumps(senha_segura)
+                
+                logger.info(f"🔐 Gerando hash seguro da nova senha para: {email}")
+                
                 lista_usuarios = self.ctx.web.lists.get_by_title(self.lista_usuarios)
                 item = lista_usuarios.get_item_by_id(usuario['ID'])
                 
-                item.set_property('Senha', nova_senha)
+                # Armazena senha hasheada ao invés de texto plano
+                item.set_property('Senha', senha_json)
                 item.update()
                 self.ctx.execute_query()
                 
-                logger.info(f"✅ Senha alterada com sucesso no SharePoint: {email}")
+                logger.info(f"✅ Senha alterada com hash seguro no SharePoint: {email}")
                 self._log_alteracao_senha(email, usuario['ID'], strength_level)
                 
                 return {

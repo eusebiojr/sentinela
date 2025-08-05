@@ -21,11 +21,12 @@ except ImportError:
     UserCredential = None
 
 try:
-    from ..config.settings import config
+    from ..config.settings import config, file_upload_config
     CONFIG_AVAILABLE = True
 except ImportError:
     CONFIG_AVAILABLE = False
     config = None
+    file_upload_config = None
 
 try:
     from ..config.logging_config import setup_logger
@@ -38,9 +39,7 @@ except ImportError:
 class TicketService:
     """Serviço FINAL para tickets - USA CAMPO 'Imagem' (Hiperlink-Imagem)"""
     
-    # Configurações
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-    ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+    # Configurações (agora centralizadas)
     
     # Motivos predefinidos
     MOTIVOS_TICKETS = [

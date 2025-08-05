@@ -32,6 +32,8 @@ def main(page: ft.Page):
         logger.info("🚀 Sentinela iniciando...")
         logger.info(f"📊 Configuração: {config.site_url}")
         
+        # SentinelaApp já importada no topo do arquivo
+        
         # Inicializa a aplicação principal
         app = SentinelaApp(page)
         app.inicializar()
@@ -53,38 +55,51 @@ def main(page: ft.Page):
 
 
 def run_app():
-    """Executa a aplicação com configurações otimizadas para Cloud Run"""
+    """Executa a aplicação com configurações otimizadas"""
     
     # Detecta path de assets baseado no diretório atual
     current_dir = os.getcwd()
+    logger.info(f"📁 Diretório atual: {current_dir}")
     
     if "app" in current_dir and current_dir.endswith("app"):
-        # Executando de dentro da pasta app
         assets_path = "assets"
     else:
-        # Executando da raiz
         assets_path = "app/assets"
     
-    # Configurações específicas para produção/Cloud Run
-    if os.getenv("ENVIRONMENT") == "production":
+    logger.info(f"📁 Assets path: {assets_path}")
+    
+    # Verifica se assets existem
+    if not os.path.exists(assets_path):
+        logger.warning(f"⚠️ Assets path não encontrado: {assets_path}")
+        assets_path = None
+    
+    # Configuração simplificada para evitar problemas de conexão
+    logger.info("🚀 Iniciando aplicação Flet...")
+    
+    try:
+        # Força modo WEB (como estava antes) - agora usa configuração centralizada
         ft.app(
-            target=main, 
+            target=main,
             view=ft.AppView.WEB_BROWSER,
-            host=config.host,
             port=config.port,
-            assets_dir=assets_path,
-            route_url_strategy="hash",
-            web_renderer="html"
-        )
-    else:
-        # Desenvolvimento local
-        ft.app(
-            target=main, 
-            view=ft.AppView.WEB_BROWSER,
-            host="localhost",
-            port=8081,
             assets_dir=assets_path
         )
+    except Exception as e:
+        logger.error(f"❌ Erro na configuração web: {e}")
+        logger.info("🔄 Tentando modo desktop como fallback...")
+        
+        # Fallback para desktop se web falhar
+        try:
+            ft.app(
+                target=main,
+                assets_dir=assets_path
+            )
+        except Exception as e2:
+            logger.error(f"❌ Erro crítico: {e2}")
+            print("❌ Não foi possível iniciar a aplicação Flet")
+            print("💡 Verifique se todas as dependências estão instaladas:")
+            print("   pip install -r requirements.txt")
+            raise
 
 
 if __name__ == "__main__":

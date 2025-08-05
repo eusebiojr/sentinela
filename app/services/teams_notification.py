@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from typing import Dict, Any, Optional
 from ..config.logging_config import setup_logger
+from ..config.settings import network_config
 
 # Import condicional do requests para evitar erro
 try:
@@ -29,7 +30,7 @@ class TeamsNotificationService:
             webhook_url: URL do webhook do Teams (opcional, pode ser configurado depois)
         """
         self.webhook_url = webhook_url
-        self.timeout = 10  # segundos
+        self.timeout = network_config.teams_timeout_seconds
         
         if not REQUESTS_AVAILABLE:
             logger.warning("⚠️ Biblioteca 'requests' não encontrada. Notificações Teams desabilitadas.")

@@ -264,25 +264,25 @@ class ModernHeader:
                 menu_items.append(separador)
                 continue
             
-            # Estilo especial para logoff
+            # Estilo especial para logoff - ESTRUTURA SIMPLES QUE FUNCIONA
             if opcao.get("destaque", False):
                 item_container = ft.Container(
-                    content=ft.Row([
-                        ft.Icon(opcao["icon"], color=ft.colors.WHITE, size=18),
-                        ft.Text(
-                            opcao["text"],
-                            color=ft.colors.WHITE,
-                            weight=ft.FontWeight.W_600,
-                            size=14
-                        )
-                    ], spacing=12),
-                    padding=ft.padding.symmetric(horizontal=16, vertical=12),
+                    content=ft.Text(
+                        opcao["text"],
+                        color=ft.colors.WHITE,
+                        weight=ft.FontWeight.BOLD,
+                        size=14,
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                    padding=ft.padding.all(10),
                     on_click=lambda e, action=opcao["action"]: self._executar_acao_menu(action),
                     border_radius=8,
-                    bgcolor=ft.colors.RED_600,
-                    margin=ft.margin.symmetric(horizontal=5, vertical=2),
-                    ink=True,
-                    border=ft.border.all(1, ft.colors.RED_700)
+                    bgcolor="#c62828",
+                    margin=ft.margin.all(3),
+                    width=200,
+                    height=40,
+                    alignment=ft.alignment.center,
+                    border=ft.border.all(2, "#8e0000")
                 )
             else:
                 # Estilo normal

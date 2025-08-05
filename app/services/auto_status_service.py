@@ -8,15 +8,13 @@ import pytz
 from typing import List, Tuple, Dict, Any
 from ..config.logging_config import setup_logger
 from ..services.sharepoint_client import SharePointClient
+from ..config.settings import business_rules
 
 logger = setup_logger("auto_status_service")
 
 
 class AutoStatusService:
     """Serviço para processamento automático de status 'Não Tratado'"""
-    
-    # Limite de tempo em horas para marcar como "Não Tratado"
-    LIMITE_HORAS = 2
     
     @staticmethod
     def obter_timezone_brasilia():
@@ -216,7 +214,7 @@ class AutoStatusService:
         
         # Filtra eventos com mais de 2 horas desde o DESVIO
         eventos_expirados = eventos_ativos[
-            eventos_ativos["tempo_decorrido_horas"] > AutoStatusService.LIMITE_HORAS
+            eventos_ativos["tempo_decorrido_horas"] > business_rules.auto_status_limit_hours
         ]
         
         if not eventos_expirados.empty:

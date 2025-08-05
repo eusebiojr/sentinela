@@ -2,6 +2,7 @@ import threading
 import time
 from typing import Callable, Optional
 from ..config.logging_config import setup_logger
+from ..config.settings import refresh_config
 
 logger = setup_logger("auto_refresh")
 
@@ -14,7 +15,6 @@ class AutoRefreshService:
         self.app_controller = app_controller
         
         # ===== CORREÇÃO CRÍTICA: DESABILITADO POR PADRÃO =====
-        self.intervalo_segundos = 600  # 10 minutos
         self.timer_ativo = False
         self.timer_pausado = False
         self.usuario_habilitou = False  # ⚡ PADRÃO: FALSE (DESABILITADO)
@@ -75,13 +75,13 @@ class AutoRefreshService:
         self.timer_ativo = True
         self.timer_pausado = False
         self.parar_thread = False
-        self.segundos_restantes = self.intervalo_segundos
+        self.segundos_restantes = refresh_config.auto_refresh_interval_seconds
         
         # Inicia thread do timer
         self.thread_timer = threading.Thread(target=self._executar_timer, daemon=True)
         self.thread_timer.start()
         
-        logger.info(f"🔄 Auto-refresh iniciado - intervalo: {self.intervalo_segundos/60:.0f} minutos")
+        logger.info(f"🔄 Auto-refresh iniciado - intervalo: {refresh_config.auto_refresh_interval_seconds/60:.0f} minutos")
         self._notificar_mudanca_status()
     
     def parar_timer(self):
@@ -114,7 +114,7 @@ class AutoRefreshService:
         if self.timer_pausado:
             self.timer_pausado = False
             # Reinicia contador quando retoma
-            self.segundos_restantes = self.intervalo_segundos
+            self.segundos_restantes = refresh_config.auto_refresh_interval_seconds
             logger.info("▶️ Auto-refresh retomado")
             self._notificar_mudanca_status()
     
@@ -145,7 +145,7 @@ class AutoRefreshService:
         if len(self.campos_monitorados) == 0 and self.usuario_digitando:
             self.usuario_digitando = False
             # Aguarda 30 segundos antes de retomar (tempo para usuário continuar digitando)
-            threading.Timer(30.0, self._verificar_retomar_timer).start()
+            threading.Timer(refresh_config.user_typing_delay_seconds, self._verificar_retomar_timer).start()
             logger.info(f"⏱️ Campo {campo_id} liberado - verificação de retomada em 30s")
     
     def _verificar_retomar_timer(self):
@@ -208,7 +208,7 @@ class AutoRefreshService:
                 # Executa refresh quando tempo acabar (e não estiver pausado)
                 if self.segundos_restantes <= 0 and not self.timer_pausado:
                     self._executar_refresh()
-                    self.segundos_restantes = self.intervalo_segundos  # Reinicia ciclo
+                    self.segundos_restantes = refresh_config.auto_refresh_interval_seconds  # Reinicia ciclo
                 
                 # Aguarda 1 segundo
                 time.sleep(1)
